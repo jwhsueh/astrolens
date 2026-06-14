@@ -264,6 +264,9 @@ export default function App() {
     setIsDownloadingPDF(true);
     
     try {
+      // 1. 給予瀏覽器約 350毫秒 的時間將 #print-report-container 渲染為可視的 block (但在 z-index -9999 之下)
+      await new Promise((resolve) => setTimeout(resolve, 350));
+
       const element = document.getElementById('print-report-container');
       if (!element) {
         alert('找不到下載報告書容器，請稍後再試。');
@@ -271,25 +274,8 @@ export default function App() {
         return;
       }
 
-      // 我們建立一個臨時的克隆元素
-      const clone = element.cloneNode(true) as HTMLElement;
-      
-      // html2pdf 要求渲染的元素在 DOM 中並且可見
-      clone.style.position = 'absolute';
-      clone.style.left = '-9999px';
-      clone.style.top = '0';
-      clone.style.display = 'block';
-      clone.style.width = '794px'; // 完美 A4 寬度 (8.27in * 96px ~= 794px)
-      clone.style.color = '#000000';
-      clone.style.backgroundColor = '#ffffff';
-
-      // 移除 print-only 的隱藏 class 確保能被轉成圖片
-      clone.classList.remove('print-only');
-      
-      document.body.appendChild(clone);
-
       const opt = {
-        margin:       12, // mm
+        margin:       10, // mm
         filename:     `AstroLens_星域雙盤占卜解讀報告書-${birthDate}.pdf`,
         image:        { type: 'jpeg' as const, quality: 0.98 },
         html2canvas:  { 
@@ -299,19 +285,19 @@ export default function App() {
           scrollY: 0,
           scrollX: 0
         },
-        jsPDF:        { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
+        jsPDF:        { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const },
+        pagebreak:    { mode: ['css', 'legacy'] }
       };
 
       const html2pdfLib = html2pdf;
       if (!html2pdfLib) {
         alert('PDF下載套件未正確加載，請稍後重試！');
-        document.body.removeChild(clone);
         setIsDownloadingPDF(false);
         return;
       }
 
-      await html2pdfLib().set(opt).from(clone).save();
-      document.body.removeChild(clone);
+      // 直接傳遞真實 DOM 節點進行渲染（無須對 SVGs 進行不穩定的深克隆）
+      await html2pdfLib().set(opt).from(element).save();
     } catch (error) {
       console.error('下載 PDF 發生異常:', error);
       alert('下載 PDF 發生異常，請重試！');
@@ -1804,7 +1790,21 @@ export default function App() {
       {/* =========================================================================
                      4. HIDDEN COMPACT PRINT REPORT VIEW (Only shown on Print)
           ========================================================================= */}
-      <div id="print-report-container" className="print-only max-w-[8.27in] mx-auto bg-white text-slate-900 p-8 space-y-8 font-sans">
+      <div 
+        id="print-report-container" 
+        className={`${isDownloadingPDF ? 'block bg-white text-slate-900 p-8 space-y-8 font-sans' : 'print-only'} max-w-[8.27in] mx-auto`}
+        style={isDownloadingPDF ? {
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '794px',
+          height: 'auto',
+          zIndex: -9999,
+          pointerEvents: 'none',
+          backgroundColor: '#ffffff',
+          color: '#000000',
+        } : undefined}
+      >
         
         {/* PDF Page 1: Header and Chart Visuals */}
         <div className="print-break-after space-y-6">
