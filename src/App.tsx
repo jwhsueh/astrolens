@@ -12,6 +12,8 @@ import {
 } from './utils/astrology';
 import { ALL_TAROT_CARDS, getTarotCardById } from './utils/tarot';
 import AstrologyWheel from './components/AstrologyWheel';
+// @ts-ignore
+import html2pdf from 'html2pdf.js';
 import {
   Calendar,
   Clock,
@@ -289,7 +291,7 @@ export default function App() {
       const opt = {
         margin:       12, // mm
         filename:     `AstroLens_星域雙盤占卜解讀報告書-${birthDate}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
+        image:        { type: 'jpeg' as const, quality: 0.98 },
         html2canvas:  { 
           scale: 2, 
           useCORS: true, 
@@ -297,12 +299,12 @@ export default function App() {
           scrollY: 0,
           scrollX: 0
         },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        jsPDF:        { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
       };
 
-      const html2pdfLib = (window as any).html2pdf;
+      const html2pdfLib = html2pdf;
       if (!html2pdfLib) {
-        alert('PDF下載套件正在極速加載中，請再次點選下載！');
+        alert('PDF下載套件未正確加載，請稍後重試！');
         document.body.removeChild(clone);
         setIsDownloadingPDF(false);
         return;
@@ -312,6 +314,7 @@ export default function App() {
       document.body.removeChild(clone);
     } catch (error) {
       console.error('下載 PDF 發生異常:', error);
+      alert('下載 PDF 發生異常，請重試！');
     } finally {
       setIsDownloadingPDF(false);
     }
