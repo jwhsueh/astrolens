@@ -12,8 +12,6 @@ import {
 } from './utils/astrology';
 import { ALL_TAROT_CARDS, getTarotCardById } from './utils/tarot';
 import AstrologyWheel from './components/AstrologyWheel';
-// @ts-ignore
-import html2pdf from 'html2pdf.js';
 import {
   Calendar,
   Clock,
@@ -256,53 +254,168 @@ export default function App() {
   const [futureCardId, setFutureCardId] = useState(() => localStorage.getItem('tarot_future_card') || 'world');
   const [futureReversed, setFutureReversed] = useState(() => localStorage.getItem('tarot_future_reversed') === 'true');
 
-  // 7. Download PDF States & Handler
-  const [isDownloadingPDF, setIsDownloadingPDF] = useState<boolean>(false);
+  // 7. Download HTML States & Handler
+  const [isDownloadingHTML, setIsDownloadingHTML] = useState<boolean>(false);
 
-  const handleDownloadPDF = async () => {
-    if (isDownloadingPDF) return;
-    setIsDownloadingPDF(true);
+  const handleDownloadHTML = async () => {
+    if (isDownloadingHTML) return;
+    setIsDownloadingHTML(true);
     
     try {
-      // 1. 給予瀏覽器約 350毫秒 的時間將 #print-report-container 渲染為可視的 block (但在 z-index -9999 之下)
-      await new Promise((resolve) => setTimeout(resolve, 350));
+      await new Promise((resolve) => setTimeout(resolve, 150));
 
       const element = document.getElementById('print-report-container');
       if (!element) {
         alert('找不到下載報告書容器，請稍後再試。');
-        setIsDownloadingPDF(false);
+        setIsDownloadingHTML(false);
         return;
       }
 
-      const opt = {
-        margin:       10, // mm
-        filename:     `AstroLens_星域雙盤占卜解讀報告書-${birthDate}.pdf`,
-        image:        { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas:  { 
-          scale: 2, 
-          useCORS: true, 
-          logging: false,
-          scrollY: 0,
-          scrollX: 0
-        },
-        jsPDF:        { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const },
-        pagebreak:    { mode: ['css', 'legacy'] }
-      };
+      const innerHTMLContent = element.innerHTML;
 
-      const html2pdfLib = html2pdf;
-      if (!html2pdfLib) {
-        alert('PDF下載套件未正確加載，請稍後重試！');
-        setIsDownloadingPDF(false);
-        return;
+      const htmlContent = `<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AstroLens - 星域雙盤占卜解讀報告書 (${birthDate})</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;850&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+      background-color: #040810;
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 3rem 1rem;
+      background-image: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #040810 70%);
+    }
+    .print-only {
+      display: block !important;
+    }
+    .print-break-after {
+      margin-bottom: 3.5rem;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+      padding-bottom: 3.5rem;
+    }
+    .report-card {
+      max-width: 860px;
+      width: 100%;
+      background: #0b1329;
+      color: #cbd5e1;
+      border-radius: 28px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(197, 160, 89, 0.15);
+      padding: 3rem 2.5rem;
+    }
+    .report-card .text-slate-900 {
+      color: #f1f5f9 !important;
+    }
+    .report-card .bg-slate-100 {
+      background-color: rgba(255, 255, 255, 0.04) !important;
+      border-left-color: #c5a059 !important;
+    }
+    .report-card .bg-slate-50 {
+      background-color: rgba(255, 255, 255, 0.02) !important;
+      border-color: rgba(255, 255, 255, 0.05) !important;
+    }
+    .report-card .border-slate-200, .report-card .border-slate-300 {
+      border-color: rgba(255, 255, 255, 0.08) !important;
+    }
+    .report-card .text-slate-800, .report-card .text-slate-850 {
+      color: #e2e8f0 !important;
+    }
+    .report-card .text-slate-500, .report-card .text-slate-400 {
+      color: #94a3b8 !important;
+    }
+    .report-card .text-slate-600 {
+      color: #cbd5e1 !important;
+    }
+    .report-card table th, .report-card table td {
+      border-bottom-color: rgba(255, 255, 255, 0.05) !important;
+    }
+    svg {
+      max-width: 100%;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="max-w-[860px] w-full mb-6 flex flex-col sm:flex-row justify-between items-center bg-slate-900/80 backdrop-blur-md p-4 rounded-2xl border border-white/5 gap-3 no-print">
+    <div>
+      <h3 class="text-xs font-bold text-amber-400">✨ 離線互動式星象解讀報告書</h3>
+      <p class="text-[10px] text-slate-400 mt-0.5">您可以隨時用瀏覽器開啟此單一檔案(支援離線)，亦可一鍵列印或輸出為紙本 PDF</p>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="window.print()" class="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 text-[#0c1220] rounded-xl text-xs font-bold hover:brightness-110 active:scale-95 transition shadow-lg cursor-pointer flex items-center gap-1.5 shadow-amber-500/10">
+        🖨️ 列印此報告 / 另存為標準 PDF
+      </button>
+    </div>
+  </div>
+
+  <main class="report-card">
+    ${innerHTMLContent}
+  </main>
+
+  <footer class="mt-8 text-center text-[11px] text-slate-500 no-print">
+    <p>報告生成時間: ${new Date().toLocaleDateString('zh-TW')} &bull; AstroLens Pro 星象雙盤解讀系統</p>
+  </footer>
+
+  <style>
+    @media print {
+      body {
+        background: #ffffff !important;
+        background-image: none !important;
+        color: #000000 !important;
+        padding: 0 !important;
       }
+      .no-print {
+        display: none !important;
+      }
+      .report-card {
+        max-width: 100% !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        background: transparent !important;
+        color: #000000 !important;
+      }
+      .report-card .text-slate-905, .report-card .text-slate-900 {
+        color: #000000 !important;
+      }
+      .report-card .bg-slate-100 {
+        background-color: #f1f5f9 !important;
+        border-left-color: #000000 !important;
+      }
+      .report-card .bg-slate-50 {
+        background-color: #f8fafc !important;
+        border-color: #e2e8f0 !important;
+      }
+      .report-card .border-slate-200 {
+        border-color: #cbd5e1 !important;
+      }
+    }
+  </style>
+</body>
+</html>`;
 
-      // 直接傳遞真實 DOM 節點進行渲染（無須對 SVGs 進行不穩定的深克隆）
-      await html2pdfLib().set(opt).from(element).save();
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `AstroLens_星盤雙盤占卜解讀報告書_${birthDate}.html`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('下載 PDF 發生異常:', error);
-      alert('下載 PDF 發生異常，請重試！');
+      console.error('下載 HTML 報告發生異常:', error);
+      alert('下載 HTML 報告發生異常，請重試！');
     } finally {
-      setIsDownloadingPDF(false);
+      setIsDownloadingHTML(false);
     }
   };
 
@@ -750,18 +863,18 @@ export default function App() {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={handleDownloadPDF}
-              disabled={isDownloadingPDF}
-              className={`flex items-center space-x-2 px-4 py-2 bg-[#c5a059] text-[#060a13] hover:bg-[#b08b47] active:scale-95 text-xs font-bold uppercase tracking-wider rounded-xl transition shadow-lg border border-[#e5c583]/30 ${isDownloadingPDF ? 'opacity-70 cursor-not-allowed' : ''}`}
-              title="一鍵直接本地下載 PDF 報告規格書"
+              onClick={handleDownloadHTML}
+              disabled={isDownloadingHTML}
+              className={`flex items-center space-x-2 px-4 py-2 bg-[#c5a059] text-[#060a13] hover:bg-[#b08b47] active:scale-95 text-xs font-bold uppercase tracking-wider rounded-xl transition shadow-lg border border-[#e5c583]/30 ${isDownloadingHTML ? 'opacity-70 cursor-not-allowed' : ''}`}
+              title="一鍵直接本地下載 HTML 互動式報告規格書"
               id="export-pdf-main-btn"
             >
-              {isDownloadingPDF ? (
+              {isDownloadingHTML ? (
                 <Loader2 className="w-4 h-4 animate-spin text-[#060a13]" />
               ) : (
                 <Download className="w-4 h-4 text-[#060a13]" />
               )}
-              <span>{isDownloadingPDF ? '在編譯下載中...' : '下載 PDF 報告書'}</span>
+              <span>{isDownloadingHTML ? '在編譯下載中...' : '下載 HTML 報告書'}</span>
             </button>
           </div>
         </div>
@@ -1770,7 +1883,7 @@ export default function App() {
             </h2>
           </div>
           <p className="text-xs text-slate-400 leading-normal">
-            在此輸入占卜鑑定解說或是補充文字。此處填寫的客製化備忘錄，將會同步呈現在您所匯出的 <strong>PDF 報告書</strong> 底層區域，助您生成專業權威的星象整合報告書：
+            在此輸入占卜鑑定解說或是補充文字。此處填寫的客製化備忘錄，將會同步呈現在您所下載的 <strong>HTML 報告書</strong> 與列印底層區域，助您生成專業權威的星象整合報告書：
           </p>
           <textarea
             value={notes}
@@ -1792,8 +1905,8 @@ export default function App() {
           ========================================================================= */}
       <div 
         id="print-report-container" 
-        className={`${isDownloadingPDF ? 'block bg-white text-slate-900 p-8 space-y-8 font-sans' : 'print-only'} max-w-[8.27in] mx-auto`}
-        style={isDownloadingPDF ? {
+        className={`${isDownloadingHTML ? 'block bg-white text-slate-900 p-8 space-y-8 font-sans' : 'print-only'} max-w-[8.27in] mx-auto`}
+        style={isDownloadingHTML ? {
           position: 'fixed',
           top: 0,
           left: 0,
