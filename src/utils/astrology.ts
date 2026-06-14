@@ -27,6 +27,7 @@ export interface Aspect {
   harmony: 'positive' | 'challenging' | 'neutral';
   ingressTime?: string;
   egressTime?: string;
+  futureAspects?: { name: string; time: string; angle: number }[];
 }
 
 export interface HouseData {
