@@ -18,6 +18,8 @@ import {
   MapPin,
   Sparkles,
   Printer,
+  Download,
+  Loader2,
   FileText,
   Search,
   BookOpen,
@@ -149,6 +151,36 @@ const getCardValue = (cardId: string): number => {
   return 0; // major or unknown
 };
 
+const PLANET_CORE_MEANINGS: Record<string, string> = {
+  '太陽': '能量核心、外在自我、生命力與意志力的展現，主導人格追求與核心天賦。',
+  '月亮': '內心情感、情緒本能、潛意識世界、安全感來源與內在情感需求。',
+  '水星': '心智思維、學習交流、邏輯分析、語言表達與溝通能力。',
+  '金星': '愛與美感、人際和諧、藝術追求、價值觀、金錢財產與戀愛態度。',
+  '火星': '行動力、精力與慾望、競爭侵略、身體耐力與生存意志。',
+  '木星': '幸運繁榮、機遇與擴張、哲學信念、道德情操、高等教育與智慧引領。',
+  '土星': '限制與考驗、紀律責任、壓抑恐懼、嚴肅秩序、耐力與業力磨練。',
+  '天王星': '變革不羈、獨立自主、突然變化、原創見解、科技突破與特立獨行。',
+  '海王星': '靈性想像力、夢境幻覺、同情共情、藝術直覺與無邊界包容力量。',
+  '冥王星': '深層轉化、毀滅與再生、意志掌控、秘密權力、靈魂宿命與浴火重生。',
+  '北交點': '靈魂今生進化的課題、需要主動挑戰與學習的高層次方向。',
+  '南交點': '靈魂過去世累積的熟練習慣、舒適圈以及應避免的過度沈溺。',
+};
+
+const ZODIAC_CORE_MEANINGS: Record<string, string> = {
+  '牡羊座': '熱情直率、勇往直前、自我意志強、不畏競爭（火象 / 創始）',
+  '金牛座': '務實穩定、美感物質、追求感官享受、耐心與沉穩（土象 / 固定）',
+  '雙子座': '好奇善變、資訊傳播、靈活多工、機智聰敏與健談（風象 / 變動）',
+  '巨蟹座': '溫柔敏感、家庭懷舊、母性滋養、注重安全感與情感呵護（水象 / 創始）',
+  '獅子座': '自信慷慨、耀眼表達、渴望焦點、舞台魅力與追求尊嚴（火象 / 固定）',
+  '處女座': '完美主義、條理分析、注重瑣碎精準、熱心服務與工作常規（土象 / 變動）',
+  '天秤座': '和諧優雅、注重關係公平、美感外交與猶豫不決（風象 / 創始）',
+  '天蠍座': '深沉執著、直覺穿透、靈魂蛻變、掌控與神祕吸引力（水象 / 固定）',
+  '射手座': '追求哲理、自由樂觀、跨界探索、慷慨直率與拓展視野（火象 / 變動）',
+  '摩羯座': '紀律野心、嚴謹負責、社會成就、堅忍與保守沉著（土象 / 創始）',
+  '水瓶座': '特立獨行、前衛客觀、群體福祉、冷靜高度智慧與疏離感（風象 / 固定）',
+  '雙魚座': '靈性夢幻、超強共情、藝術想像、自我犧牲與包容溫柔（水象 / 變動）',
+};
+
 const highlightText = (text: string, highlightNames: string[]) => {
   if (!highlightNames.length) return <span>{text}</span>;
   const sortedNames = [...new Set(highlightNames)]
@@ -221,6 +253,69 @@ export default function App() {
 
   const [futureCardId, setFutureCardId] = useState(() => localStorage.getItem('tarot_future_card') || 'world');
   const [futureReversed, setFutureReversed] = useState(() => localStorage.getItem('tarot_future_reversed') === 'true');
+
+  // 7. Download PDF States & Handler
+  const [isDownloadingPDF, setIsDownloadingPDF] = useState<boolean>(false);
+
+  const handleDownloadPDF = async () => {
+    if (isDownloadingPDF) return;
+    setIsDownloadingPDF(true);
+    
+    try {
+      const element = document.getElementById('print-report-container');
+      if (!element) {
+        alert('找不到下載報告書容器，請稍後再試。');
+        setIsDownloadingPDF(false);
+        return;
+      }
+
+      // 我們建立一個臨時的克隆元素
+      const clone = element.cloneNode(true) as HTMLElement;
+      
+      // html2pdf 要求渲染的元素在 DOM 中並且可見
+      clone.style.position = 'absolute';
+      clone.style.left = '-9999px';
+      clone.style.top = '0';
+      clone.style.display = 'block';
+      clone.style.width = '794px'; // 完美 A4 寬度 (8.27in * 96px ~= 794px)
+      clone.style.color = '#000000';
+      clone.style.backgroundColor = '#ffffff';
+
+      // 移除 print-only 的隱藏 class 確保能被轉成圖片
+      clone.classList.remove('print-only');
+      
+      document.body.appendChild(clone);
+
+      const opt = {
+        margin:       12, // mm
+        filename:     `AstroLens_星域雙盤占卜解讀報告書-${birthDate}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { 
+          scale: 2, 
+          useCORS: true, 
+          logging: false,
+          scrollY: 0,
+          scrollX: 0
+        },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      const html2pdfLib = (window as any).html2pdf;
+      if (!html2pdfLib) {
+        alert('PDF下載套件正在極速加載中，請再次點選下載！');
+        document.body.removeChild(clone);
+        setIsDownloadingPDF(false);
+        return;
+      }
+
+      await html2pdfLib().set(opt).from(clone).save();
+      document.body.removeChild(clone);
+    } catch (error) {
+      console.error('下載 PDF 發生異常:', error);
+    } finally {
+      setIsDownloadingPDF(false);
+    }
+  };
 
   // Persist notes
   useEffect(() => {
@@ -666,13 +761,18 @@ export default function App() {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={() => window.print()}
-              className="flex items-center space-x-2 px-4 py-2 bg-[#c5a059] text-[#060a13] hover:bg-[#b08b47] active:scale-95 text-xs font-bold uppercase tracking-wider rounded-xl transition shadow-lg border border-[#e5c583]/30"
-              title="列印或直接保存為高密度 PDF 報告書"
+              onClick={handleDownloadPDF}
+              disabled={isDownloadingPDF}
+              className={`flex items-center space-x-2 px-4 py-2 bg-[#c5a059] text-[#060a13] hover:bg-[#b08b47] active:scale-95 text-xs font-bold uppercase tracking-wider rounded-xl transition shadow-lg border border-[#e5c583]/30 ${isDownloadingPDF ? 'opacity-70 cursor-not-allowed' : ''}`}
+              title="一鍵直接本地下載 PDF 報告規格書"
               id="export-pdf-main-btn"
             >
-              <Printer className="w-4 h-4 text-[#060a13]" />
-              <span>匯出 PDF 報告書</span>
+              {isDownloadingPDF ? (
+                <Loader2 className="w-4 h-4 animate-spin text-[#060a13]" />
+              ) : (
+                <Download className="w-4 h-4 text-[#060a13]" />
+              )}
+              <span>{isDownloadingPDF ? '在編譯下載中...' : '下載 PDF 報告書'}</span>
             </button>
           </div>
         </div>
@@ -985,6 +1085,18 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* Cosmic Meanings: Planet Essence & Zodiac Essence */}
+                <div className="grid grid-cols-2 gap-2 text-[10px]">
+                  <div className="bg-white/[0.03] p-2 rounded-xl border border-white/5">
+                    <span className="text-amber-300 font-bold block mb-0.5">🪐 {hoveredPlanet.name}象徵：</span>
+                    <p className="text-slate-300 leading-relaxed font-sans">{PLANET_CORE_MEANINGS[hoveredPlanet.name] || '此天體主導能量意志與內在特質推演。'}</p>
+                  </div>
+                  <div className="bg-white/[0.03] p-2 rounded-xl border border-white/5">
+                    <span className="text-amber-300 font-bold block mb-0.5">🌟 {ZODIAC_SIGNS[hoveredPlanet.signIndex].name}特質：</span>
+                    <p className="text-slate-300 leading-relaxed font-sans">{ZODIAC_CORE_MEANINGS[ZODIAC_SIGNS[hoveredPlanet.signIndex].name] || '該星座為該能量帶來特異之色彩與行動風格。'}</p>
+                  </div>
+                </div>
+
                 <p className="text-xs text-slate-300 bg-black/35 p-3 rounded-2xl border border-white/5 leading-relaxed">
                   {hoveredPlanetType === 'natal' 
                     ? getPlanetSignInterpretation(hoveredPlanet.name, ZODIAC_SIGNS[hoveredPlanet.signIndex].name)
@@ -1013,6 +1125,18 @@ export default function App() {
                     <span className="inline-block px-2 py-0.5 bg-[#c5a059]/15 border border-[#c5a059]/40 text-[#c5a059] rounded text-[8px] font-mono font-bold uppercase tracking-wider">
                       已自動展開
                     </span>
+                  </div>
+                </div>
+
+                {/* Cosmic Meanings: Planet Essence & Zodiac Essence */}
+                <div className="grid grid-cols-2 gap-2 text-[10px] pb-2 border-b border-white/5">
+                  <div className="bg-white/[0.03] p-1.5 rounded-xl border border-white/5">
+                    <span className="text-amber-300 font-bold block mb-0.5">🪐 {selectedPlanet.name}象徵：</span>
+                    <p className="text-slate-300 leading-normal font-sans">{PLANET_CORE_MEANINGS[selectedPlanet.name] || '此天體主導能量意志與內在特質推演。'}</p>
+                  </div>
+                  <div className="bg-white/[0.03] p-1.5 rounded-xl border border-white/5">
+                    <span className="text-amber-300 font-bold block mb-0.5">🌟 {ZODIAC_SIGNS[selectedPlanet.signIndex].name}特質：</span>
+                    <p className="text-slate-300 leading-normal font-sans">{ZODIAC_CORE_MEANINGS[ZODIAC_SIGNS[selectedPlanet.signIndex].name] || '該星座為該能量帶來特異之色彩與行動風格。'}</p>
                   </div>
                 </div>
 
@@ -1677,7 +1801,7 @@ export default function App() {
       {/* =========================================================================
                      4. HIDDEN COMPACT PRINT REPORT VIEW (Only shown on Print)
           ========================================================================= */}
-      <div className="print-only max-w-[8.27in] mx-auto bg-white text-slate-900 p-8 space-y-8 font-sans">
+      <div id="print-report-container" className="print-only max-w-[8.27in] mx-auto bg-white text-slate-900 p-8 space-y-8 font-sans">
         
         {/* PDF Page 1: Header and Chart Visuals */}
         <div className="print-break-after space-y-6">
