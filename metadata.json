@@ -1,0 +1,6 @@
+{
+  "name": "Astrology Natal Transit Chart",
+  "description": "An astrology natal and transit chart application with dynamic house predictions.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
