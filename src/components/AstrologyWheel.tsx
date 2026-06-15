@@ -80,7 +80,7 @@ export default function AstrologyWheel({
       <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?auto=format&fit=crop&w=600&q=20')] bg-cover opacity-15 mix-blend-color-dodge pointer-events-none" />
 
       {/* On-screen Tooltip Header Overlay */}
-      <div className="absolute top-3 left-4 right-4 flex justify-between items-center z-10 pointer-events-none glass px-3 py-1.5 rounded-full text-xs text-slate-300 border border-[#c5a059]/20">
+      <div className="absolute top-3 left-4 right-4 flex justify-between items-center z-10 pointer-events-none glass px-3 py-1.5 rounded-full text-xs text-slate-300 border border-[#c5a059]/20 no-print print:hidden">
         <div className="flex items-center space-x-1.5">
           <span className="w-2 h-2 rounded-full bg-[#c5a059] animate-pulse" />
           <span className="font-medium text-slate-100">

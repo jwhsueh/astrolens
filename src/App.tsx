@@ -40,15 +40,36 @@ import {
 
 // Preset birth and observatory list
 const LOCATION_PRESETS = [
+  // 台灣主要城市 / Taiwan Cities
   { name: '台北市 (Taipei)', longitude: 121.50, latitude: 25.03, timezone: 8 },
+  { name: '新北市 (New Taipei)', longitude: 121.46, latitude: 25.01, timezone: 8 },
+  { name: '桃園市 (Taoyuan)', longitude: 121.31, latitude: 24.99, timezone: 8 },
+  { name: '新竹市 (Hsinchu)', longitude: 120.96, latitude: 24.81, timezone: 8 },
+  { name: '台中市 (Taichung)', longitude: 120.67, latitude: 24.14, timezone: 8 },
+  { name: '嘉義市 (Chiayi)', longitude: 120.44, latitude: 23.48, timezone: 8 },
+  { name: '台南市 (Tainan)', longitude: 120.20, latitude: 22.99, timezone: 8 },
+  { name: '高雄市 (Kaohsiung)', longitude: 120.30, latitude: 22.61, timezone: 8 },
+  { name: '基隆市 (Keelung)', longitude: 121.74, latitude: 25.12, timezone: 8 },
+  
+  // 美國主要城市 / US Cities
+  { name: '紐約 (New York)', longitude: -74.00, latitude: 40.71, timezone: -5 },
+  { name: '洛杉磯 (Los Angeles)', longitude: -118.24, latitude: 34.05, timezone: -8 },
+  { name: '舊金山 (San Francisco)', longitude: -122.41, latitude: 37.77, timezone: -8 },
+  { name: '芝加哥 (Chicago)', longitude: -87.62, latitude: 41.87, timezone: -6 },
+  { name: '休士頓 (Houston)', longitude: -95.36, latitude: 29.76, timezone: -6 },
+  { name: '邁阿密 (Miami)', longitude: -80.19, latitude: 25.76, timezone: -5 },
+  { name: '波士頓 (Boston)', longitude: -71.05, latitude: 42.36, timezone: -5 },
+  { name: '西雅圖 (Seattle)', longitude: -122.33, latitude: 47.60, timezone: -8 },
+  { name: '華盛頓特區 (Washington D.C.)', longitude: -77.03, latitude: 38.90, timezone: -5 },
+  { name: '檀香山 (Honolulu)', longitude: -157.85, latitude: 21.30, timezone: -10 },
+
+  // 其他亞歐城市 / Other Global Presets
   { name: '香港 (Hong Kong)', longitude: 114.15, latitude: 22.25, timezone: 8 },
   { name: '上海市 (Shanghai)', longitude: 121.47, latitude: 31.23, timezone: 8 },
   { name: '北京市 (Beijing)', longitude: 116.40, latitude: 39.90, timezone: 8 },
   { name: '東京 (Tokyo)', longitude: 139.69, latitude: 35.67, timezone: 9 },
   { name: '新加坡 (Singapore)', longitude: 103.85, latitude: 1.35, timezone: 8 },
   { name: '倫敦 (London)', longitude: -0.12, latitude: 51.50, timezone: 0 },
-  { name: '紐約 (New York)', longitude: -74.00, latitude: 40.71, timezone: -5 },
-  { name: '洛杉磯 (Los Angeles)', longitude: -118.24, latitude: 34.05, timezone: -8 },
 ];
 
 const HOUSE_DETAILS_MAP: { [key: number]: string } = {
@@ -286,58 +307,58 @@ export default function App() {
   <style>
     body {
       font-family: 'Inter', 'Noto Sans TC', system-ui, -apple-system, sans-serif;
-      background-color: #040810;
-      color: #f8fafc;
+      background-color: #f5f2eb;
+      color: #292524;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       padding: 3rem 1rem;
-      background-image: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #040810 70%);
+      background-image: radial-gradient(circle at 50% 0%, #faf8f5 0%, #f5f2eb 100%);
     }
     .print-only {
       display: block !important;
     }
     .print-break-after {
       margin-bottom: 3.5rem;
-      border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+      border-bottom: 1px dashed rgba(181, 146, 71, 0.2);
       padding-bottom: 3.5rem;
     }
     .report-card {
       max-width: 860px;
       width: 100%;
-      background: #0b1329;
-      color: #cbd5e1;
+      background: #fbfaf5;
+      color: #292524;
       border-radius: 28px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-      border: 1px solid rgba(197, 160, 89, 0.15);
+      box-shadow: 0 25px 50px -12px rgba(139, 92, 26, 0.08);
+      border: 1px solid rgba(181, 146, 71, 0.25);
       padding: 3rem 2.5rem;
     }
     .report-card .text-slate-900 {
-      color: #f1f5f9 !important;
+      color: #2c2416 !important;
     }
     .report-card .bg-slate-100 {
-      background-color: rgba(255, 255, 255, 0.04) !important;
-      border-left-color: #c5a059 !important;
+      background-color: #f5ebd3 !important;
+      border-left-color: #b59247 !important;
     }
     .report-card .bg-slate-50 {
-      background-color: rgba(255, 255, 255, 0.02) !important;
-      border-color: rgba(255, 255, 255, 0.05) !important;
+      background-color: #faf8f4 !important;
+      border-color: #e8dfcb !important;
     }
     .report-card .border-slate-200, .report-card .border-slate-300 {
-      border-color: rgba(255, 255, 255, 0.08) !important;
+      border-color: #e8dfca !important;
     }
     .report-card .text-slate-800, .report-card .text-slate-850 {
-      color: #e2e8f0 !important;
+      color: #2c2416 !important;
     }
     .report-card .text-slate-500, .report-card .text-slate-400 {
-      color: #94a3b8 !important;
+      color: #6e6350 !important;
     }
     .report-card .text-slate-600 {
-      color: #cbd5e1 !important;
+      color: #6e6350 !important;
     }
     .report-card table th, .report-card table td {
-      border-bottom-color: rgba(255, 255, 255, 0.05) !important;
+      border-bottom-color: #e8dfca !important;
     }
     svg {
       max-width: 100%;
@@ -346,16 +367,10 @@ export default function App() {
   </style>
 </head>
 <body>
-  <div class="max-w-[860px] w-full mb-6 flex flex-col sm:flex-row justify-between items-center bg-slate-900/80 backdrop-blur-md p-4 rounded-2xl border border-white/5 gap-3 no-print">
-    <div>
-      <h3 class="text-xs font-bold text-amber-400">✨ 離線互動式星象解讀報告書</h3>
-      <p class="text-[10px] text-slate-400 mt-0.5">您可以隨時用瀏覽器開啟此單一檔案(支援離線)，亦可一鍵列印或輸出為紙本 PDF</p>
-    </div>
-    <div class="flex gap-2">
-      <button onclick="window.print()" class="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 text-[#0c1220] rounded-xl text-xs font-bold hover:brightness-110 active:scale-95 transition shadow-lg cursor-pointer flex items-center gap-1.5 shadow-amber-500/10">
-        🖨️ 列印此報告 / 另存為標準 PDF
-      </button>
-    </div>
+  <div class="max-w-[860px] w-full mb-4 flex justify-end no-print">
+    <button onclick="window.print()" class="px-4 py-2 bg-[#b59247] text-white font-bold rounded-xl text-xs hover:brightness-110 transition cursor-pointer flex items-center gap-1.5 shadow-md">
+      🖨️ 列印此占星報告 (可另存 PDF)
+    </button>
   </div>
 
   <main class="report-card">
@@ -2605,433 +2620,306 @@ export default function App() {
       {/* =========================================================================
                      4. HIDDEN COMPACT PRINT REPORT VIEW (Only shown on Print)
           ========================================================================= */}
-      <div 
-        id="print-report-container" 
-        className={`${isDownloadingHTML ? 'block bg-white text-slate-900 p-8 space-y-8 font-sans' : 'print-only'} max-w-[8.27in] mx-auto`}
-        style={isDownloadingHTML ? {
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '794px',
-          height: 'auto',
-          zIndex: -9999,
-          pointerEvents: 'none',
-          backgroundColor: '#ffffff',
-          color: '#000000',
-        } : undefined}
-      >
-        
-        {/* PDF Page 1: Header and Chart Visuals */}
-        <div className="print-break-after space-y-6">
-          <div className="border-b-4 border-slate-900 pb-4 flex justify-between items-end">
-            <div>
-              <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">星域雙盤占卜解讀報告書</h1>
-              <p className="text-slate-500 text-xs mt-1">Natal & Transit Astrology Hub &bull; Professional Edition</p>
-            </div>
-            <div className="text-right font-mono text-[10px] text-slate-400">
-              列印時刻: {new Date().toLocaleDateString('zh-TW')}
-            </div>
-          </div>
+      {(() => {
+        const isOuterPlanet = (name: string) => {
+          return name.includes("天王") || name.includes("海王") || name.includes("冥王") || 
+                 name.toLowerCase().includes("uranus") || name.toLowerCase().includes("neptune") || name.toLowerCase().includes("pluto");
+        };
+        const cleanNatalNatal = natalNatalAspects.filter(asp => !isOuterPlanet(asp.planetA) && !isOuterPlanet(asp.planetB));
+        const cleanTransitTransit = transitTransitAspects.filter(asp => !isOuterPlanet(asp.planetA) && !isOuterPlanet(asp.planetB));
+        const cleanTransitNatal = transitNatalAspects.filter(asp => !isOuterPlanet(asp.planetA) && !isOuterPlanet(asp.planetB));
 
-          <div className="grid grid-cols-2 gap-6 items-start">
-            <div className="space-y-4">
-              <h2 className="text-sm font-bold bg-slate-100 px-2 py-1 border-l-4 border-amber-600">
-                1. 觀測本命與流年參數 (Observation Metadata)
-              </h2>
-              <table className="w-full text-[10px] text-left border-collapse">
-                <tbody>
-                  <tr className="border-b border-slate-200">
-                    <th className="py-1.5 font-medium text-slate-500">本命誕辰時空</th>
-                    <td className="py-1.5 text-slate-900">{natalChart.localTime}</td>
-                  </tr>
-                  <tr className="border-b border-slate-200">
-                    <th className="py-1.5 font-medium text-slate-500">本命經緯座標</th>
-                    <td className="py-1.5 text-slate-900">{natalChart.location} (GMT+{birthTimezone})</td>
-                  </tr>
-                  <tr className="border-b border-slate-200">
-                    <th className="py-1.5 font-medium text-slate-500">問事觀測時間</th>
-                    <td className="py-1.5 text-slate-900">{transitChart.localTime}</td>
-                  </tr>
-                  <tr className="border-b border-slate-200">
-                    <th className="py-1.5 font-medium text-slate-500">流年觀測座標</th>
-                    <td className="py-1.5 text-slate-900">{transitChart.location} (GMT+{transitTimezone})</td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <h2 className="text-sm font-bold bg-slate-100 px-2 py-1 border-l-4 border-amber-500">
-                2. 核心大三元星耀 (Core Astrological Trinity)
-              </h2>
-              <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                  <span className="block text-[8px] text-slate-500">太陽（核心能量）</span>
-                  <span className="block text-sm font-bold text-slate-900 mt-1">
-                    {ZODIAC_SIGNS[natalChart.planets[0].signIndex].name}
-                  </span>
-                  <span className="text-[9px] text-slate-400 font-mono">
-                     {natalChart.planets[0].degreeInSign.toFixed(1)}°
-                  </span>
+        return (
+          <div 
+            id="print-report-container" 
+            className={`${isDownloadingHTML ? 'block p-8 space-y-8 font-sans' : 'print-only'} max-w-[8.27in] mx-auto`}
+            style={{
+              ...(isDownloadingHTML ? {
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '794px',
+                height: 'auto',
+                zIndex: -9999,
+                pointerEvents: 'none',
+              } : {}),
+              backgroundColor: '#fbfaf5',
+              color: '#292524',
+            }}
+          >
+            
+            {/* PDF Page 1: Header and Chart Visuals */}
+            <div className="print-break-after space-y-6">
+              <div className="border-b-4 border-[#b59247] pb-4 flex justify-between items-end">
+                <div>
+                  <h1 className="text-3xl font-black text-[#947132] tracking-tight">星域雙盤占卜解讀報告</h1>
+                  <p className="text-[#6e6350] text-xs mt-1.5 font-sans font-medium">Natal & Transit Astrology Hub &bull; Professional Standard Client Edition</p>
                 </div>
-                <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                  <span className="block text-[8px] text-slate-500">月亮（內在感受）</span>
-                  <span className="block text-sm font-bold text-slate-900 mt-1">
-                    {ZODIAC_SIGNS[natalChart.planets[1].signIndex].name}
-                  </span>
-                  <span className="text-[9px] text-slate-400 font-mono">
-                     {natalChart.planets[1].degreeInSign.toFixed(1)}°
-                  </span>
-                </div>
-                <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                  <span className="block text-[8px] text-slate-500">上升點（性格面具）</span>
-                  <span className="block text-sm font-bold text-slate-900 mt-1 font-sans">
-                     {ZODIAC_SIGNS[Math.floor(natalChart.ascendant / 30)].name}
-                  </span>
-                  <span className="text-[9px] text-slate-400 font-mono">
-                     {(natalChart.ascendant % 30).toFixed(1)}°
-                  </span>
+                <div className="text-right font-mono text-xs text-[#8c7447] font-bold">
+                  報告日期: {new Date().toLocaleDateString('zh-TW')}
                 </div>
               </div>
 
-              <h2 className="text-sm font-bold bg-slate-100 px-2 py-1 border-l-4 border-slate-700 mt-2">
-                2b. 本命與流年四元素比例 (Element Proportions)
-              </h2>
-              <div className="space-y-1.5 text-[9.5px]">
-                {[
-                  { key: '火', label: '🔥 火象元素 (Fire) - 行動力' },
-                  { key: '土', label: '🌱 土象元素 (Earth) - 實踐力' },
-                  { key: '風', label: '💨 風象元素 (Air) - 理智力' },
-                  { key: '水', label: '💧 水象元素 (Water) - 感受力' }
-                ].map(item => {
-                  const n = natalElements.percentages[item.key as '火' | '土' | '風' | '水'] || 0;
-                  const t = transitElements.percentages[item.key as '火' | '土' | '風' | '水'] || 0;
-                  const nC = natalElements.counts[item.key as '火' | '土' | '風' | '水'] || 0;
-                  const tC = transitElements.counts[item.key as '火' | '土' | '風' | '水'] || 0;
-                  
-                  return (
-                    <div key={`print-el-${item.key}`} className="border-b border-slate-200 pb-1">
-                      <div className="flex justify-between font-medium">
-                        <span className="text-slate-800 font-bold">{item.label}</span>
-                        <span className="text-slate-600">本命: <strong>{n}%</strong> ({nC}星) | 流年: <strong>{t}%</strong> ({tC}星)</span>
+              {/* Section 1 & 3: Parameters and Elements Side-by-Side */}
+              <div className="grid grid-cols-2 gap-6 items-start">
+                <div className="space-y-4">
+                  <div className="space-y-3">
+                    <h2 className="text-sm font-extrabold bg-[#f5ebd3] text-[#785b24] px-3 py-1.5 border-l-4 border-[#b59247]">
+                      1. 觀測本命與流年參數 / Observation Parameters
+                    </h2>
+                    <table className="w-full text-xs text-left border-collapse">
+                      <tbody>
+                        <tr className="border-b border-[#e8dfca]">
+                          <th className="py-2 font-bold text-[#6e6350] w-28">本命誕辰時空</th>
+                          <td className="py-2 text-[#2c2416] font-medium">{natalChart.localTime}</td>
+                        </tr>
+                        <tr className="border-b border-[#e8dfca]">
+                          <th className="py-2 font-bold text-[#6e6350] w-28">本命經緯座標</th>
+                          <td className="py-2 text-[#2c2416] font-medium">{natalChart.location} (GMT+{birthTimezone})</td>
+                        </tr>
+                        <tr className="border-b border-[#e8dfca]">
+                          <th className="py-2 font-bold text-[#6e6350] w-28">問事觀測時間</th>
+                          <td className="py-2 text-[#2c2416] font-medium">{transitChart.localTime}</td>
+                        </tr>
+                        <tr className="border-b border-[#e8dfca]">
+                          <th className="py-2 font-bold text-[#6e6350] w-28">流年觀測座標</th>
+                          <td className="py-2 text-[#2c2416] font-medium">{transitChart.location} (GMT+{transitTimezone})</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h2 className="text-sm font-extrabold bg-[#f5ebd3] text-[#785b24] px-3 py-1.5 border-l-4 border-[#b59247]">
+                      2. 核心大三元星耀 / Core Trinity
+                    </h2>
+                    <div className="grid grid-cols-3 gap-2.5 text-center">
+                      <div className="bg-[#faf8f4] p-2.5 rounded-xl border border-[#e8dfcb] shadow-sm">
+                        <span className="block text-[9px] text-[#6e6350] font-bold">太陽 (Self)</span>
+                        <span className="block text-base font-black text-[#2c2416] mt-0.5">
+                          {ZODIAC_SIGNS[natalChart.planets[0].signIndex].name}
+                        </span>
+                        <span className="text-[10px] text-[#6e6350] font-mono font-medium">
+                           {natalChart.planets[0].degreeInSign.toFixed(1)}°
+                        </span>
                       </div>
-                      <div className="grid grid-cols-2 gap-2 mt-0.5">
-                        <div className="flex items-center gap-1">
-                          <span className="text-[7.5px] text-slate-500 w-6 shrink-0">本命</span>
-                          <div className="flex-1 bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                            <div className="bg-slate-700 h-full" style={{ width: `${n}%` }} />
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <span className="text-[7.5px] text-slate-500 w-6 shrink-0">流年</span>
-                          <div className="flex-1 bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                            <div className="bg-slate-500 h-full" style={{ width: `${t}%` }} />
-                          </div>
-                        </div>
+                      <div className="bg-[#faf8f4] p-2.5 rounded-xl border border-[#e8dfcb] shadow-sm">
+                        <span className="block text-[9px] text-[#6e6350] font-bold">月亮 (Soul)</span>
+                        <span className="block text-base font-black text-[#2c2416] mt-0.5">
+                          {ZODIAC_SIGNS[natalChart.planets[1].signIndex].name}
+                        </span>
+                        <span className="text-[10px] text-[#6e6350] font-mono font-medium">
+                           {natalChart.planets[1].degreeInSign.toFixed(1)}°
+                        </span>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Print Friendly SVG Chart section */}
-            <div className="bg-slate-50 p-4 border rounded-xl flex items-center justify-center">
-              <AstrologyWheel
-                natalChart={natalChart}
-                transitChart={transitChart}
-                onHoverPlanet={() => {}}
-                onHoverHouse={() => {}}
-                hideOuterPlanets={hideOuterPlanets}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <h2 className="text-sm font-bold bg-slate-100 px-2 py-1 border-l-4 border-amber-600">
-              3. 本命行星宮位配屬 (Natal Planets in Houses)
-            </h2>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-[10px]">
-              {filteredNatalPlanets.map(p => (
-                <div key={`print-natal-${p.id}`} className="flex justify-between border-b pb-1">
-                  <span className="font-semibold text-slate-800">
-                    {p.symbol} {p.name}
-                  </span>
-                  <span className="text-slate-600 font-mono">
-                    落入 {ZODIAC_SIGNS[p.signIndex].name} ({p.degreeInSign.toFixed(1)}°) | 第 {p.house} 宮
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <h2 className="text-sm font-bold bg-slate-100 px-2 py-1 border-l-4 border-amber-600">
-              4. 流年行星落入本命宮位與移動預估 (Transit Planet Overlays)
-            </h2>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-[10px]">
-              {filteredTransitPlanets.map(p => (
-                <div key={`print-transit-${p.id}`} className="flex justify-between border-b pb-1">
-                  <span className="font-semibold text-slate-800">
-                    流年 {p.symbol} {p.name}
-                  </span>
-                  <span className="text-slate-600 font-mono">
-                    落本命第 {p.house} 宮 | {formatTimeRange(p.daysToNextHouse)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* PDF Page 2: Divination Remarks, AI and Hand-written reports */}
-        <div className="space-y-6">
-          <div className="space-y-4">
-            <h2 className="text-sm font-bold text-slate-850 tracking-wide pb-1 bg-slate-100 px-2 py-1 border-l-4 border-slate-900">
-              5. 流年天體未來一輪黃道星座與本命宮位行運時程預估 (Celestial Cycle Timelines)
-            </h2>
-            <div className="space-y-2">
-              {filteredTransitPlanets.map(p => {
-                const cycles = getPlanetFutureCycles(p);
-                return (
-                  <div key={`print-cycle-${p.id}`} className="bg-slate-50 p-2 rounded border border-slate-200 text-[8px] leading-normal">
-                    <div className="flex justify-between border-b border-dashed pb-0.5 mb-1 text-[8.5px]">
-                      <span className="font-bold text-slate-800">流年 {p.symbol} {p.name} 行運時空軌跡預期</span>
-                      <span className="text-slate-500 font-mono">目前位置: {ZODIAC_SIGNS[p.signIndex].name} {p.degreeInSign.toFixed(1)}° | 本命第 {p.house} 宮</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-                      <div>
-                        <strong className="text-slate-750 block text-[7px] mb-0.5 font-bold">🌟 預估進入黃道星座進站時刻（未來一輪）：</strong>
-                        <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[7px] font-mono leading-tight">
-                          {cycles.signTimes.slice(0, 6).map((st, sIdx) => (
-                            <div key={`p-cycs-${p.id}-${sIdx}`} className="flex justify-between py-0.5 border-b border-dashed border-slate-100">
-                              <span className="text-slate-600">{st.signSymbol} {st.signName}</span>
-                              <span className="text-amber-800 font-bold">{st.days < 0.02 ? '當前落入' : st.formattedTime}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <strong className="text-slate-750 block text-[7px] mb-0.5 font-bold">🏡 預估進入本命宮位進站時刻（未來一輪）：</strong>
-                        <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[7px] font-mono leading-tight">
-                          {cycles.houseTimes.slice(0, 6).map((ht, hIdx) => (
-                            <div key={`p-cych-${p.id}-${hIdx}`} className="flex justify-between py-0.5 border-b border-dashed border-slate-100">
-                              <span className="text-slate-600">第 {ht.houseNum} 宮</span>
-                              <span className="text-amber-850 font-bold">{ht.days < 0.02 ? '當前落入' : ht.formattedTime}</span>
-                            </div>
-                          ))}
-                        </div>
+                      <div className="bg-[#faf8f4] p-2.5 rounded-xl border border-[#e8dfcb] shadow-sm">
+                        <span className="block text-[9px] text-[#6e6350] font-bold">上升 (Persona)</span>
+                        <span className="block text-base font-black text-[#2c2416] mt-0.5">
+                           {ZODIAC_SIGNS[Math.floor(natalChart.ascendant / 30)].name}
+                        </span>
+                        <span className="text-[10px] text-[#6e6350] font-mono font-medium">
+                           {(natalChart.ascendant % 30).toFixed(1)}°
+                        </span>
                       </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
+                </div>
 
-          <div className="border-b space-y-4">
-            <h2 className="text-sm font-bold text-slate-850 tracking-wide pb-1 bg-slate-100 px-2 py-1 border-l-4 border-slate-900">
-              6. 雙盤十二宮落星及警戒相位附錄 (12 Houses Planet List & Crucial Aspects)
-            </h2>
-            <div className="grid grid-cols-3 gap-3 text-[9px] leading-relaxed">
-              {natalChart.houses.slice(0, 12).map((house) => {
-                const nPlanets = filteredNatalPlanets.filter(p => p.house === house.number);
-                const tPlanets = filteredTransitPlanets.filter(p => p.house === house.number);
-                return (
-                  <div key={`print-house-${house.number}`} className="bg-slate-50 p-2 rounded border border-slate-200 flex flex-col justify-between">
-                    <div>
-                      <span className="font-bold text-slate-800">{house.name}起點在 {ZODIAC_SIGNS[house.signIndex].name}</span>
-                      <div className="text-[8px] text-slate-500 mt-0.5">
-                        <strong>本命:</strong> {nPlanets.map(p => `${p.symbol}${p.name}`).join(', ') || '無'}
-                      </div>
-                      <div className="text-[8px] text-slate-500">
-                        <strong>流年:</strong> {tPlanets.map(p => {
-                          const hasEnteredAnotherSign = p.signIndex !== house.signIndex;
-                          const signName = ZODIAC_SIGNS[p.signIndex].name;
-                          return `${p.symbol}${p.name}${hasEnteredAnotherSign ? `(已入${signName})` : ''}`;
-                        }).join(', ') || '無'}
-                      </div>
-                    </div>
-                    {tPlanets.length > 0 && (
-                      <div className="mt-1 pt-1 border-t border-slate-200 text-[7px] text-slate-400 font-mono space-y-0.5">
-                        {tPlanets.map(p => {
-                          const times = calculateHouseTransitTimes(p, house.number);
-                          const hasEnteredAnotherSign = p.signIndex !== house.signIndex;
-                          const signName = ZODIAC_SIGNS[p.signIndex].name;
-                          return (
-                            <div key={`print-time-${house.number}-${p.id}`} className="truncate">
-                              <strong>{p.symbol}{p.name}{hasEnteredAnotherSign ? `(${signName.substring(0, 2)})` : ''}:</strong> 🟢 {times.ingress} 🔴 {times.egress}
+                {/* Elements */}
+                <div className="space-y-3">
+                  <h2 className="text-sm font-extrabold bg-[#f5ebd3] text-[#785b24] px-3 py-1.5 border-l-4 border-[#b59247]">
+                    3. 本命與流年四元素比例 / Elements
+                  </h2>
+                  <div className="space-y-2 text-xs">
+                    {[
+                      { key: '火', label: '🔥 火象元素 (Fire) - 意志行動力' },
+                      { key: '土', label: '🌱 土象元素 (Earth) - 穩健實踐力' },
+                      { key: '風', label: '💨 風象元素 (Air) - 客觀理智力' },
+                      { key: '水', label: '💧 水象元素 (Water) - 感受共情力' }
+                    ].map(item => {
+                      const n = natalElements.percentages[item.key as '火' | '土' | '風' | '水'] || 0;
+                      const t = transitElements.percentages[item.key as '火' | '土' | '風' | '水'] || 0;
+                      const nC = natalElements.counts[item.key as '火' | '土' | '風' | '水'] || 0;
+                      const tC = transitElements.counts[item.key as '火' | '土' | '風' | '水'] || 0;
+                      
+                      return (
+                        <div key={`print-el-${item.key}`} className="border-b border-[#e8dfca] pb-1.5">
+                          <div className="flex justify-between font-bold text-xs mb-0.5">
+                            <span className="text-[#2c2416]">{item.label}</span>
+                            <span className="text-[#6e6350] font-mono text-[10px]">本命: {n}% ({nC}星) | 流年: {t}% ({tC}星)</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3 mt-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[9px] text-[#6e6350] font-medium w-6 shrink-0">本命</span>
+                              <div className="flex-1 bg-[#f0ebd8] h-1.5 rounded-full overflow-hidden">
+                                <div className="bg-[#8c7447] h-full" style={{ width: `${n}%` }} />
+                              </div>
                             </div>
-                          );
-                        })}
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[9px] text-[#6e6350] font-medium w-6 shrink-0">流年</span>
+                              <div className="flex-1 bg-[#f0ebd8] h-1.5 rounded-full overflow-hidden">
+                                <div className="bg-[#bc9c63] h-full" style={{ width: `${t}%` }} />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Centered Large Astrology Chart Section */}
+              <div className="space-y-2 pt-2 flex flex-col items-center">
+                <h2 className="w-full text-sm font-extrabold bg-[#f5ebd3] text-[#785b24] px-3 py-1.5 border-l-4 border-[#b59247] text-center">
+                  星耀雙盤對照圖 / Natal & Transit Astrology Chart Map
+                </h2>
+                <div className="bg-[#faf8f4] p-6 border border-[#e8dfca] rounded-3xl flex items-center justify-center shadow-inner w-full max-w-[420px] mx-auto">
+                  <AstrologyWheel
+                    natalChart={natalChart}
+                    transitChart={transitChart}
+                    onHoverPlanet={() => {}}
+                    onHoverHouse={() => {}}
+                    hideOuterPlanets={hideOuterPlanets}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6 pt-2">
+                <div className="space-y-3">
+                  <h2 className="text-sm font-extrabold bg-[#f5ebd3] text-[#785b24] px-3 py-1.5 border-l-4 border-[#b59247]">
+                    4. 本命行星宮位配屬 / Natal Planets & Houses
+                  </h2>
+                  <div className="space-y-2.5 text-xs">
+                    {filteredNatalPlanets.slice(0, 10).map(p => (
+                      <div key={`print-natal-${p.id}`} className="flex justify-between border-b border-[#e8dfca] pb-1.5">
+                        <span className="font-extrabold text-[#2c2416] flex items-center gap-1">
+                          <span>{p.symbol}</span>
+                          <span>{p.name}</span>
+                        </span>
+                        <span className="text-[#6e6350] font-semibold font-mono">
+                          落入 {ZODIAC_SIGNS[p.signIndex].name} ({p.degreeInSign.toFixed(1)}°) | 第 {p.house} 宮
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h2 className="text-sm font-extrabold bg-[#f5ebd3] text-[#785b24] px-3 py-1.5 border-l-4 border-[#b59247]">
+                    5. 流年天體本命宮位行運落點 / Transit Overlays
+                  </h2>
+                  <div className="space-y-2.5 text-xs">
+                    {filteredTransitPlanets.slice(0, 10).map(p => (
+                      <div key={`print-transit-${p.id}`} className="flex justify-between border-b border-[#e8dfca] pb-1.5">
+                        <span className="font-extrabold text-[#2c2416] flex items-center gap-1">
+                          <span>{p.symbol}</span>
+                          <span>流年 {p.name}</span>
+                        </span>
+                        <span className="text-[#6e6350] font-semibold font-mono">
+                          落本命第 {p.house} 宮 | {formatTimeRange(p.daysToNextHouse)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* PDF Page 2: aspects and remarks */}
+            <div className="space-y-6 pt-4">
+              <div className="space-y-3">
+                <h2 className="text-sm font-extrabold bg-[#f5ebd3] text-[#785b24] px-3 py-1.5 border-l-4 border-[#b59247]">
+                  6. 本命、流年與雙盤交會重要星體相位 / Key Astrological Aspects (Top 6)
+                </h2>
+                <div className="grid grid-cols-3 gap-4">
+                  {/* 1. Natal Aspects */}
+                  <div className="bg-[#faf8f4] p-3.5 rounded-xl border border-[#e8dfcb] shadow-sm space-y-2">
+                    <strong className="block text-xs text-[#785b24] font-extrabold border-b border-[#e8dfcb] pb-1.5 flex items-center gap-1">
+                      <span>⭕</span><span>本命性格內部相位 / Natal</span>
+                    </strong>
+                    {cleanNatalNatal.length === 0 ? (
+                      <div className="text-[#6e6350] italic text-[11px] py-2">無顯著本命性格內部相位。</div>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {cleanNatalNatal.slice(0, 6).map((aspect, index) => (
+                          <div key={`print-natal-asp-${index}`} className="border-b border-dashed border-[#e8dfcb] pb-1.5 text-[11px]">
+                            <div className="flex justify-between font-bold text-[#2c2416]">
+                              <span>{aspect.planetA} ✖ {aspect.planetB}</span>
+                            </div>
+                            <div className="text-[#6e6350] flex justify-between font-mono text-[10px] mt-0.5">
+                              <span>類型: {aspect.name}</span>
+                              <span className="font-bold text-[#2c2416]">差: {aspect.orb.toFixed(1)}°</span>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
-                );
-              })}
-            </div>
-            {/* Printable section of crucial aspects */}
-            <div className="mt-3 bg-slate-50 p-2.5 rounded border border-slate-200 text-[8.5px] leading-relaxed space-y-4">
-              <div>
-                <strong className="block text-[9.5px] text-slate-800 mb-1 border-b pb-0.5">🌌 雙盤重要警戒相位與進出時刻速查 (Transit-Natal Aspect Ingress/Egress)</strong>
-                {transitNatalAspects.length === 0 ? (
-                  <div className="text-slate-500 italic text-[7.5px]">無顯著警戒與吉凶交會相位。</div>
-                ) : (
-                   <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                     {transitNatalAspects.slice(0, 10).map((aspect, index) => (
-                       <div key={`print-asp-${index}`} className="border-b border-dashed border-slate-200 pb-1 text-[7.5px]">
-                         <div className="flex justify-between">
-                           <span className="font-bold text-slate-800">{aspect.planetA} ✖ {aspect.planetB} ({aspect.name} • 差 {aspect.orb.toFixed(2)}°)</span>
-                         </div>
-                         <div className="text-slate-500 flex justify-between font-mono">
-                           <span>🟢 入：{aspect.ingressTime}</span>
-                           <span>🔴 出：{aspect.egressTime}</span>
-                         </div>
-                         {aspect.futureAspects && aspect.futureAspects.length > 0 && (
-                           <div className="text-[6.5px] text-amber-700 font-sans mt-0.5 leading-snug">
-                             🔮 未來交會：{aspect.futureAspects.map(fut => `${fut.name} (${fut.time})`).join(' | ')}
-                           </div>
-                         )}
-                       </div>
-                     ))}
-                   </div>
-                )}
-              </div>
 
-              <div className="grid grid-cols-2 gap-4 border-t border-slate-200 pt-2.5">
-                <div>
-                  <strong className="block text-[9px] text-slate-800 mb-1 border-b pb-0.5">🏡 本命盤內在性格交織相位 (Natal-Natal Aspects)</strong>
-                  {natalNatalAspects.length === 0 ? (
-                    <div className="text-slate-500 italic text-[7.5px]">無顯著本命性格內部相位。</div>
-                  ) : (
-                    <div className="space-y-1 max-h-[140px] overflow-hidden text-[7.5px] leading-snug">
-                      {natalNatalAspects.slice(0, 8).map((aspect, index) => (
-                        <div key={`print-na-asp-${index}`} className="border-b border-slate-100 pb-0.5 flex justify-between">
-                          <span className="font-bold text-slate-700">{aspect.planetA} ✖ {aspect.planetB}</span>
-                          <span className="text-slate-500 font-mono">{aspect.name} ({aspect.orb.toFixed(1)}°)</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <strong className="block text-[9px] text-slate-800 mb-1 border-b pb-0.5">🪐 當前大環境世俗天象相位 (Transit-Transit Aspects)</strong>
-                  {transitTransitAspects.length === 0 ? (
-                    <div className="text-slate-500 italic text-[7.5px]">無顯著世俗天象內部相位。</div>
-                  ) : (
-                    <div className="space-y-1 max-h-[140px] overflow-hidden text-[7.5px] leading-snug">
-                      {transitTransitAspects.slice(0, 8).map((aspect, index) => (
-                        <div key={`print-tr-asp-${index}`} className="border-b border-slate-100 pb-1">
-                          <div className="flex justify-between">
-                            <span className="font-bold text-slate-700">{aspect.planetA} ✖ {aspect.planetB}</span>
-                            <span className="text-slate-500 font-mono">{aspect.name} ({aspect.orb.toFixed(1)}°)</span>
-                          </div>
-                          {(aspect.ingressTime || aspect.egressTime) && (
-                            <div className="text-slate-450 flex justify-between font-mono text-[6.5px] leading-none mt-0.5">
-                              <span>🟢 進入：{aspect.ingressTime}</span>
-                              <span>🔴 離開：{aspect.egressTime}</span>
+                  {/* 2. Transit-Transit Aspects */}
+                  <div className="bg-[#faf8f4] p-3.5 rounded-xl border border-[#e8dfcb] shadow-sm space-y-2">
+                    <strong className="block text-xs text-[#785b24] font-extrabold border-b border-[#e8dfcb] pb-1.5 flex items-center gap-1">
+                      <span>🪐</span><span>世代環境流年相位 / Transit</span>
+                    </strong>
+                    {cleanTransitTransit.length === 0 ? (
+                      <div className="text-[#6e6350] italic text-[11px] py-2">目前大環境無顯著星象交會。</div>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {cleanTransitTransit.slice(0, 6).map((aspect, index) => (
+                          <div key={`print-transit-asp-${index}`} className="border-b border-dashed border-[#e8dfcb] pb-1.5 text-[11px]">
+                            <div className="flex justify-between font-bold text-[#2c2416]">
+                              <span>{aspect.planetA} ✖ {aspect.planetB}</span>
                             </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                            <div className="text-[#6e6350] flex justify-between font-mono text-[10px] mt-0.5">
+                              <span>類型: {aspect.name}</span>
+                              <span className="font-bold text-[#2c2416]">差: {aspect.orb.toFixed(1)}°</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 3. Transit-Natal Aspects */}
+                  <div className="bg-[#faf8f4] p-3.5 rounded-xl border border-[#e8dfcb] shadow-sm space-y-2">
+                    <strong className="block text-xs text-[#785b24] font-extrabold border-b border-[#e8dfcb] pb-1.5 flex items-center gap-1">
+                      <span>⚡</span><span>雙盤流年對本命交會 / Overlay</span>
+                    </strong>
+                    {cleanTransitNatal.length === 0 ? (
+                      <div className="text-[#6e6350] italic text-[11px] py-2">無顯著流年對本命盤交會。</div>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {cleanTransitNatal.slice(0, 6).map((aspect, index) => (
+                          <div key={`print-tn-asp-${index}`} className="border-b border-dashed border-[#e8dfcb] pb-1.5 text-[11px]">
+                            <div className="flex justify-between font-bold text-[#2c2416]">
+                              <span>{aspect.planetA} ✖ {aspect.planetB}</span>
+                            </div>
+                            <div className="text-[#6e6350] flex justify-between font-mono text-[10px] mt-0.5">
+                              <span>類型: {aspect.name}</span>
+                              <span className="font-bold text-[#2c2416]">誤差: {aspect.orb.toFixed(1)}°</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h2 className="text-sm font-extrabold bg-[#f5ebd3] text-[#785b24] px-3 py-1.5 border-l-4 border-[#b59247]">
+                  7. 綜合占星備註解說 / Summary Astrology Remarks
+                </h2>
+                <div className="text-xs text-[#2c2416] leading-relaxed bg-[#faf8f4] p-5 rounded-xl border border-[#e8dfcb] shadow-inner whitespace-pre-wrap font-sans font-medium">
+                  {notes}
                 </div>
               </div>
             </div>
+
           </div>
-
-          <div className="border-b space-y-4">
-            <h2 className="text-sm font-bold text-slate-850 tracking-wide pb-1 bg-slate-100 px-2 py-1 border-l-4 border-slate-900">
-              7. 輔助預測：塔羅時間軸牌陣 (Complementary Tarot Analysis)
-            </h2>
-            <div className="grid grid-cols-3 gap-4 text-[10px] leading-relaxed">
-              <div className="bg-slate-50 p-3 rounded border border-slate-200">
-                <span className="font-extrabold text-slate-900 block border-b pb-1 mb-1.5">❶ 過去 (Past Path)</span>
-                {(() => {
-                  const card = getTarotCardById(pastCardId);
-                  return card ? (
-                    <div>
-                      <div className="flex justify-between font-bold text-slate-800">
-                        <span>{card.symbol} {card.name}</span>
-                        <span>{pastReversed ? '逆位' : '正位'}</span>
-                      </div>
-                      <p className="text-slate-600 italic text-[9px] mt-1.5 leading-relaxed">
-                        {pastReversed ? card.pastInterpretation.reversed : card.pastInterpretation.upright}
-                      </p>
-                      {renderTarotAstrologyConnection(pastCardId, true)}
-                    </div>
-                  ) : <span>未設定</span>;
-                })()}
-              </div>
-
-              <div className="bg-slate-50 p-3 rounded border border-slate-200">
-                <span className="font-extrabold text-slate-900 block border-b pb-1 mb-1.5">❷ 現在 (Present Scene)</span>
-                {(() => {
-                  const card = getTarotCardById(presentCardId);
-                  return card ? (
-                    <div>
-                      <div className="flex justify-between font-bold text-slate-800">
-                        <span>{card.symbol} {card.name}</span>
-                        <span>{presentReversed ? '逆位' : '正位'}</span>
-                      </div>
-                      <p className="text-slate-600 italic text-[9px] mt-1.5 leading-relaxed">
-                        {presentReversed ? card.presentInterpretation.reversed : card.presentInterpretation.upright}
-                      </p>
-                      {renderTarotAstrologyConnection(presentCardId, true)}
-                    </div>
-                  ) : <span>未設定</span>;
-                })()}
-              </div>
-
-              <div className="bg-slate-50 p-3 rounded border border-slate-200">
-                <span className="font-extrabold text-slate-900 block border-b pb-1 mb-1.5">❸ 未來 (Future Sight)</span>
-                {(() => {
-                  const card = getTarotCardById(futureCardId);
-                  return card ? (
-                    <div>
-                      <div className="flex justify-between font-bold text-slate-800">
-                        <span>{card.symbol} {card.name}</span>
-                        <span>{futureReversed ? '逆位' : '正位'}</span>
-                      </div>
-                      <p className="text-slate-600 italic text-[9px] mt-1.5 leading-relaxed">
-                        {futureReversed ? card.futureInterpretation.reversed : card.futureInterpretation.upright}
-                      </p>
-                      {renderTarotAstrologyConnection(futureCardId, true)}
-                    </div>
-                  ) : <span>未設定</span>;
-                })()}
-              </div>
-            </div>
-          </div>
-
-          <div className="border-b pb-2">
-            <h2 className="text-sm font-bold text-slate-850 tracking-wide bg-slate-100 px-2 py-1 border-l-4 border-slate-900">
-              8. 占卜大師詳實分析備註 (Full Detailed Horoscope Assessment)
-            </h2>
-          </div>
-
-          <div className="text-xs text-slate-700 leading-relaxed bg-slate-50 p-6 rounded-2xl border border-slate-200 shadow-inner whitespace-pre-wrap font-sans">
-            {notes}
-          </div>
-
-          <div className="border-t pt-8 mt-12 grid grid-cols-3 gap-4 text-center text-xs">
-            <div>
-              <div className="border-b w-32 mx-auto h-12" />
-              <span className="block text-[9px] text-slate-500 mt-2 font-mono">主占星師 簽章</span>
-            </div>
-            <div>
-              <div className="border-b w-32 mx-auto h-12" />
-              <span className="block text-[9px] text-slate-500 mt-2 font-mono">核定日期</span>
-            </div>
-            <div className="flex flex-col justify-end items-center">
-              <span className="text-[9px] text-slate-500 font-mono italic">
-                Astro Center Web Hub Standard Certification
-              </span>
-            </div>
-          </div>
-        </div>
-
-      </div>
+        );
+      })()}
 
     </div>
   );
