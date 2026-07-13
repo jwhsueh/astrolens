@@ -434,3 +434,109 @@ export function getPlanetHouseInterpretation(planetName: string, houseNum: numbe
   if (!pObj) return '';
   return pObj.houses[houseNum] || '';
 }
+
+export interface AspectTransitItem {
+  target: string;
+  soft: string;
+  hard: string;
+}
+
+export interface PlanetAspectTransitGroup {
+  planet: string;
+  period: string;
+  items: AspectTransitItem[];
+}
+
+export const PLANET_ASPECT_TRANSITS: PlanetAspectTransitGroup[] = [
+  {
+    planet: '♂ 流年火星 ✖ 本命行星',
+    period: '效期約一週：行動與衝突的引信',
+    items: [
+      { target: '✖ 太陽', soft: '精力充沛，推進個人目標的衝刺週', hard: '易怒、衝突、意外與過勞，忌硬碰權威' },
+      { target: '✖ 月亮', soft: '情緒帶勁，家事效率高', hard: '情緒引爆點，家中口角、睡眠差' },
+      { target: '✖ 水星', soft: '思維敏捷、談判有力', hard: '言語衝突、交通急躁，簽約勿衝動' },
+      { target: '✖ 金星', soft: '感情升溫、社交主動出擊的好時機', hard: '感情摩擦、金錢衝動消費' },
+      { target: '✖ 火星', soft: '火星回歸(約2年)：能量週期重啟', hard: '容易發生衝突與運動傷害' },
+      { target: '✖ 木星', soft: '放手一搏有回報', hard: '衝過頭、過度承諾' },
+      { target: '✖ 土星', soft: '紀律行動、推進耐力工程', hard: '踩剎車的挫折感、與體制衝撞' },
+      { target: '✖ 天王星', soft: '突破性行動', hard: '衝動突變、意外事件，務必慢下來' },
+      { target: '✖ 海王星', soft: '為理想行動、直覺帶路', hard: '行動失焦、精力莫名流失、防受騙' },
+      { target: '✖ 冥王星', soft: '意志強大、深度執行力', hard: '權力衝突激烈，切忌玉石俱焚' }
+    ]
+  },
+  {
+    planet: '♃ 流年木星 ✖ 本命行星',
+    period: '效期數週，逆行可達數月：擴張與機會',
+    items: [
+      { target: '✖ 太陽', soft: '年度幸運高點，自信、舞台與貴人齊至', hard: '自我膨脹、攬事過多' },
+      { target: '✖ 月亮', soft: '情緒豐盈、家庭喜事、安全感擴張', hard: '情緒與飲食放縱' },
+      { target: '✖ 水星', soft: '學習、出版、談判的好運與好消息', hard: '話說太滿、計畫過度樂觀' },
+      { target: '✖ 金星', soft: '愛情與財運雙喜的經典訊號', hard: '享樂過度、花錢手鬆' },
+      { target: '✖ 火星', soft: '敢衝有回報、行動得利', hard: '過度自信的冒進' },
+      { target: '✖ 木星', soft: '木星回歸(約12年)：新一輪12年成長週期開啟', hard: '盲目樂觀、擴張過度' },
+      { target: '✖ 土星', soft: '擴張與紀律的平衡，穩健成長', hard: '樂觀與現實的拉鋸、對未來搖擺' },
+      { target: '✖ 天王星', soft: '幸運的突破、意外之喜', hard: '機會來得突然，防見獵心喜' },
+      { target: '✖ 海王星', soft: '靈感、慈悲與夢想的擴張', hard: '理想膨脹、過度迷信好運' },
+      { target: '✖ 冥王星', soft: '資源整合的大機會、影響力躍升', hard: '慾望與權力野心的膨脹' }
+    ]
+  },
+  {
+    planet: '♄ 流年土星 ✖ 本命行星',
+    period: '效期數月，三次觸發可達一年：考驗與結構化',
+    items: [
+      { target: '✖ 太陽', soft: '踏實累積、承擔後獲得認可', hard: '約每7年一次壓力測試：自信受挫、責任加重、留意體力' },
+      { target: '✖ 月亮', soft: '情緒成熟穩定', hard: '情緒低潮、孤單感、家庭責任沉重' },
+      { target: '✖ 水星', soft: '思維嚴謹，深度學習的好時期', hard: '溝通受阻、悲觀思維迴圈、文件卡關' },
+      { target: '✖ 金星', soft: '感情走向承諾與落實', hard: '感情的冷卻測試、財務緊縮——經得起的關係在此定型' },
+      { target: '✖ 火星', soft: '毅力工程、精準的長期執行', hard: '行動受挫、進退兩難的煎熬期' },
+      { target: '✖ 木星', soft: '樂觀與務實的整合', hard: '信心與現實的拉扯' },
+      { target: '✖ 土星', soft: '土星回歸(約29歲、58歲)：人生結構的總驗收與重建', hard: '成年與成熟的嚴格門檻與重壓' },
+      { target: '✖ 天王星', soft: '改革落地', hard: '穩定與變革的拉扯' },
+      { target: '✖ 海王星', soft: '夢想結構化落地', hard: '理想幻滅感、現實與夢的拉扯' },
+      { target: '✖ 冥王星', soft: '深層重建的耐力', hard: '結構性的深層壓力與轉折' }
+    ]
+  },
+  {
+    planet: '♅ 流年天王星 ✖ 本命行星',
+    period: '效期數月到一年餘：突變與解放',
+    items: [
+      { target: '✖ 太陽', soft: '自我更新、突破舒適圈的順風', hard: '生活突變、叛逆衝動 (約42歲天王對分太陽=經典中年轉折)' },
+      { target: '✖ 月亮', soft: '情緒解放、生活換氣', hard: '情緒動盪、居住變動來得突然' },
+      { target: '✖ 水星', soft: '靈感爆發、思維升級', hard: '思緒亢奮失眠、決策反覆' },
+      { target: '✖ 金星', soft: '新鮮刺激的感情際遇', hard: '感情突變、心猿意馬、財務波動' },
+      { target: '✖ 火星', soft: '行動的突破口', hard: '衝動、意外、易怒，務必慢半拍' },
+      { target: '✖ 木星', soft: '突如其來的機運', hard: '機會與風險同樣動盪' },
+      { target: '✖ 土星', soft: '舊結構的漸進改革', hard: '穩定被迫鬆動的焦慮' },
+      { target: '✖ 天王星', soft: '天王對分(約42歲中年覺醒)；天王回歸(84歲生命回顧)', hard: '強烈變革期' },
+      { target: '✖ 海王星 / 冥王星', soft: '世代相位，個人影響主要看落入宮位', hard: '世代變革與潛意識衝擊' }
+    ]
+  },
+  {
+    planet: '♆ 流年海王星 ✖ 本命行星',
+    period: '效期一年以上：消融與理想化',
+    items: [
+      { target: '✖ 太陽', soft: '藝術與靈性的高峰期、慈悲滋養', hard: '方向迷惘、精力低落、易被美好敘事帶走' },
+      { target: '✖ 月亮', soft: '同理與直覺增幅', hard: '情緒如霧、易受暗示與氛圍感染' },
+      { target: '✖ 水星', soft: '想像力豐沛、創作靈感如泉', hard: '思緒渙散、訊息混淆、高詐騙風險期' },
+      { target: '✖ 金星', soft: '浪漫與美感的靈感高點', hard: '感情濾鏡最厚的時期、財務糊塗' },
+      { target: '✖ 火星', soft: '為理想而行動', hard: '動力流失、行動失焦' },
+      { target: '✖ 木星', soft: '夢想的正向擴張', hard: '過度理想化、信仰泡沫' },
+      { target: '✖ 土星', soft: '夢想被賦予結構', hard: '現實感消融的不安、辛苦建立的被質疑' },
+      { target: '✖ 天王星 / 海王星 / 冥王星', soft: '世代相位，看宮位論個人意義', hard: '集體潛意識共振' }
+    ]
+  },
+  {
+    planet: '♇ 流年冥王星 ✖ 本命行星',
+    period: '效期一到數年：深層轉化與權力',
+    items: [
+      { target: '✖ 太陽', soft: '深度賦能、脫胎換骨的成長', hard: '身分的毀滅與重建、與權力者的角力 (一生僅一兩次的重大轉化)' },
+      { target: '✖ 月亮', soft: '情感的深化與淨化', hard: '深層情緒翻攪、家庭權力課題浮現' },
+      { target: '✖ 水星', soft: '洞察力巔峰、研究深掘的黃金期', hard: '思想偏執、言語的權力戰' },
+      { target: '✖ 金星', soft: '愛的深化、財富的轉機', hard: '感情的執迷與糾葛、財務的深度重整' },
+      { target: '✖ 火星', soft: '意志與執行力的極大化', hard: '激烈衝突、慾望失控的風險' },
+      { target: '✖ 木星', soft: '大規模的資源整合與影響力', hard: '野心的膨脹與反噬' },
+      { target: '✖ 土星', soft: '深層而持久的重建', hard: '舊結構崩解的重壓' },
+      { target: '✖ 天王星 / 海王星 / 冥王星', soft: '世代相位，看宮位論個人意義', hard: '深度時代洗禮' }
+    ]
+  }
+];

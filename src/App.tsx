@@ -12,6 +12,7 @@ import {
 import {
   PLANET_SIGN_INTERPRETATIONS,
   PLANET_HOUSE_INTERPRETATIONS,
+  PLANET_ASPECT_TRANSITS,
   getPlanetSignInterpretation,
   getPlanetHouseInterpretation
 } from './utils/planetInterpretations';
@@ -2821,6 +2822,21 @@ export default function App() {
                               ))}
                             </ul>
                           </div>
+                          {m.aspectQuote && (
+                            <div className="pt-2 border-t border-[#c5a059]/20 space-y-1.5 bg-black/40 p-2.5 rounded-lg border border-[#c5a059]/30">
+                              <div className="flex flex-col text-[9.5px] font-bold text-[#e5c583] space-y-0.5">
+                                <span>📐 觸發相位</span>
+                                <span className="font-mono text-amber-200 text-[10px]">{m.aspectQuote.planetGroup} {m.aspectQuote.targetPlanet}</span>
+                              </div>
+                              <div className={`text-[10px] p-1.5 rounded ${m.aspectQuote.aspectType === 'soft' ? 'bg-emerald-950/40 text-emerald-300 border border-emerald-500/30' : 'bg-amber-950/40 text-amber-300 border border-amber-500/30'}`}>
+                                <div className="font-bold flex items-center gap-1 mb-0.5">
+                                  <span>{m.aspectQuote.aspectType === 'soft' ? '🟢 柔和相位觸發' : '🔴 困難相位觸發'}</span>
+                                </div>
+                                <p className="leading-snug">{m.aspectQuote.aspectMeaning}</p>
+                              </div>
+                              <p className="text-[8.5px] text-slate-400 italic">（摘自相位性質總表 • {m.aspectQuote.period}）</p>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -2949,66 +2965,60 @@ export default function App() {
             {/* 2. Houses Table */}
             <div className="space-y-3 pt-4">
               <h3 className="font-extrabold text-[#e5c583] flex items-center gap-2 text-sm border-b border-[#c5a059]/20 pb-2">
-                <span>🏛️</span><span>十二宮位與自然黃道 (12 Houses & Natural Zodiac)</span>
+                <span>🏛️</span><span>十二宮位與生命領域 (12 Astrological Houses)</span>
               </h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs text-left border-collapse">
                   <thead>
                     <tr className="bg-black/60 text-[#c5a059] border-b border-white/10">
                       <th className="p-2.5">宮位</th>
-                      <th className="p-2.5">傳統名稱</th>
-                      <th className="p-2.5">生活領域</th>
-                      <th className="p-2.5">對應星座</th>
-                      <th className="p-2.5">宮位分類</th>
+                      <th className="p-2.5">自然黃道對應</th>
+                      <th className="p-2.5">核心領域與人生課題</th>
+                      <th className="p-2.5">分類</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
                     {[
-                      { house: '第1宮', name: '命宮', domain: '自我、外貌、性格門面、人生方向、身體', sign: '牡羊', cat: '角宮 (最強)' },
-                      { house: '第2宮', name: '財帛宮', domain: '金錢、財產、賺錢能力、自我價值、天賦', sign: '金牛', cat: '續宮 (鞏固)' },
-                      { house: '第3宮', name: '兄弟宮', domain: '溝通、基礎學習、短途移動、手足、鄰里', sign: '雙子', cat: '降宮 (流通)' },
-                      { house: '第4宮', name: '田宅宮', domain: '家庭、父母、房產、根源、內在安全感', sign: '巨蟹', cat: '角宮 (最強)' },
-                      { house: '第5宮', name: '子女宮', domain: '創造、戀愛、子女、娛樂、投機、表演', sign: '獅子', cat: '續宮 (鞏固)' },
-                      { house: '第6宮', name: '奴僕宮', domain: '日常工作、健康、例行事務、服務、寵物', sign: '處女', cat: '降宮 (流通)' },
-                      { house: '第7宮', name: '夫妻宮', domain: '婚姻、合夥、一對一關係、公開的對手', sign: '天秤', cat: '角宮 (最強)' },
-                      { house: '第8宮', name: '疾厄宮', domain: '共享資源、他人之財、親密性、危機轉化', sign: '天蠍', cat: '續宮 (鞏固)' },
-                      { house: '第9宮', name: '遷移宮', domain: '高等教育、信仰哲學、遠行、國外、出版', sign: '射手', cat: '降宮 (流通)' },
-                      { house: '第10宮', name: '官祿宮', domain: '事業、地位、名聲、成就頂點、權威', sign: '摩羯', cat: '角宮 (最強)' },
-                      { house: '第11宮', name: '福德宮', domain: '朋友、社群、人脈、理想、長期目標', sign: '水瓶', cat: '續宮 (鞏固)' },
-                      { house: '第12宮', name: '玄祕宮', domain: '潛意識、退隱、隱藏事務、犧牲、消融', sign: '雙魚', cat: '降宮 (流通)' }
+                      { house: '第 1 宮', sign: '白羊座', meaning: '自我外表、人格特質、生命活力、第一印象', type: '角宮 (Angular)' },
+                      { house: '第 2 宮', sign: '金牛座', meaning: '價值資產、財富金錢、感官享受、個人資產', type: '續宮 (Succedent)' },
+                      { house: '第 3 宮', sign: '雙子座', meaning: '溝通學習、短途旅行、兄弟姊妹、周遭鄰里', type: '果宮 (Cadent)' },
+                      { house: '第 4 宮', sign: '巨蟹座', meaning: '家庭根源、原生家庭、安全感、晚年居所', type: '角宮 (Angular)' },
+                      { house: '第 5 宮', sign: '獅子座', meaning: '愛情創意、子女娛樂、投機賭運、個人創作', type: '續宮 (Succedent)' },
+                      { house: '第 6 宮', sign: '處女座', meaning: '日常工作、勞健醫療、生活秩序、寵物部屬', type: '果宮 (Cadent)' },
+                      { house: '第 7 宮', sign: '天秤座', meaning: '夫妻伴侶、合夥合約、公開敵人、對事人際', type: '角宮 (Angular)' },
+                      { house: '第 8 宮', sign: '天蠍座', meaning: '他人資源、遺產保險、神祕玄學、深層轉化與性', type: '續宮 (Succedent)' },
+                      { house: '第 9 宮', sign: '射手座', meaning: '高等哲學、遠行深造、法律宗教、出版外國', type: '果宮 (Cadent)' },
+                      { house: '第 10 宮', sign: '摩羯座', meaning: '事業名望、社會地位、官祿成就、人生標竿', type: '角宮 (Angular)' },
+                      { house: '第 11 宮', sign: '水瓶座', meaning: '群眾社會、福德人脈、志同道合社群、願景', type: '續宮 (Succedent)' },
+                      { house: '第 12 宮', sign: '雙魚座', meaning: '隱密玄秘、因果業力、靈性直覺、潛意識與小人', type: '果宮 (Cadent)' }
                     ].map((h, i) => (
                       <tr key={`enc-main-h-${i}`} className="hover:bg-white/5">
-                        <td className="p-2.5 font-bold text-slate-200">{h.house}</td>
-                        <td className="p-2.5 text-amber-300 font-semibold">{h.name}</td>
-                        <td className="p-2.5 text-slate-300">{h.domain}</td>
-                        <td className="p-2.5 text-slate-400">{h.sign}</td>
-                        <td className="p-2.5 text-slate-400 font-mono">{h.cat}</td>
+                        <td className="p-2.5 font-bold text-emerald-400">{h.house}</td>
+                        <td className="p-2.5 font-semibold text-amber-300">{h.sign}</td>
+                        <td className="p-2.5 text-slate-300">{h.meaning}</td>
+                        <td className="p-2.5 text-slate-400 font-mono">{h.type}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              </div>
-              <div className="bg-black/40 p-4 rounded-xl border border-white/5 text-xs">
-                <span className="font-bold text-[#e5c583] block mb-1">💡 自然黃道與宮位分類說明：</span>
-                <p className="text-slate-300">宮位與星座有天然對應（第1宮≈牡羊、第2宮≈金牛……），宮位主題就是對應星座關鍵字的「場所化」。角宮(1/4/7/10)能量最強；續宮(2/5/8/11)鞏固資源；降宮(3/6/9/12)調整流通。</p>
               </div>
             </div>
 
             {/* 3. Planets Table */}
             <div className="space-y-3 pt-4">
               <h3 className="font-extrabold text-[#e5c583] flex items-center gap-2 text-sm border-b border-[#c5a059]/20 pb-2">
-                <span>🪐</span><span>各行星涵義與運行週期 (Planets Meanings & Cycles)</span>
+                <span>🪐</span><span>十大行星核心涵義與週期 (10 Astrological Planets)</span>
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-black/40 p-4 rounded-xl border border-white/5 space-y-2">
-                  <span className="font-bold text-amber-300 text-xs block">個人行星 (移動快，定義個人性格)：</span>
+                  <span className="font-bold text-amber-300 text-xs block">個人行星與社會核心 (緊密塑造性格與日常)：</span>
                   <div className="space-y-1.5 text-xs">
                     {[
-                      { symbol: '☉', name: '太陽', meaning: '核心身分、生命力、意志、想成為的人、父親原型 (1年)' },
-                      { symbol: '☽', name: '月亮', meaning: '情緒需求、安全感、本能反應、習慣、母親原型 (27.3天)' },
-                      { symbol: '☿', name: '水星', meaning: '思考、溝通、學習、語言、資訊處理方式 (約1年)' },
-                      { symbol: '♀', name: '金星', meaning: '愛情觀、審美、金錢觀、吸引力、享受的方式 (約1年)' },
-                      { symbol: '♂', name: '火星', meaning: '行動力、慾望、競爭、憤怒的表達、性驅力 (約2年)' }
+                      { symbol: '☉', name: '太陽', meaning: '自我核心、意志力、人生目標、生命活力 (1年)' },
+                      { symbol: '☽', name: '月亮', meaning: '情緒情感、安全感、內在需求、母親本能 (28天)' },
+                      { symbol: '☿', name: '水星', meaning: '思維邏輯、溝通表達、資訊處理、學習 (88天)' },
+                      { symbol: '♀', name: '金星', meaning: '愛情審美、金錢價值、社交人際、喜悅 (225天)' },
+                      { symbol: '♂', name: '火星', meaning: '行動力、企圖心、脾氣爆發、性與競爭 (687天)' }
                     ].map((p, idx) => (
                       <div key={`p-main-1-${idx}`} className="flex justify-between items-center bg-white/5 p-2 rounded">
                         <span className="font-bold text-slate-200">{p.symbol} {p.name}</span>
@@ -3037,6 +3047,119 @@ export default function App() {
                 </div>
               </div>
             </div>
+
+            {/* 第三部：月亮南北交點 (業力軸線) */}
+            <div className="pt-6 border-t border-white/15">
+              <h4 className="text-xs font-bold text-amber-200 uppercase tracking-wider mb-3">☊ 第三部：月亮南北交點 (業力軸線)</h4>
+              <div className="bg-black/30 p-4 rounded-xl border border-[#c5a059]/30 text-xs text-slate-300 space-y-2 mb-4 leading-relaxed">
+                <strong className="text-[#e5c583] block">🔮 概念說明：</strong>
+                <p>南北交點不是實體行星，而是月亮軌道與黃道的兩個交會點，永遠正對（相差180°）。傳統（尤其受印度占星與演化占星影響）的詮釋是：南交點☋ = 與生俱來的慣性、舒適圈、前世/早年已熟練的模式；北交點☊ = 今生要走向的成長方向、陌生但必要的功課。</p>
+                <p className="text-amber-200/90 font-medium">💡 解讀口訣：南交點是「起點與退路」，北交點是「終點與功課」——人在壓力下會退回南交點模式，而人生的滿足感來自朝北交點移動。因兩點永遠成對，以下以「北交點所在」為標題，每條同時說明南交點。</p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <h5 className="text-[11px] font-bold text-amber-300 mb-2 uppercase tracking-wide">☊ 北交點 × 十二星座軸 (Zodiac Axis)</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                    {[
+                      { title: '北交牡羊 (南交天秤)', lesson: '學會獨立與為自己作主', inertia: '過度依賴關係、以他人意見定義自己', growth: '先成為完整的自己，再進入關係' },
+                      { title: '北交金牛 (南交天蠍)', lesson: '建立簡單穩定的自足生活與自我價值', inertia: '沉溺於危機、糾葛與依賴他人資源', growth: '從動盪中走向平靜的累積' },
+                      { title: '北交雙子 (南交射手)', lesson: '傾聽、提問與接納多元觀點', inertia: '急於下結論、說教、抱持真理在握的姿態', growth: '從「我知道」走向「我好奇」' },
+                      { title: '北交巨蟹 (南交摩羯)', lesson: '滋養情感、建立家的連結、允許脆弱', inertia: '以成就與控制取代情感、過度扛責', growth: '從「做到」走向「感受到」' },
+                      { title: '北交獅子 (南交水瓶)', lesson: '勇敢站上舞台、活出個人創造力', inertia: '躲進群體、以旁觀者姿態疏離自己的心', growth: '從「大家」走向「我」' },
+                      { title: '北交處女 (南交雙魚)', lesson: '落實, 分辨與建立日常秩序', inertia: '逃避、混沌、以「隨緣」迴避責任', growth: '把靈感化為具體的服務與作品' },
+                      { title: '北交天秤 (南交牡羊)', lesson: '合作、傾聽與在關係中成全雙方', inertia: '單打獨鬥、衝動行事、凡事以自己優先', growth: '從「我」走向「我們」' },
+                      { title: '北交天蠍 (南交金牛)', lesson: '深度交融、共享資源、擁抱蛻變', inertia: '死守既有的安逸與財物、抗拒改變', growth: '放掉抓緊的，才能獲得更深的' },
+                      { title: '北交射手 (南交雙子)', lesson: '建立自己的信念與人生大方向', inertia: '漂浮在資訊與八卦中、想法隨風搖擺', growth: '從碎片走向整體視野' },
+                      { title: '北交摩羯 (南交巨蟹)', lesson: '承擔責任、走向社會成就與成熟自立', inertia: '躲回家庭與情緒的舒適圈、依賴被照顧', growth: '從被撫養者成為承擔者' },
+                      { title: '北交水瓶 (南交獅子)', lesson: '為群體與理想貢獻、學會平等協作', inertia: '需要聚光燈、以自我為中心索取認同', growth: '從「看我」走向「我們一起」' },
+                      { title: '北交雙魚 (南交處女)', lesson: '信任直覺、學會放手與慈悲', inertia: '焦慮控制細節、以批判與完美主義自苦', growth: '從「分析」走向「臣服」' }
+                    ].map((item, idx) => (
+                      <div key={`node-sign-${idx}`} className="bg-black/25 p-3 rounded-xl border border-white/5 space-y-1 text-[11px]">
+                        <strong className="text-[#e5c583] block text-xs">{item.title}</strong>
+                        <p className="text-slate-300">🎯 <strong>功課：</strong>{item.lesson}</p>
+                        <p className="text-slate-400">⚓ <strong>慣性：</strong>{item.inertia}</p>
+                        <p className="text-emerald-300">✨ <strong>成長方向：</strong>{item.growth}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/10">
+                  <h5 className="text-[11px] font-bold text-amber-300 mb-2 uppercase tracking-wide">☊ 北交點 × 十二宮位軸 (House Axis)</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                    {[
+                      { title: '北交1宮 (南交7宮)', lesson: '自我認同——學會獨立決斷、發展個人特質', inertia: '活在伴侶或他人期待裡 (關係重要，但須先站穩自己)' },
+                      { title: '北交2宮 (南交8宮)', lesson: '自食其力——建立自己的財務與價值體系', inertia: '依賴他人資源(伴侶財、家產、借貸)或沉溺深層糾葛' },
+                      { title: '北交3宮 (南交9宮)', lesson: '落地的學習與溝通——向身邊人事物學習、好好說話', inertia: '高談闊論理念、心繫遠方而忽略眼前' },
+                      { title: '北交4宮 (南交10宮)', lesson: '回家——建立內在根基、經營家庭與私領域', inertia: '把全部人生押在事業與社會形象上' },
+                      { title: '北交5宮 (南交11宮)', lesson: '個人的創造與心動——談自己的戀愛、做自己的作品', inertia: '隱身於朋友圈與集體目標中，不敢突出自己' },
+                      { title: '北交6宮 (南交12宮)', lesson: '規律與服務——建立健康的日常秩序、在具體工作中修行', inertia: '退隱、做夢、以逃避面對現實' },
+                      { title: '北交7宮 (南交1宮)', lesson: '關係與合作——學會妥協、傾聽與長期承諾', inertia: '獨來獨往、凡事靠自己、不讓人靠近' },
+                      { title: '北交8宮 (南交2宮)', lesson: '深度交付——學會與人共享資源、經歷親密與轉化', inertia: '死守自己的錢與價值觀、停在物質安全區' },
+                      { title: '北交9宮 (南交3宮)', lesson: '建立信念與遠見——進修、遠行、發展人生哲學', inertia: '困在日常瑣訊、人云亦云、想太多走不遠' },
+                      { title: '北交10宮 (南交4宮)', lesson: '社會成就——走出家門、承擔公共角色與名聲', inertia: '躲在家庭舒適圈、被家族議題絆住' },
+                      { title: '北交11宮 (南交5宮)', lesson: '群體與願景——把個人才華貢獻給更大的目標、經營志同道合社群', inertia: '沉溺於個人的浪漫、掌聲與玩樂' },
+                      { title: '北交12宮 (南交6宮)', lesson: '放下與內在整合——學習獨處、靈性成長、信任無形安排', inertia: '以忙碌工作與控制細節填滿人生' }
+                    ].map((item, idx) => (
+                      <div key={`node-house-${idx}`} className="bg-black/25 p-3 rounded-xl border border-white/5 space-y-1 text-[11px]">
+                        <strong className="text-emerald-300 block text-xs">{item.title}</strong>
+                        <p className="text-slate-300">🌟 <strong>今生功課：</strong>{item.lesson}</p>
+                        <p className="text-slate-400">⚓ <strong>慣性：</strong>{item.inertia}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+                {/* 第四部：行星相位與流年觸發對照資料庫 */}
+                <div className="pt-6 border-t border-white/15">
+                  <h4 className="text-xs font-bold text-amber-200 uppercase tracking-wider mb-3">⚡ 第四部：行星相位性質與流年觸發對照</h4>
+                  <div className="bg-black/30 p-4 rounded-xl border border-[#c5a059]/30 text-xs text-slate-300 space-y-3 mb-4 leading-relaxed">
+                    <strong className="text-[#e5c583] block">📐 相位性質總表 (先查這裡)：</strong>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 pt-1">
+                      <div className="bg-white/5 p-2 rounded border border-white/5">
+                        <span className="font-bold text-amber-300">合相 0°</span>：融合、強化（吉凶視行星組合）。流年行星直接灌入本命行星，最強觸發。
+                      </div>
+                      <div className="bg-white/5 p-2 rounded border border-white/5">
+                        <span className="font-bold text-emerald-300">三分相 120°</span>：順流、助力。事情自然發生，舒服但易被動錯過。
+                      </div>
+                      <div className="bg-white/5 p-2 rounded border border-white/5">
+                        <span className="font-bold text-emerald-300">六分相 60°</span>：溫和機會順風。需主動把握才兌現。
+                      </div>
+                      <div className="bg-white/5 p-2 rounded border border-white/5">
+                        <span className="font-bold text-amber-400">四分相 90°</span>：摩擦、壓力。必須處理的張力，事件感最強。
+                      </div>
+                      <div className="bg-white/5 p-2 rounded border border-white/5">
+                        <span className="font-bold text-red-300">對分相 180°</span>：拉扯、對峙。課題透過他人或外境照見，常以關係事件呈現。
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-slate-400 pt-2 border-t border-white/5">
+                      💡 <strong>使用規則：</strong>以下每組給「柔和相位」(三分/六分，及多數吉星合相)與「困難相位」(四分/對分，及凶星合相)兩種讀法。合相取兩者之間、強度最高。流年內行星(太陽、月亮、水星、金星)效期數小時到數天，實務上當作「觸發器/計時器」使用。
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    {PLANET_ASPECT_TRANSITS.map((group, gIdx) => (
+                      <div key={`aspect-group-${gIdx}`} className="bg-black/25 p-3.5 rounded-xl border border-white/5 space-y-2">
+                        <div className="flex justify-between items-center border-b border-white/10 pb-1.5">
+                          <span className="font-bold text-[#e5c583] text-xs">{group.planet}</span>
+                          <span className="text-[10px] text-amber-200/95 font-mono">⏳ {group.period}</span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
+                          {group.items.map((it, iIdx) => (
+                            <div key={`asp-item-${gIdx}-${iIdx}`} className="bg-white/5 p-2 rounded-lg border border-white/5 text-[11px] space-y-1">
+                              <span className="font-bold text-amber-300 block">{it.target}</span>
+                              <p className="text-emerald-300/90">🟢 <strong>柔和相位：</strong>{it.soft}</p>
+                              <p className="text-amber-200/90">🔴 <strong>困難相位：</strong>{it.hard}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
             {/* 4. Planet x Sign & Planet x House Full Reference Guide */}
             <div className="space-y-3 pt-6 border-t border-[#c5a059]/20">

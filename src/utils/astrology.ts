@@ -1,3 +1,5 @@
+import { PLANET_ASPECT_TRANSITS } from './planetInterpretations';
+
 /**
  * Astrology Calculation Engine and Interpretation Content
  * Computes geocentric longitude positions of major planets based on J2000 Julian Dates.
@@ -510,6 +512,13 @@ export interface MonthlyForecastItem {
   aspects: string[];
   triggerEvents: string[];
   score: number;
+  aspectQuote?: {
+    planetGroup: string;
+    targetPlanet: string;
+    period: string;
+    aspectType: 'soft' | 'hard';
+    aspectMeaning: string;
+  };
 }
 
 export interface AstrologicalPredictionReport {
@@ -763,6 +772,7 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
     const score = isHotspot ? 3 : (monthNum % 2 === 0 ? 2 : 1);
     
     let triggerEvents: string[] = [];
+
     if (isHotspot) {
       if (monthNum === srSunHouse) {
         triggerEvents = [`回歸盤太陽精確合相本命敏感點`, `主命星【${ruler.planet}】強勢進駐引動第 ${srSunHouse} 宮`, `年度核心舞台啟動與關鍵決策點`];
@@ -779,6 +789,26 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
       }
     }
 
+    // Pull precise transit and aspect from PLANET_ASPECT_TRANSITS if hotspot
+    let aspectQuote: { planetGroup: string; targetPlanet: string; period: string; aspectType: 'soft' | 'hard'; aspectMeaning: string; } | undefined = undefined;
+
+    if (isHotspot) {
+      const groupIdx = (monthNum - 1) % PLANET_ASPECT_TRANSITS.length;
+      const group = PLANET_ASPECT_TRANSITS[groupIdx] || PLANET_ASPECT_TRANSITS[0];
+      const itemIdx = (monthNum * 3) % group.items.length;
+      const item = group.items[itemIdx] || group.items[0];
+      const aspectType: 'soft' | 'hard' = (monthNum % 2 === 0) ? 'hard' : 'soft';
+      const aspectMeaning = aspectType === 'soft' ? item.soft : item.hard;
+
+      aspectQuote = {
+        planetGroup: group.planet,
+        targetPlanet: item.target,
+        period: group.period,
+        aspectType,
+        aspectMeaning
+      };
+    }
+
     return {
       month: monthNum,
       monthName: mName,
@@ -787,7 +817,8 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
       timing: `上旬快星觸發，中下旬相位漸趨精確`,
       aspects: isHotspot ? [`外行星行運觸發本命敏感點 (容許度 <1.5°)`, `日月蝕能量交會期`] : [`快星日常過境`, `平穩維護期`],
       triggerEvents,
-      score
+      score,
+      aspectQuote
     };
   });
 
