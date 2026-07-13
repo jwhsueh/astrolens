@@ -14,7 +14,11 @@ import {
   PLANET_HOUSE_INTERPRETATIONS,
   PLANET_ASPECT_TRANSITS,
   getPlanetSignInterpretation,
-  getPlanetHouseInterpretation
+  getPlanetHouseInterpretation,
+  getPlanetAspectTransitGuide,
+  getRetrogradeGuideQuote,
+  getNatalAspectGuide,
+  getTransitAspectGuide
 } from './utils/planetInterpretations';
 import { ALL_TAROT_CARDS, getTarotCardById } from './utils/tarot';
 import AstrologyWheel from './components/AstrologyWheel';
@@ -525,9 +529,24 @@ export default function App() {
       };
     });
 
+  const getValidBaseDate = () => {
+    const d = new Date(`${transitDate}T${transitTime}`);
+    const year = d.getFullYear();
+    if (isNaN(d.getTime()) || isNaN(year) || year < 1900 || year > 2100) {
+      return new Date('2026-06-13T12:00');
+    }
+    return d;
+  };
+
   const getTransitTimeOffset = (daysOffset: number): string => {
-    const baseDate = new Date(`${transitDate}T${transitTime}`);
+    if (isNaN(daysOffset) || !isFinite(daysOffset)) {
+      return '時間無法計算';
+    }
+    const baseDate = getValidBaseDate();
     const resultDate = new Date(baseDate.getTime() + daysOffset * 24 * 60 * 60 * 1000);
+    if (isNaN(resultDate.getTime())) {
+      return '時間無法計算';
+    }
     
     const y = resultDate.getFullYear();
     const m = String(resultDate.getMonth() + 1).padStart(2, '0');
@@ -839,8 +858,14 @@ export default function App() {
     };
 
     const formatAspectTime = (daysOffset: number): string => {
-      const baseDate = new Date(`${transitDate}T${transitTime}`);
+      if (isNaN(daysOffset) || !isFinite(daysOffset)) {
+        return '時間極為漫長 (天體停滯於停留區)';
+      }
+      const baseDate = getValidBaseDate();
       const resultDate = new Date(baseDate.getTime() + daysOffset * 24 * 60 * 60 * 1000);
+      if (isNaN(resultDate.getTime())) {
+        return '時間極為漫長 (天體停滯於停留區)';
+      }
       
       const y = resultDate.getFullYear();
       const m = String(resultDate.getMonth() + 1).padStart(2, '0');
@@ -982,8 +1007,14 @@ export default function App() {
     };
 
     const formatAspectTime = (daysOffset: number): string => {
-      const baseDate = new Date(`${transitDate}T${transitTime}`);
+      if (isNaN(daysOffset) || !isFinite(daysOffset)) {
+        return '時間極為漫長 (天體停滯於停留區)';
+      }
+      const baseDate = getValidBaseDate();
       const resultDate = new Date(baseDate.getTime() + daysOffset * 24 * 60 * 60 * 1000);
+      if (isNaN(resultDate.getTime())) {
+        return '時間極為漫長 (天體停滯於停留區)';
+      }
       
       const y = resultDate.getFullYear();
       const m = String(resultDate.getMonth() + 1).padStart(2, '0');
@@ -1289,7 +1320,8 @@ export default function App() {
                     step="0.01"
                     value={birthLongitude}
                     onChange={(e) => {
-                      setBirthLongitude(parseFloat(e.target.value) || 0);
+                      const val = parseFloat(e.target.value);
+                      setBirthLongitude(isNaN(val) ? 0 : val);
                       setBirthLocationName('');
                     }}
                     className="w-full bg-black/40 border border-white/5 rounded-lg px-2 py-1 text-slate-200 focus:border-[#c5a059] focus:outline-none"
@@ -1302,7 +1334,8 @@ export default function App() {
                     step="0.01"
                     value={birthLatitude}
                     onChange={(e) => {
-                      setBirthLatitude(parseFloat(e.target.value) || 0);
+                      const val = parseFloat(e.target.value);
+                      setBirthLatitude(isNaN(val) ? 0 : val);
                       setBirthLocationName('');
                     }}
                     className="w-full bg-black/40 border border-white/5 rounded-lg px-2 py-1 text-slate-200 focus:border-[#c5a059] focus:outline-none"
@@ -1315,7 +1348,8 @@ export default function App() {
                     step="1"
                     value={birthTimezone}
                     onChange={(e) => {
-                      setBirthTimezone(parseInt(e.target.value) || 0);
+                      const val = parseInt(e.target.value, 10);
+                      setBirthTimezone(isNaN(val) ? 0 : val);
                       setBirthLocationName('');
                     }}
                     className="w-full bg-black/40 border border-white/5 rounded-lg px-2 py-1 text-slate-200 focus:border-[#c5a059] focus:outline-none"
@@ -1379,7 +1413,8 @@ export default function App() {
                     step="0.01"
                     value={transitLongitude}
                     onChange={(e) => {
-                      setTransitLongitude(parseFloat(e.target.value) || 0);
+                      const val = parseFloat(e.target.value);
+                      setTransitLongitude(isNaN(val) ? 0 : val);
                       setTransitLocationName('');
                     }}
                     className="w-full bg-black/40 border border-white/5 rounded-lg px-2 py-1 text-slate-200 focus:border-[#c5a059] focus:outline-none"
@@ -1392,7 +1427,8 @@ export default function App() {
                     step="0.01"
                     value={transitLatitude}
                     onChange={(e) => {
-                      setTransitLatitude(parseFloat(e.target.value) || 0);
+                      const val = parseFloat(e.target.value);
+                      setTransitLatitude(isNaN(val) ? 0 : val);
                       setTransitLocationName('');
                     }}
                     className="w-full bg-black/40 border border-white/5 rounded-lg px-2 py-1 text-slate-200 focus:border-[#c5a059] focus:outline-none"
@@ -1405,7 +1441,8 @@ export default function App() {
                     step="1"
                     value={transitTimezone}
                     onChange={(e) => {
-                      setTransitTimezone(parseInt(e.target.value) || 0);
+                      const val = parseInt(e.target.value, 10);
+                      setTransitTimezone(isNaN(val) ? 0 : val);
                       setTransitLocationName('');
                     }}
                     className="w-full bg-black/40 border border-white/5 rounded-lg px-2 py-1 text-slate-200 focus:border-[#c5a059] focus:outline-none"
@@ -2050,7 +2087,7 @@ export default function App() {
               下方揭示本命誕辰盤（🔘 內圈）及問事相應流年盤（🪐 外圈）在各宮位內之占星星體配屬。這能協助占卜師快速定位生活領域之核心驅力與當下流年能量匯入點：
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
               {natalChart.houses.map((house) => {
                 const natalPlanetsInHouse = filteredNatalPlanets.filter(p => p.house === house.number);
                 const transitPlanetsInHouse = filteredTransitPlanets.filter(p => p.house === house.number);
@@ -2058,7 +2095,7 @@ export default function App() {
                 return (
                   <div
                     key={`mapping-house-${house.number}`}
-                    className="bg-black/40 border border-white/5 rounded-2xl p-4 hover:border-[#c5a059]/30 transition-colors flex flex-col justify-between"
+                    className="bg-black/45 border border-white/5 rounded-2xl p-5 hover:border-[#c5a059]/30 transition-colors flex flex-col justify-between shadow-md"
                   >
                     <div>
                       <div className="flex justify-between items-start border-b border-white/5 pb-2 mb-2.5">
@@ -2080,18 +2117,19 @@ export default function App() {
                     <div className="space-y-2 text-[11px] bg-black/20 p-2.5 rounded-xl border border-white/5">
                       {/* Natal Residing */}
                       <div className="flex items-start justify-between">
-                        <span className="text-slate-500 font-bold shrink-0 mr-2 uppercase text-[9px] tracking-wider">🔘 本命落位:</span>
-                        <div className="text-right flex flex-wrap gap-1 justify-end">
+                        <span className="text-slate-400 font-bold shrink-0 mr-2 uppercase text-[10px] tracking-wider pt-0.5">🔘 本命落位:</span>
+                        <div className="text-right flex flex-wrap gap-1.5 justify-end">
                           {natalPlanetsInHouse.length > 0 ? (
                             natalPlanetsInHouse.map(p => (
                               <span
                                 key={`map-natal-${p.id}`}
                                 onClick={() => handlePlanetSelect(p, 'natal')}
-                                className="inline-flex items-center space-x-0.5 px-1.5 py-0.5 bg-[#c5a059]/10 border border-[#c5a059]/30 rounded text-[#e5c583] cursor-pointer hover:bg-[#c5a059]/20"
+                                className="inline-flex items-center space-x-1 px-2 py-0.5 bg-[#c5a059]/10 border border-[#c5a059]/30 rounded-md text-[#e5c583] cursor-pointer hover:bg-[#c5a059]/20 text-[11px]"
                                 title={`${p.name}落入${ZODIAC_SIGNS[p.signIndex].name}`}
                               >
-                                <span className="font-serif text-xs">{p.symbol}</span>
-                                <span>{p.name.substring(0, 2)}</span>
+                                <span className="font-serif">{p.symbol}</span>
+                                <span>{p.name}</span>
+                                <span className="text-[9px] text-slate-300 font-mono">({ZODIAC_SIGNS[p.signIndex].name})</span>
                               </span>
                             ))
                           ) : (
@@ -2101,31 +2139,22 @@ export default function App() {
                       </div>
 
                       {/* Transit Residing */}
-                      <div className="flex items-start justify-between pt-1 border-t border-white/5">
-                        <span className="text-slate-500 font-bold shrink-0 mr-2 uppercase text-[9px] tracking-wider">🪐 流年客居:</span>
-                        <div className="text-right flex flex-wrap gap-1 justify-end">
+                      <div className="flex items-start justify-between pt-1.5 border-t border-white/5">
+                        <span className="text-slate-400 font-bold shrink-0 mr-2 uppercase text-[10px] tracking-wider pt-0.5">🪐 流年客居:</span>
+                        <div className="text-right flex flex-wrap gap-1.5 justify-end">
                           {transitPlanetsInHouse.length > 0 ? (
                             transitPlanetsInHouse.map(p => {
-                              const hasEnteredAnotherSign = p.signIndex !== house.signIndex;
                               const signName = ZODIAC_SIGNS[p.signIndex].name;
                               return (
                                 <span
                                   key={`map-transit-${p.id}`}
                                   onClick={() => handlePlanetSelect(p, 'transit')}
-                                  className={`inline-flex items-center space-x-0.5 px-1.5 py-0.5 rounded text-amber-200 cursor-pointer text-[10px] ${
-                                    hasEnteredAnotherSign 
-                                      ? 'bg-amber-500/20 border border-amber-500/50' 
-                                      : 'bg-[#e5c583]/10 border border-amber-500/30 hover:bg-amber-500/10'
-                                  }`}
-                                  title={`${p.name}正在此流年行宮過宮${hasEnteredAnotherSign ? `，但已走入：${signName}` : ''}`}
+                                  className="inline-flex items-center space-x-1 px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 rounded-md text-amber-200 cursor-pointer hover:bg-amber-500/20 text-[11px]"
+                                  title={`${p.name}落入${signName}`}
                                 >
-                                  <span className="font-serif text-xs">{p.symbol}</span>
-                                  <span>{p.name.substring(0, 2)}</span>
-                                  {hasEnteredAnotherSign && (
-                                    <span className="text-[7px] text-[#e5c583] bg-amber-500/20 px-0.5 py-0 rounded border border-amber-500/40 ml-0.5">
-                                      {signName.substring(0, 2)}
-                                    </span>
-                                  )}
+                                  <span className="font-serif">{p.symbol}</span>
+                                  <span>{p.name}</span>
+                                  <span className="text-[9px] text-amber-300 font-mono">({signName})</span>
                                 </span>
                               );
                             })
@@ -2138,12 +2167,14 @@ export default function App() {
                       {/* House Ingress / Egress Times */}
                       {transitPlanetsInHouse.length > 0 && (
                         <div className="pt-1.5 border-t border-white/5 space-y-1">
-                          <span className="text-slate-500 font-bold block uppercase text-[8px] tracking-wider">⏱️ 流年進入/離開時刻:</span>
+                          <span className="text-slate-500 font-bold block uppercase text-[8px] tracking-wider">⏱️ 流年進入/離開時刻與文獻指引:</span>
                           <div className="space-y-1">
                             {transitPlanetsInHouse.map(p => {
                               const times = calculateHouseTransitTimes(p, house.number);
+                              const houseInterpret = getPlanetHouseInterpretation(p.name, house.number);
+                              const retroQuote = p.isRetrograde ? getRetrogradeGuideQuote(p.name, house.number) : '';
                               return (
-                                <div key={`house-time-${house.number}-${p.id}`} className="bg-white/[0.02] border border-white/5 p-1 rounded-lg text-[8.5px] font-mono leading-tight space-y-0.5">
+                                <div key={`house-time-${house.number}-${p.id}`} className="bg-white/[0.02] border border-white/5 p-1.5 rounded-lg text-[8.5px] font-mono leading-tight space-y-1">
                                   <div className="flex justify-between text-slate-300 font-sans">
                                     <span className="font-bold inline-flex items-center">
                                       {p.symbol} {p.name}{p.isRetrograde ? ' (逆)' : ''}
@@ -2159,6 +2190,16 @@ export default function App() {
                                     <span className="truncate">🟢 入: <strong className="text-[#e2ca9c]">{times.ingress}</strong></span>
                                     <span className="truncate">🔴 出: <strong className="text-[#e2ca9c]">{times.egress}</strong></span>
                                   </div>
+                                  {houseInterpret && (
+                                    <div className="text-[8px] text-slate-300 font-sans bg-black/30 p-1 rounded border border-white/5 leading-relaxed">
+                                      📖 落宮文獻：{houseInterpret}
+                                    </div>
+                                  )}
+                                  {retroQuote && (
+                                    <div className="text-[8px] text-amber-300 font-sans bg-amber-950/20 p-1 rounded border border-amber-500/20 leading-relaxed">
+                                      📍 逆行指引對照：{retroQuote}
+                                    </div>
+                                  )}
                                 </div>
                               );
                             })}
@@ -2367,6 +2408,11 @@ export default function App() {
                           <p className="text-[10px] text-slate-350 leading-relaxed font-sans">
                             {highlightText(aspect.description, highlightNames)} (精算相差: {aspect.orb.toFixed(2)}°)
                           </p>
+                          {getPlanetAspectTransitGuide(aspect.planetA, aspect.planetB, aspect.harmony) && (
+                            <div className="p-2 bg-amber-950/20 rounded-lg border border-amber-500/20 text-slate-300 text-[10px] whitespace-pre-line leading-relaxed font-sans">
+                              {highlightText(getPlanetAspectTransitGuide(aspect.planetA, aspect.planetB, aspect.harmony), highlightNames)}
+                            </div>
+                          )}
                           <div className="flex flex-col sm:flex-row justify-between text-[9px] text-slate-400 font-mono pt-1.5 border-t border-white/5 gap-1">
                             {aspect.ingressTime && (
                               <span className="flex items-center gap-1">🟢 進入相位：<strong className="text-[#e2ca9c]">{aspect.ingressTime}</strong></span>
@@ -2478,6 +2524,8 @@ export default function App() {
                         badgeTitle = '⚠️ 本命挑戰相';
                       }
 
+                      const natalAspectGuide = getNatalAspectGuide(aspect.planetA, aspect.planetB, aspect.harmony);
+
                       return (
                         <div
                           key={`natal-natal-asp-${index}`}
@@ -2494,6 +2542,11 @@ export default function App() {
                           <p className="text-[10px] text-slate-350 leading-relaxed font-sans">
                             {highlightText(aspect.description, highlightNames)} (精算誤差: {aspect.orb.toFixed(2)}°)
                           </p>
+                          {natalAspectGuide && (
+                            <div className="p-2 bg-amber-950/20 rounded-xl border border-amber-500/20 text-slate-350 text-[10px] leading-relaxed font-sans mt-1">
+                              {highlightText(natalAspectGuide, highlightNames)}
+                            </div>
+                          )}
                         </div>
                       );
                     });
@@ -2585,6 +2638,8 @@ export default function App() {
                         badgeTitle = '⚠️ 天象挑戰相';
                       }
 
+                      const transitAspectGuide = getTransitAspectGuide(aspect.planetA, aspect.planetB, aspect.harmony);
+
                       return (
                         <div
                           key={`transit-transit-asp-${index}`}
@@ -2601,6 +2656,11 @@ export default function App() {
                           <p className="text-[10px] text-slate-350 leading-relaxed font-sans">
                             {highlightText(aspect.description, highlightNames)} (精算誤差: {aspect.orb.toFixed(2)}°)
                           </p>
+                          {transitAspectGuide && (
+                            <div className="p-2 bg-amber-950/20 rounded-xl border border-amber-500/20 text-slate-350 text-[10px] leading-relaxed font-sans">
+                              {highlightText(transitAspectGuide, highlightNames)}
+                            </div>
+                          )}
                           <div className="flex flex-col sm:flex-row justify-between text-[9px] text-slate-400 font-mono pt-1.5 border-t border-white/5 gap-1">
                             {aspect.ingressTime && (
                               <span className="flex items-center gap-1">🟢 進入相位：<strong className="text-[#e2ca9c]">{aspect.ingressTime}</strong></span>

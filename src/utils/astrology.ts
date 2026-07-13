@@ -147,6 +147,10 @@ export function calculateAstrology(
   latitude: number,    // degrees North (positive)
   timezoneOffsetHours: number
 ): AstrologyChart {
+  const safeLongitude = isFinite(longitude) ? longitude : 121.5;
+  const safeLatitude = isFinite(latitude) ? Math.max(-89.9, Math.min(89.9, latitude)) : 25.03;
+  const safeTimezone = isFinite(timezoneOffsetHours) ? timezoneOffsetHours : 8;
+
   const date = new Date(dateTimeStr);
   let year = date.getFullYear();
   let month = date.getMonth() + 1;
@@ -154,7 +158,7 @@ export function calculateAstrology(
   let hour = date.getHours();
   let minute = date.getMinutes();
 
-  if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hour) || isNaN(minute)) {
+  if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hour) || isNaN(minute) || isNaN(date.getTime()) || year < 1900 || year > 2100) {
     const fallbackDate = new Date('1998-05-18T10:30');
     year = fallbackDate.getFullYear();
     month = fallbackDate.getMonth() + 1;
@@ -163,7 +167,7 @@ export function calculateAstrology(
     minute = fallbackDate.getMinutes();
   }
 
-  const JD = calculateJulianDate(year, month, day, hour, minute, timezoneOffsetHours);
+  const JD = calculateJulianDate(year, month, day, hour, minute, safeTimezone);
   const d = JD - 2451545.0; // Days from J2000 epoch
 
   // Coordinates of Earth/Sun
@@ -268,14 +272,14 @@ export function calculateAstrology(
   // Greenwich Sidereal Time GST in hours
   // GST at UT 00:00 is: 6.6460656 + 2400.0513 * T (centuries from 1900)
   // Simplified robust GST
-  const UT_hours = hour - timezoneOffsetHours + minute / 60.0;
+  const UT_hours = hour - safeTimezone + minute / 60.0;
   const GST_hours = normalizeDegrees((18.697374558 + 24.06570982441908 * d) + UT_hours) * 15; // as degrees
-  const LST_deg = normalizeDegrees(GST_hours + longitude);
+  const LST_deg = normalizeDegrees(GST_hours + safeLongitude);
 
   // Ascendant ASC calculation
   const obliquity = 23.439 * Math.PI / 180;
   const alphaOutput = LST_deg * Math.PI / 180;
-  const latRads = latitude * Math.PI / 180;
+  const latRads = safeLatitude * Math.PI / 180;
 
   // ASC longitude formulas
   let ascendant = normalizeDegrees(Math.atan2(
@@ -582,7 +586,8 @@ export interface AstrologicalPredictionReport {
 
 export function generatePredictiveReport(natalChart: AstrologyChart, transitDateStr: string): AstrologicalPredictionReport {
   const parsedDate = new Date(transitDateStr);
-  const transitYear = isNaN(parsedDate.getFullYear()) ? 2026 : parsedDate.getFullYear();
+  const year = parsedDate.getFullYear();
+  const transitYear = (isNaN(year) || isNaN(parsedDate.getTime()) || year < 1900 || year > 2100) ? 2026 : year;
   const ascIndex = Math.floor(natalChart.ascendant / 30);
   const ascSignName = ZODIAC_SIGNS[ascIndex]?.name || '射手座';
 

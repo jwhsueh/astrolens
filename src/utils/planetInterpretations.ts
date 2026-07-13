@@ -712,3 +712,76 @@ export const PLANET_RETROGRADE_GUIDE: RetrogradeGuideItem[] = [
   }
 ];
 
+export function getPlanetAspectTransitGuide(transitPlanetName: string, natalPlanetName: string, harmony: 'positive' | 'challenging' | 'neutral'): string {
+  let cleanT = '';
+  if (transitPlanetName.includes('火星') || transitPlanetName.includes('Mars')) cleanT = '火星';
+  else if (transitPlanetName.includes('木星') || transitPlanetName.includes('Jupiter')) cleanT = '木星';
+  else if (transitPlanetName.includes('土星') || transitPlanetName.includes('Saturn')) cleanT = '土星';
+  else if (transitPlanetName.includes('天王') || transitPlanetName.includes('Uranus')) cleanT = '天王星';
+  else if (transitPlanetName.includes('海王') || transitPlanetName.includes('Neptune')) cleanT = '海王星';
+  else if (transitPlanetName.includes('冥王') || transitPlanetName.includes('Pluto')) cleanT = '冥王星';
+  else return '';
+
+  let cleanN = '太陽';
+  if (natalPlanetName.includes('月亮') || natalPlanetName.includes('Moon')) cleanN = '月亮';
+  else if (natalPlanetName.includes('水星') || natalPlanetName.includes('Mercury')) cleanN = '水星';
+  else if (natalPlanetName.includes('金星') || natalPlanetName.includes('Venus')) cleanN = '金星';
+  else if (natalPlanetName.includes('火星') || natalPlanetName.includes('Mars')) cleanN = '火星';
+  else if (natalPlanetName.includes('木星') || natalPlanetName.includes('Jupiter')) cleanN = '木星';
+  else if (natalPlanetName.includes('土星') || natalPlanetName.includes('Saturn')) cleanN = '土星';
+  else if (natalPlanetName.includes('天王') || natalPlanetName.includes('Uranus')) cleanN = '天王星';
+  else if (natalPlanetName.includes('海王') || natalPlanetName.includes('Neptune')) cleanN = '海王星';
+  else if (natalPlanetName.includes('冥王') || natalPlanetName.includes('Pluto')) cleanN = '冥王星';
+  else if (natalPlanetName.includes('太陽') || natalPlanetName.includes('Sun')) cleanN = '太陽';
+
+  const group = PLANET_ASPECT_TRANSITS.find(g => g.planet.includes(cleanT));
+  if (!group) return '';
+
+  const item = group.items.find(i => i.target.includes(cleanN));
+  if (!item) return '';
+
+  if (harmony === 'positive') return `📖 經典文獻順流指引：${item.soft}（週期效期：${group.period}）`;
+  if (harmony === 'challenging') return `📖 經典文獻考驗指引：${item.hard}（週期效期：${group.period}）`;
+  return `📖 經典文獻交會對照：${item.soft} / ${item.hard}（週期效期：${group.period}）`;
+}
+
+export function getRetrogradeGuideQuote(planetName: string, houseNum: number): string {
+  let cleanP = '';
+  if (planetName.includes('水星') || planetName.includes('Mercury')) cleanP = '水星';
+  else if (planetName.includes('金星') || planetName.includes('Venus')) cleanP = '金星';
+  else if (planetName.includes('火星') || planetName.includes('Mars')) cleanP = '火星';
+  else if (planetName.includes('木星') || planetName.includes('Jupiter')) cleanP = '木星';
+  else if (planetName.includes('土星') || planetName.includes('Saturn')) cleanP = '土星';
+  else if (planetName.includes('天王') || planetName.includes('Uranus')) cleanP = '天王星';
+  else if (planetName.includes('海王') || planetName.includes('Neptune')) cleanP = '海王星';
+  else if (planetName.includes('冥王') || planetName.includes('Pluto')) cleanP = '冥王星';
+  else return '';
+
+  const guide = PLANET_RETROGRADE_GUIDE.find(g => g.planet === cleanP);
+  if (!guide) return '';
+  return guide.houses[houseNum] || '';
+}
+
+export function getNatalAspectGuide(planetA: string, planetB: string, harmony: 'positive' | 'challenging' | 'neutral'): string {
+  const pA = planetA.replace(/^(本命|流年)\s*/, '');
+  const pB = planetB.replace(/^(本命|流年)\s*/, '');
+  if (harmony === 'positive') {
+    return `📖 本命經典文獻合諧指引：${pA}與${pB}呈流暢共振，象徵先天性格中兩大天賦力量互相支援，潛能自然流露、內在少有矛盾，在人生關鍵時刻易獲貴人或內在直覺助力。`;
+  } else if (harmony === 'challenging') {
+    return `📖 本命經典文獻張力指引：${pA}與${pB}呈考驗相位，象徵內在價值與外在行事風格存在持續的對話與磨練。此種張力往往是個人突破平庸、淬鍊專業與心理韌性的核心動力源。`;
+  }
+  return `📖 本命經典文獻交會指引：${pA}與${pB}緊密交會，融合彼此能量，形成獨特而強烈的生命特質。`;
+}
+
+export function getTransitAspectGuide(planetA: string, planetB: string, harmony: 'positive' | 'challenging' | 'neutral'): string {
+  const pA = planetA.replace(/^(本命|流年)\s*/, '');
+  const pB = planetB.replace(/^(本命|流年)\s*/, '');
+  if (harmony === 'positive') {
+    return `📖 天象經典文獻順流指引：天空中${pA}與${pB}形成吉相位，大環境能量流暢，有利於推動合作、拓展視野及落實長期計劃。`;
+  } else if (harmony === 'challenging') {
+    return `📖 天象經典文獻考驗指引：天空中${pA}與${pB}形成挑戰相位，象徵群體意識或外在社會環境出現結構性摩擦與改革壓力，宜保持靈活彈性以對應變局。`;
+  }
+  return `📖 天象經典文獻交會指引：天空中${pA}與${pB}交會，帶來集體心理氛圍的轉折點。`;
+}
+
+
