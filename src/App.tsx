@@ -1988,7 +1988,7 @@ export default function App() {
               return (
                 <div
                   key={`mapping-house-${house.number}`}
-                  className="bg-black/45 border border-white/5 rounded-2xl p-5 hover:border-[#c5a059]/30 transition-colors flex flex-col justify-between shadow-md"
+                  className="bg-black/45 border border-white/5 rounded-2xl p-5 hover:border-[#c5a059]/30 transition-colors flex flex-col shadow-md space-y-4"
                 >
                   <div>
                     <div className="flex justify-between items-start border-b border-white/5 pb-2 mb-2.5">
@@ -2030,6 +2030,41 @@ export default function App() {
                         )}
                       </div>
                     </div>
+
+                    {/* Natal Planet Interpretations */}
+                    {natalPlanetsInHouse.length > 0 && (
+                      <div className="pt-2 border-t border-white/10 space-y-2">
+                        <span className="text-slate-400 font-bold block uppercase text-[10px] tracking-wider">🌟 本命星體落位與宮位文獻解析:</span>
+                        <div className="space-y-2">
+                          {natalPlanetsInHouse.map(p => {
+                            const signName = ZODIAC_SIGNS[p.signIndex].name;
+                            const signInterpret = getPlanetSignInterpretation(p.name, signName);
+                            const houseInterpret = getPlanetHouseInterpretation(p.name, house.number);
+                            return (
+                              <div key={`natal-interpret-${house.number}-${p.id}`} className="bg-black/30 border border-[#c5a059]/20 p-2.5 rounded-xl text-xs font-sans leading-normal space-y-1.5 shadow-sm">
+                                <div className="flex justify-between items-center text-slate-200 font-bold">
+                                  <span className="inline-flex items-center text-[#e5c583] text-xs">
+                                    {p.symbol} {p.name} 落入 {signName} / 第 {house.number} 宮{p.isRetrograde ? ' (逆行)' : ''}
+                                  </span>
+                                </div>
+                                {signInterpret && (
+                                  <div className="text-[11px] text-slate-200 bg-black/40 p-2 rounded-lg border border-white/10 leading-relaxed">
+                                    <strong className="text-[#e5c583] font-mono text-[10px] uppercase">🌟 本命星座特徵 ({p.name} × {signName})：</strong>
+                                    <p className="mt-0.5 text-slate-300">{signInterpret}</p>
+                                  </div>
+                                )}
+                                {houseInterpret && (
+                                  <div className="text-[11px] text-slate-200 bg-black/40 p-2 rounded-lg border border-white/10 leading-relaxed">
+                                    <strong className="text-[#c5a059] font-mono text-[10px] uppercase">📖 本命落宮文獻 ({p.name} × 第 {house.number} 宮)：</strong>
+                                    <p className="mt-0.5 text-slate-300">{houseInterpret}</p>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Transit Residing */}
                     <div className="flex items-start justify-between pt-1.5 border-t border-white/5">
