@@ -508,6 +508,7 @@ export interface MonthlyForecastItem {
   theme: string;
   timing: string;
   aspects: string[];
+  triggerEvents: string[];
   score: number;
 }
 
@@ -760,6 +761,24 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
     const monthNum = idx + 1;
     const isHotspot = monthNum === srSunHouse || monthNum === ((srSunHouse + 3) % 12) + 1 || monthNum === 3 || monthNum === 9;
     const score = isHotspot ? 3 : (monthNum % 2 === 0 ? 2 : 1);
+    
+    let triggerEvents: string[] = [];
+    if (isHotspot) {
+      if (monthNum === srSunHouse) {
+        triggerEvents = [`回歸盤太陽精確合相本命敏感點`, `主命星【${ruler.planet}】強勢進駐引動第 ${srSunHouse} 宮`, `年度核心舞台啟動與關鍵決策點`];
+      } else if (monthNum === 3 || monthNum === 9) {
+        triggerEvents = [`春季/秋季日月蝕軸線強烈交會`, `突發環境變動與心態轉折點`, `重要合約、合作或人際關係重整`];
+      } else {
+        triggerEvents = [`行運外行星（土/冥/木）與本命敏感點形成緊密四分/對分相`, `壓力測試與結構性突破期`];
+      }
+    } else {
+      if (monthNum % 3 === 0) {
+        triggerEvents = [`水星逆行停滯期（檢視與舊案重審）`, `日常行政細節覆核與溝通校準`];
+      } else {
+        triggerEvents = [`快星過境與平穩日程推進`, `穩扎穩打累積日常成果與基底調整`];
+      }
+    }
+
     return {
       month: monthNum,
       monthName: mName,
@@ -767,6 +786,7 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
       theme: isHotspot ? `強效引動【${HOUSE_DETAILS[srSunHouse - 1]?.name}】之核心主題` : `日常運作與基底調整期`,
       timing: `上旬快星觸發，中下旬相位漸趨精確`,
       aspects: isHotspot ? [`外行星行運觸發本命敏感點 (容許度 <1.5°)`, `日月蝕能量交會期`] : [`快星日常過境`, `平穩維護期`],
+      triggerEvents,
       score
     };
   });

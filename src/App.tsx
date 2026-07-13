@@ -2802,14 +2802,25 @@ export default function App() {
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
                       {pred.monthlyTimeline.map(m => (
-                        <div key={`m-main-${m.month}`} className={`p-3 rounded-xl border text-xs flex flex-col justify-between space-y-2 ${m.intensity === 'high' ? 'bg-amber-500/10 border-amber-500/30 text-amber-300' : 'bg-white/5 border-white/5 text-slate-300'}`}>
+                        <div key={`m-main-${m.month}`} className={`p-3 rounded-xl border text-xs flex flex-col justify-between space-y-2.5 ${m.intensity === 'high' ? 'bg-amber-500/10 border-amber-500/30 text-amber-300' : 'bg-white/5 border-white/5 text-slate-300'}`}>
                           <div className="flex justify-between items-center font-bold">
                             <span>{m.monthName}</span>
                             <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${m.intensity === 'high' ? 'bg-amber-500/20 text-amber-200' : 'bg-white/10 text-slate-400'}`}>
                               {m.intensity === 'high' ? '🔥 事件熱區' : '平穩期'}
                             </span>
                           </div>
-                          <p className="text-[11px] text-slate-400 leading-snug">{m.theme}</p>
+                          <p className="text-[11px] text-slate-300 leading-snug font-medium">{m.theme}</p>
+                          <div className="pt-1.5 border-t border-white/10 space-y-1">
+                            <span className="text-[10px] font-bold text-amber-200/90 block">⚡ 觸發事件：</span>
+                            <ul className="space-y-0.5 text-[10px] text-slate-300">
+                              {m.triggerEvents.map((evt, eIdx) => (
+                                <li key={`evt-${m.month}-${eIdx}`} className="flex items-start gap-1">
+                                  <span className="text-[#e5c583]">•</span>
+                                  <span>{evt}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
                         </div>
                       ))}
                     </div>
