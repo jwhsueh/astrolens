@@ -1953,280 +1953,186 @@ export default function App() {
                     ))}
                   </optgroup>
                 </select>
-
-                {(() => {
-                  const card = getTarotCardById(presentCardId);
-                  if (!card) return null;
-                  return (
-                    <div className="bg-black/30 p-2.5 rounded-xl border border-[#c5a059]/10 space-y-1.5 text-[11px]">
-                      <div className="flex justify-between items-center text-[10px] pb-1 border-b border-white/5">
-                        <span className="font-bold text-slate-200">{card.name}</span>
-                        <span className={`font-mono px-1.5 py-0.5 rounded text-[8px] font-bold ${presentReversed ? 'bg-red-500/15 text-red-400' : 'bg-[#c5a059]/15 text-[#e5c583]'}`}>
-                          {presentReversed ? '▼ 逆位' : '▲ 正位'}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-1 text-[8px]">
-                        {(presentReversed ? card.reversedKeywords : card.uprightKeywords).map((k, idx) => (
-                          <span key={`pr-k-${idx}`} className="bg-white/5 text-slate-400 px-1 py-0.5 rounded">
-                            #{k}
-                          </span>
-                        ))}
-                      </div>
-                      <p className="text-slate-300 italic text-[10px] leading-relaxed">
-                        {presentReversed ? card.presentInterpretation.reversed : card.presentInterpretation.upright}
-                      </p>
-                      {renderTarotAstrologyConnection(presentCardId, false)}
-                    </div>
-                  );
-                })()}
               </div>
-
-              {/* Slot 3: FUTURE */}
-              <div className="bg-black/40 rounded-2xl p-4 border border-white/5 space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-extrabold text-[#c5a059] font-mono">❸ 未來 (Future Sight)</span>
-                  <label className="flex items-center space-x-1 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={futureReversed}
-                      onChange={(e) => setFutureReversed(e.target.checked)}
-                      className="rounded bg-black border-[#c5a059]/40 text-[#c5a059] focus:ring-0 focus:ring-offset-0 focus:outline-none w-3.5 h-3.5 cursor-pointer"
-                    />
-                    <span className="text-[10px] text-slate-400 font-bold hover:text-[#c5a059] transition-colors">
-                      逆位 (Reversed)
-                    </span>
-                  </label>
-                </div>
-
-                <select
-                  value={futureCardId}
-                  onChange={(e) => setFutureCardId(e.target.value)}
-                  className="w-full bg-black/60 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-slate-250 focus:outline-none focus:border-[#c5a059] cursor-pointer"
-                >
-                  <optgroup label="大阿爾克納 (Major Arcana)">
-                    {ALL_TAROT_CARDS.filter(c => c.category === 'major').map(c => (
-                      <option key={`f-maj-${c.id}`} value={c.id}>{c.name}</option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="權杖牌組 (Suit of Wands - 火)">
-                    {ALL_TAROT_CARDS.filter(c => c.category === 'wands').map(c => (
-                      <option key={`f-wnd-${c.id}`} value={c.id}>{c.name}</option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="聖杯牌組 (Suit of Cups - 水)">
-                    {ALL_TAROT_CARDS.filter(c => c.category === 'cups').map(c => (
-                      <option key={`f-cup-${c.id}`} value={c.id}>{c.name}</option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="寶劍牌組 (Suit of Swords - 風)">
-                    {ALL_TAROT_CARDS.filter(c => c.category === 'swords').map(c => (
-                      <option key={`f-swd-${c.id}`} value={c.id}>{c.name}</option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="星幣牌組 (Suit of Pentacles - 土)">
-                    {ALL_TAROT_CARDS.filter(c => c.category === 'pentacles').map(c => (
-                      <option key={`f-pen-${c.id}`} value={c.id}>{c.name}</option>
-                    ))}
-                  </optgroup>
-                </select>
-
-                {(() => {
-                  const card = getTarotCardById(futureCardId);
-                  if (!card) return null;
-                  return (
-                    <div className="bg-black/30 p-2.5 rounded-xl border border-[#c5a059]/10 space-y-1.5 text-[11px]">
-                      <div className="flex justify-between items-center text-[10px] pb-1 border-b border-white/5">
-                        <span className="font-bold text-slate-200">{card.name}</span>
-                        <span className={`font-mono px-1.5 py-0.5 rounded text-[8px] font-bold ${futureReversed ? 'bg-red-500/15 text-red-400' : 'bg-[#c5a059]/15 text-[#e5c583]'}`}>
-                          {futureReversed ? '▼ 逆位' : '▲ 正位'}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-1 text-[8px]">
-                        {(futureReversed ? card.reversedKeywords : card.uprightKeywords).map((k, idx) => (
-                          <span key={`f-k-${idx}`} className="bg-white/5 text-slate-400 px-1 py-0.5 rounded">
-                            #{k}
-                          </span>
-                        ))}
-                      </div>
-                      <p className="text-slate-300 italic text-[10px] leading-relaxed">
-                        {futureReversed ? card.futureInterpretation.reversed : card.futureInterpretation.upright}
-                      </p>
-                      {renderTarotAstrologyConnection(futureCardId, false)}
-                    </div>
-                  );
-                })()}
-              </div>
-
             </div>
           </div>
         </section>
       </div>
 
       {/* =========================================================================
-                     NEW SECTION: 12 HOUSES PLANET MAPPING & CRITICAL ASPECTS
-          ========================================================================= */}
+                     SECTION 1: 12 HOUSES PLANET MAPPING GUIDE
+           ========================================================================= */}
       <div className="space-y-6 w-full">
-        
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
-          {/* Left Block: 12 Houses Planet List (Planets in Houses Grid) - Span 8 */}
-          <div className="lg:col-span-8 glass rounded-3xl p-6 border border-[#c5a059]/20 shadow-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-[#c5a059]/20 pb-3.5">
-              <div className="flex items-center space-x-2">
-                <Layers className="w-5 h-5 text-[#c5a059]" />
-                <h2 className="text-sm font-semibold tracking-wide text-slate-200 uppercase tracking-widest serif">
-                  雙盤十二宮位星體落位指南 / 12 Houses Planet Distribution
-                </h2>
-              </div>
-              <span className="text-[10px] font-mono text-[#e5c583] bg-[#c5a059]/10 px-2.5 py-0.5 rounded-full border border-[#c5a059]/20">
-                Equal House Method
-              </span>
+        <div className="glass rounded-3xl p-6 md:p-8 border border-[#c5a059]/20 shadow-xl space-y-5">
+          <div className="flex items-center justify-between border-b border-[#c5a059]/20 pb-4">
+            <div className="flex items-center space-x-2.5">
+              <Layers className="w-5.5 h-5.5 text-[#c5a059]" />
+              <h2 className="text-base font-semibold tracking-wide text-slate-200 uppercase tracking-widest serif">
+                雙盤十二宮位星體落位指南 / 12 Houses Planet Distribution
+              </h2>
             </div>
+            <span className="text-[11px] font-mono text-[#e5c583] bg-[#c5a059]/10 px-3 py-1 rounded-full border border-[#c5a059]/20">
+              Equal House Method
+            </span>
+          </div>
 
-            <p className="text-xs text-slate-400 max-w-2xl leading-normal">
-              下方揭示本命誕辰盤（🔘 內圈）及問事相應流年盤（🪐 外圈）在各宮位內之占星星體配屬。這能協助占卜師快速定位生活領域之核心驅力與當下流年能量匯入點：
-            </p>
+          <p className="text-xs sm:text-sm text-slate-400 max-w-4xl leading-relaxed">
+            下方完整揭示本命誕辰盤（🔘 內圈）及問事相應流年盤（🪐 外圈）在各宮位內之占星星體配屬與流年天體進出時間。這能協助占卜師全面定位生活領域之核心驅力與當下流年能量匯入點：
+          </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
-              {natalChart.houses.map((house) => {
-                const natalPlanetsInHouse = filteredNatalPlanets.filter(p => p.house === house.number);
-                const transitPlanetsInHouse = filteredTransitPlanets.filter(p => p.house === house.number);
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 pt-2">
+            {natalChart.houses.map((house) => {
+              const natalPlanetsInHouse = filteredNatalPlanets.filter(p => p.house === house.number);
+              const transitPlanetsInHouse = filteredTransitPlanets.filter(p => p.house === house.number);
 
-                return (
-                  <div
-                    key={`mapping-house-${house.number}`}
-                    className="bg-black/45 border border-white/5 rounded-2xl p-5 hover:border-[#c5a059]/30 transition-colors flex flex-col justify-between shadow-md"
-                  >
-                    <div>
-                      <div className="flex justify-between items-start border-b border-white/5 pb-2 mb-2.5">
-                        <div>
-                          <span className="font-mono text-xs font-extrabold text-[#c5a059]">
-                            {String(house.number).padStart(2, '0')} Cusp
-                          </span>
-                          <h4 className="text-xs font-bold text-slate-200">{house.name}</h4>
-                        </div>
-                        <span className="text-[9px] text-[#e5c583] font-mono bg-[#c5a059]/5 px-1.5 py-0.5 rounded border border-[#c5a059]/10">
-                          {ZODIAC_SIGNS[house.signIndex].name}
+              return (
+                <div
+                  key={`mapping-house-${house.number}`}
+                  className="bg-black/45 border border-white/5 rounded-2xl p-5 hover:border-[#c5a059]/30 transition-colors flex flex-col justify-between shadow-md"
+                >
+                  <div>
+                    <div className="flex justify-between items-start border-b border-white/5 pb-2 mb-2.5">
+                      <div>
+                        <span className="font-mono text-xs font-extrabold text-[#c5a059]">
+                          {String(house.number).padStart(2, '0')} Cusp
                         </span>
+                        <h4 className="text-xs font-bold text-slate-200">{house.name}</h4>
                       </div>
-                      <p className="text-[10px] text-slate-400 mb-3 italic leading-normal">
-                        {house.meaning}
-                      </p>
+                      <span className="text-[9px] text-[#e5c583] font-mono bg-[#c5a059]/5 px-1.5 py-0.5 rounded border border-[#c5a059]/10">
+                        {ZODIAC_SIGNS[house.signIndex].name}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 mb-3 italic leading-normal">
+                      {house.meaning}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 text-[11px] bg-black/20 p-2.5 rounded-xl border border-white/5">
+                    {/* Natal Residing */}
+                    <div className="flex items-start justify-between">
+                      <span className="text-slate-400 font-bold shrink-0 mr-2 uppercase text-[10px] tracking-wider pt-0.5">🔘 本命落位:</span>
+                      <div className="text-right flex flex-wrap gap-1.5 justify-end">
+                        {natalPlanetsInHouse.length > 0 ? (
+                          natalPlanetsInHouse.map(p => (
+                            <span
+                              key={`map-natal-${p.id}`}
+                              onClick={() => handlePlanetSelect(p, 'natal')}
+                              className="inline-flex items-center space-x-1 px-2 py-0.5 bg-[#c5a059]/10 border border-[#c5a059]/30 rounded-md text-[#e5c583] cursor-pointer hover:bg-[#c5a059]/20 text-[11px]"
+                              title={`${p.name}落入${ZODIAC_SIGNS[p.signIndex].name}`}
+                            >
+                              <span className="font-serif">{p.symbol}</span>
+                              <span>{p.name}</span>
+                              <span className="text-[9px] text-slate-300 font-mono">({ZODIAC_SIGNS[p.signIndex].name})</span>
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-slate-600 italic">空宮</span>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="space-y-2 text-[11px] bg-black/20 p-2.5 rounded-xl border border-white/5">
-                      {/* Natal Residing */}
-                      <div className="flex items-start justify-between">
-                        <span className="text-slate-400 font-bold shrink-0 mr-2 uppercase text-[10px] tracking-wider pt-0.5">🔘 本命落位:</span>
-                        <div className="text-right flex flex-wrap gap-1.5 justify-end">
-                          {natalPlanetsInHouse.length > 0 ? (
-                            natalPlanetsInHouse.map(p => (
+                    {/* Transit Residing */}
+                    <div className="flex items-start justify-between pt-1.5 border-t border-white/5">
+                      <span className="text-slate-400 font-bold shrink-0 mr-2 uppercase text-[10px] tracking-wider pt-0.5">🪐 流年客居:</span>
+                      <div className="text-right flex flex-wrap gap-1.5 justify-end">
+                        {transitPlanetsInHouse.length > 0 ? (
+                          transitPlanetsInHouse.map(p => {
+                            const signName = ZODIAC_SIGNS[p.signIndex].name;
+                            return (
                               <span
-                                key={`map-natal-${p.id}`}
-                                onClick={() => handlePlanetSelect(p, 'natal')}
-                                className="inline-flex items-center space-x-1 px-2 py-0.5 bg-[#c5a059]/10 border border-[#c5a059]/30 rounded-md text-[#e5c583] cursor-pointer hover:bg-[#c5a059]/20 text-[11px]"
-                                title={`${p.name}落入${ZODIAC_SIGNS[p.signIndex].name}`}
+                                key={`map-transit-${p.id}`}
+                                onClick={() => handlePlanetSelect(p, 'transit')}
+                                className="inline-flex items-center space-x-1 px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 rounded-md text-amber-200 cursor-pointer hover:bg-amber-500/20 text-[11px]"
+                                title={`${p.name}落入${signName}`}
                               >
                                 <span className="font-serif">{p.symbol}</span>
                                 <span>{p.name}</span>
-                                <span className="text-[9px] text-slate-300 font-mono">({ZODIAC_SIGNS[p.signIndex].name})</span>
+                                <span className="text-[9px] text-amber-300 font-mono">({signName})</span>
                               </span>
-                            ))
-                          ) : (
-                            <span className="text-slate-600 italic">空宮</span>
-                          )}
-                        </div>
+                            );
+                          })
+                        ) : (
+                          <span className="text-slate-600 italic">空宮</span>
+                        )}
                       </div>
-
-                      {/* Transit Residing */}
-                      <div className="flex items-start justify-between pt-1.5 border-t border-white/5">
-                        <span className="text-slate-400 font-bold shrink-0 mr-2 uppercase text-[10px] tracking-wider pt-0.5">🪐 流年客居:</span>
-                        <div className="text-right flex flex-wrap gap-1.5 justify-end">
-                          {transitPlanetsInHouse.length > 0 ? (
-                            transitPlanetsInHouse.map(p => {
-                              const signName = ZODIAC_SIGNS[p.signIndex].name;
-                              return (
-                                <span
-                                  key={`map-transit-${p.id}`}
-                                  onClick={() => handlePlanetSelect(p, 'transit')}
-                                  className="inline-flex items-center space-x-1 px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 rounded-md text-amber-200 cursor-pointer hover:bg-amber-500/20 text-[11px]"
-                                  title={`${p.name}落入${signName}`}
-                                >
-                                  <span className="font-serif">{p.symbol}</span>
-                                  <span>{p.name}</span>
-                                  <span className="text-[9px] text-amber-300 font-mono">({signName})</span>
-                                </span>
-                              );
-                            })
-                          ) : (
-                            <span className="text-slate-600 italic">空宮</span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* House Ingress / Egress Times */}
-                      {transitPlanetsInHouse.length > 0 && (
-                        <div className="pt-1.5 border-t border-white/5 space-y-1">
-                          <span className="text-slate-500 font-bold block uppercase text-[8px] tracking-wider">⏱️ 流年進入/離開時刻與文獻指引:</span>
-                          <div className="space-y-1">
-                            {transitPlanetsInHouse.map(p => {
-                              const times = calculateHouseTransitTimes(p, house.number);
-                              const houseInterpret = getPlanetHouseInterpretation(p.name, house.number);
-                              const retroQuote = p.isRetrograde ? getRetrogradeGuideQuote(p.name, house.number) : '';
-                              return (
-                                <div key={`house-time-${house.number}-${p.id}`} className="bg-white/[0.02] border border-white/5 p-1.5 rounded-lg text-[8.5px] font-mono leading-tight space-y-1">
-                                  <div className="flex justify-between text-slate-300 font-sans">
-                                    <span className="font-bold inline-flex items-center">
-                                      {p.symbol} {p.name}{p.isRetrograde ? ' (逆)' : ''}
-                                      {p.signIndex !== house.signIndex && (
-                                        <span className="ml-1 text-[7.5px] text-amber-300 bg-amber-500/10 px-1 py-0 rounded border border-amber-500/20">
-                                          已入{ZODIAC_SIGNS[p.signIndex].name}
-                                        </span>
-                                      )}
-                                    </span>
-                                    <span className="text-[7.5px] text-[#e5c583]">{Math.abs(p.speed).toFixed(2)}°/天</span>
-                                  </div>
-                                  <div className="grid grid-cols-2 gap-x-1.5 text-slate-400">
-                                    <span className="truncate">🟢 入: <strong className="text-[#e2ca9c]">{times.ingress}</strong></span>
-                                    <span className="truncate">🔴 出: <strong className="text-[#e2ca9c]">{times.egress}</strong></span>
-                                  </div>
-                                  {houseInterpret && (
-                                    <div className="text-[8px] text-slate-300 font-sans bg-black/30 p-1 rounded border border-white/5 leading-relaxed">
-                                      📖 落宮文獻：{houseInterpret}
-                                    </div>
-                                  )}
-                                  {retroQuote && (
-                                    <div className="text-[8px] text-amber-300 font-sans bg-amber-950/20 p-1 rounded border border-amber-500/20 leading-relaxed">
-                                      📍 逆行指引對照：{retroQuote}
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
 
-          {/* Right Block: Crucial inter-aspect angles - Span 4 */}
-          <div className="lg:col-span-4 glass rounded-3xl p-6 border border-[#c5a059]/20 shadow-xl space-y-4">
-            <div className="flex items-center space-x-2 border-b border-[#c5a059]/20 pb-3.5">
-              <AlertTriangle className="w-5 h-5 text-[#c5a059]" />
-              <h2 className="text-sm font-semibold tracking-wide text-slate-200 uppercase tracking-widest serif">
+                    {/* House Ingress / Egress Times */}
+                    {transitPlanetsInHouse.length > 0 && (
+                      <div className="pt-2 border-t border-white/10 space-y-2">
+                        <span className="text-slate-400 font-bold block uppercase text-[10px] tracking-wider">⏱️ 流年進入/離開時刻與占星解讀:</span>
+                        <div className="space-y-2">
+                          {transitPlanetsInHouse.map(p => {
+                            const times = calculateHouseTransitTimes(p, house.number);
+                            const signName = ZODIAC_SIGNS[p.signIndex].name;
+                            const signInterpret = getPlanetSignInterpretation(p.name, signName);
+                            const houseInterpret = getPlanetHouseInterpretation(p.name, house.number);
+                            const retroQuote = p.isRetrograde ? getRetrogradeGuideQuote(p.name, house.number) : '';
+                            return (
+                              <div key={`house-time-${house.number}-${p.id}`} className="bg-black/30 border border-white/10 p-2.5 rounded-xl text-xs font-sans leading-normal space-y-1.5 shadow-sm">
+                                <div className="flex justify-between items-center text-slate-200 font-bold">
+                                  <span className="inline-flex items-center text-amber-200 text-xs">
+                                    {p.symbol} {p.name} 落入 {signName}{p.isRetrograde ? ' (逆行)' : ''}
+                                    {p.signIndex !== house.signIndex && (
+                                      <span className="ml-1.5 text-[10px] text-amber-300 bg-amber-500/20 px-1.5 py-0.5 rounded border border-amber-500/30">
+                                        已跨入{ZODIAC_SIGNS[p.signIndex].name}
+                                      </span>
+                                    )}
+                                  </span>
+                                  <span className="text-[10px] font-mono text-[#e5c583]">{Math.abs(p.speed).toFixed(2)}°/天</span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-x-2 text-[11px] text-slate-300 font-mono">
+                                  <span className="truncate">🟢 入宮: <strong className="text-[#e2ca9c]">{times.ingress}</strong></span>
+                                  <span className="truncate">🔴 出宮: <strong className="text-[#e2ca9c]">{times.egress}</strong></span>
+                                </div>
+                                {signInterpret && (
+                                  <div className="text-[11px] text-slate-200 bg-black/40 p-2 rounded-lg border border-white/10 leading-relaxed">
+                                    <strong className="text-amber-300 font-mono text-[10px] uppercase">🌟 星座特徵 ({p.name} × {signName})：</strong>
+                                    <p className="mt-0.5 text-slate-300">{signInterpret}</p>
+                                  </div>
+                                )}
+                                {houseInterpret && (
+                                  <div className="text-[11px] text-slate-200 bg-black/40 p-2 rounded-lg border border-white/10 leading-relaxed">
+                                    <strong className="text-[#e5c583] font-mono text-[10px] uppercase">📖 落宮文獻 ({p.name} × 第 {house.number} 宮)：</strong>
+                                    <p className="mt-0.5 text-slate-300">{houseInterpret}</p>
+                                  </div>
+                                )}
+                                {retroQuote && (
+                                  <div className="text-[11px] text-amber-300 bg-amber-950/30 p-2 rounded-lg border border-amber-500/30 leading-relaxed">
+                                    <strong className="font-mono text-[10px] uppercase">📍 逆行指引對照：</strong>
+                                    <p className="mt-0.5 text-amber-200">{retroQuote}</p>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* =========================================================================
+                     SECTION 2: PLANETARY ASPECT REPORTS
+           ========================================================================= */}
+        <div className="glass rounded-3xl p-6 md:p-8 border border-[#c5a059]/20 shadow-xl space-y-5">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-[#c5a059]/20 pb-4 gap-3">
+            <div className="flex items-center space-x-2.5">
+              <AlertTriangle className="w-5.5 h-5.5 text-[#c5a059]" />
+              <h2 className="text-base font-semibold tracking-wide text-slate-200 uppercase tracking-widest serif">
                 星體相位報告 / Planetary Aspect Reports
               </h2>
             </div>
 
             {/* Category Tabs */}
-            <div className="flex border border-white/10 text-[10px] bg-black/35 rounded-xl p-1 gap-1">
+            <div className="flex border border-white/10 text-xs bg-black/35 rounded-xl p-1 gap-1.5 w-full sm:w-auto">
               <button
                 onClick={() => setActiveAspectTab('double')}
-                className={`flex-1 py-1.5 text-center font-bold tracking-wider cursor-pointer transition-all rounded-lg ${
+                className={`flex-1 sm:flex-none px-4 py-1.5 text-center font-bold tracking-wider cursor-pointer transition-all rounded-lg ${
                   activeAspectTab === 'double'
                     ? 'text-[#e5c583] bg-[#c5a059]/15 shadow border border-[#c5a059]/10'
                     : 'text-slate-400 hover:text-slate-200'
@@ -2236,7 +2142,7 @@ export default function App() {
               </button>
               <button
                 onClick={() => setActiveAspectTab('natal')}
-                className={`flex-1 py-1.5 text-center font-bold tracking-wider cursor-pointer transition-all rounded-lg ${
+                className={`flex-1 sm:flex-none px-4 py-1.5 text-center font-bold tracking-wider cursor-pointer transition-all rounded-lg ${
                   activeAspectTab === 'natal'
                     ? 'text-[#e5c583] bg-[#c5a059]/15 shadow border border-[#c5a059]/10'
                     : 'text-slate-400 hover:text-slate-200'
@@ -2246,7 +2152,7 @@ export default function App() {
               </button>
               <button
                 onClick={() => setActiveAspectTab('transit')}
-                className={`flex-1 py-1.5 text-center font-bold tracking-wider cursor-pointer transition-all rounded-lg ${
+                className={`flex-1 sm:flex-none px-4 py-1.5 text-center font-bold tracking-wider cursor-pointer transition-all rounded-lg ${
                   activeAspectTab === 'transit'
                     ? 'text-[#e5c583] bg-[#c5a059]/15 shadow border border-[#c5a059]/10'
                     : 'text-slate-400 hover:text-slate-200'
@@ -2255,443 +2161,444 @@ export default function App() {
                 🪐 流年天象
               </button>
             </div>
-
-            {activeAspectTab === 'double' && (
-              <div className="space-y-4 animate-fade-in">
-                <p className="text-xs text-slate-400 leading-normal">
-                  列出此刻流年星體與您本命星體之間正形成的<strong>強烈相位（角度）</strong>。這象徵外界宇宙氣場對您本命潛能與生活產生的直接共振：
-                </p>
-
-                {/* Planet Multi-select Buttons */}
-                <div className="space-y-2.5 p-3.5 bg-black/35 rounded-2xl border border-white/5 text-[11px] no-print">
-                  <div>
-                    <span className="text-[#c5a059] font-bold block mb-1 text-[10px]">🪐 流年天體高亮與優先 (多選)</span>
-                    <div className="flex flex-wrap gap-1.5 font-mono">
-                      {filteredTransitPlanets.map(p => {
-                        const isSelected = selectedTransitPlanetIds.includes(p.id);
-                        return (
-                          <button
-                            key={`sel-tr-${p.id}`}
-                            onClick={() => {
-                              setSelectedTransitPlanetIds(prev =>
-                                prev.includes(p.id) ? prev.filter(id => id !== p.id) : [...prev, p.id]
-                              );
-                            }}
-                            className={`px-2 py-1 rounded text-[10px] transition-all flex items-center space-x-1 border cursor-pointer ${
-                              isSelected
-                                ? 'bg-[#c5a059]/20 border-[#c5a059] text-[#e5c583] font-bold shadow'
-                                : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'
-                            }`}
-                          >
-                            <span className="font-serif">{p.symbol}</span>
-                            <span>{p.name.substring(0, 2)}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div>
-                    <span className="text-[#c5a059] font-bold block mb-1 text-[10px]">🏡 本命天體高亮與優先 (多選)</span>
-                    <div className="flex flex-wrap gap-1.5 font-mono">
-                      {filteredNatalPlanets.map(p => {
-                        const isSelected = selectedNatalPlanetIds.includes(p.id);
-                        return (
-                          <button
-                            key={`sel-na-${p.id}`}
-                            onClick={() => {
-                              setSelectedNatalPlanetIds(prev =>
-                                prev.includes(p.id) ? prev.filter(id => id !== p.id) : [...prev, p.id]
-                              );
-                            }}
-                            className={`px-2 py-1 rounded text-[10px] transition-all flex items-center space-x-1 border cursor-pointer ${
-                              isSelected
-                                ? 'bg-[#c5a059]/20 border-[#c5a059] text-[#e5c583] font-bold shadow'
-                                : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'
-                            }`}
-                          >
-                            <span className="font-serif">{p.symbol}</span>
-                            <span>{p.name.substring(0, 2)}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                  <div className="text-[9px] text-slate-500 italic mt-1 leading-snug">
-                    * 點擊上述按鈕進行多選/反選。勾選星體將在下方報告中以<strong>古銅金黃色</strong>高亮，並排序最優先顯示。
-                  </div>
-                </div>
-
-                <div className="space-y-3 overflow-y-auto max-h-[390px] pr-1.5">
-                  {(() => {
-                    const sortedAspects = [...transitNatalAspects].sort((a, b) => {
-                      const isPlanetASelected = selectedTransitPlanetIds.some(id => {
-                        const p = filteredTransitPlanets.find(x => x.id === id);
-                        return p && a.planetA.includes(p.name);
-                      });
-                      const isPlanetBSelected = selectedNatalPlanetIds.some(id => {
-                        const p = filteredNatalPlanets.find(x => x.id === id);
-                        return p && a.planetB.includes(p.name);
-                      });
-
-                      const isPlanetASelectedB = selectedTransitPlanetIds.some(id => {
-                        const p = filteredTransitPlanets.find(x => x.id === id);
-                        return p && b.planetA.includes(p.name);
-                      });
-                      const isPlanetBSelectedB = selectedNatalPlanetIds.some(id => {
-                        const p = filteredNatalPlanets.find(x => x.id === id);
-                        return p && b.planetB.includes(p.name);
-                      });
-
-                      const getPriority = (isTransitSelected: boolean, isNatalSelected: boolean) => {
-                        if (isTransitSelected && isNatalSelected) return 1;
-                        if (isTransitSelected && !isNatalSelected) return 2;
-                        if (!isTransitSelected && isNatalSelected) return 3;
-                        return 4;
-                      };
-
-                      const prioA = getPriority(isPlanetASelected, isPlanetBSelected);
-                      const prioB = getPriority(isPlanetASelectedB, isPlanetBSelectedB);
-
-                      return prioA - prioB;
-                    });
-
-                    if (sortedAspects.length === 0) {
-                      return (
-                        <div className="h-[120px] flex flex-col justify-center items-center text-center text-slate-500 italic text-xs">
-                          <p>當下暫無顯著合相與沖刑，天象安和無兆。</p>
-                        </div>
-                      );
-                    }
-
-                    // Construct a list of names to highlight in text
-                    const highlightNames: string[] = [];
-                    selectedTransitPlanetIds.forEach(id => {
-                      const p = filteredTransitPlanets.find(x => x.id === id);
-                      if (p) {
-                        highlightNames.push(`流年 ${p.name}`);
-                        highlightNames.push(p.name);
-                      }
-                    });
-                    selectedNatalPlanetIds.forEach(id => {
-                      const p = filteredNatalPlanets.find(x => x.id === id);
-                      if (p) {
-                        highlightNames.push(`本命 ${p.name}`);
-                        highlightNames.push(p.name);
-                      }
-                    });
-
-                    return sortedAspects.map((aspect, index) => {
-                      let badgeBg = 'bg-amber-500/10 border-amber-500/30 text-amber-400';
-                      let badgeTitle = '🌀 交匯相位';
-                      if (aspect.harmony === 'positive') {
-                        badgeBg = 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400';
-                        badgeTitle = '🍀 順流相 (吉)';
-                      } else if (aspect.harmony === 'challenging') {
-                        badgeBg = 'bg-red-500/10 border-red-500/20 text-red-400';
-                        badgeTitle = '⚠️ 考驗相 (凶)';
-                      }
-
-                      return (
-                        <div
-                          key={`transit-natal-asp-${index}`}
-                          className="p-3 bg-black/45 border border-white/5 rounded-2xl flex flex-col space-y-2 hover:border-[#c5a059]/20 transition-all shadow-inner"
-                        >
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs font-bold text-slate-200 font-mono">
-                              {highlightText(aspect.planetA, highlightNames)} ✖ {highlightText(aspect.planetB, highlightNames)}
-                            </span>
-                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${badgeBg} whitespace-nowrap`}>
-                              {badgeTitle} • {aspect.name}
-                            </span>
-                          </div>
-                          <p className="text-[10px] text-slate-350 leading-relaxed font-sans">
-                            {highlightText(aspect.description, highlightNames)} (精算相差: {aspect.orb.toFixed(2)}°)
-                          </p>
-                          {getPlanetAspectTransitGuide(aspect.planetA, aspect.planetB, aspect.harmony) && (
-                            <div className="p-2 bg-amber-950/20 rounded-lg border border-amber-500/20 text-slate-300 text-[10px] whitespace-pre-line leading-relaxed font-sans">
-                              {highlightText(getPlanetAspectTransitGuide(aspect.planetA, aspect.planetB, aspect.harmony), highlightNames)}
-                            </div>
-                          )}
-                          <div className="flex flex-col sm:flex-row justify-between text-[9px] text-slate-400 font-mono pt-1.5 border-t border-white/5 gap-1">
-                            {aspect.ingressTime && (
-                              <span className="flex items-center gap-1">🟢 進入相位：<strong className="text-[#e2ca9c]">{aspect.ingressTime}</strong></span>
-                            )}
-                            {aspect.egressTime && (
-                              <span className="flex items-center gap-1">🔴 離開相位：<strong className="text-[#e2ca9c]">{aspect.egressTime}</strong></span>
-                            )}
-                          </div>
-                          {aspect.futureAspects && aspect.futureAspects.length > 0 && (
-                            <div className="pt-2 border-t border-white/5 space-y-1">
-                              <span className="block text-[8px] font-bold text-[#e5c583]/80 uppercase tracking-wider">🌟 該配對未來三次特殊交會預測：</span>
-                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 w-full text-[8.5px] font-mono text-slate-350">
-                                {aspect.futureAspects.map((fut, fIdx) => (
-                                  <div key={`fut-asp-${index}-${fIdx}`} className="bg-white/[0.02] border border-white/5 rounded-lg p-1.5 flex flex-col justify-between hover:border-[#c5a059]/25 transition-all">
-                                    <span className="font-bold text-[#e2ca9c]">{fut.name}</span>
-                                    <span className="text-slate-400 mt-0.5 text-[8px]">{fut.time}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    });
-                  })()}
-                </div>
-              </div>
-            )}
-
-            {activeAspectTab === 'natal' && (
-              <div className="space-y-4 animate-fade-in">
-                <p className="text-xs text-slate-400 leading-normal">
-                  列出您<strong>本命星盤內部（Natal Chart）</strong>天體之間形成的相位。這象徵您先天性格中不同力量的交織融合、天賦資源或內在心理張力摩擦：
-                </p>
-
-                {/* Planet Multi-select/Highlight for Natal */}
-                <div className="space-y-2.5 p-3.5 bg-black/35 rounded-2xl border border-white/5 text-[11px] no-print">
-                  <div>
-                    <span className="text-[#c5a059] font-bold block mb-1 text-[10px]">🏡 本命天體過濾與優先級 (多選)</span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {filteredNatalPlanets.map(p => {
-                        const isSelected = selectedNatalPlanetIds.includes(p.id);
-                        return (
-                          <button
-                            key={`natal-sel-${p.id}`}
-                            onClick={() => {
-                              setSelectedNatalPlanetIds(prev =>
-                                prev.includes(p.id) ? prev.filter(id => id !== p.id) : [...prev, p.id]
-                              );
-                            }}
-                            className={`px-2 py-1 rounded text-[10px] transition-all flex items-center space-x-1 border cursor-pointer ${
-                              isSelected
-                                ? 'bg-[#c5a059]/20 border-[#c5a059] text-[#e5c583] font-bold shadow'
-                                : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'
-                            }`}
-                          >
-                            <span className="font-serif">{p.symbol}</span>
-                            <span>{p.name.substring(0, 2)}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                  <div className="text-[9px] text-slate-500 italic mt-1 leading-snug">
-                    * 勾選的星體會在下方相位中排在最前方並以 <strong>古銅金黃色</strong> 高亮。
-                  </div>
-                </div>
-
-                <div className="space-y-3 overflow-y-auto max-h-[390px] pr-1.5">
-                  {(() => {
-                    const sortedAspects = [...natalNatalAspects].sort((a, b) => {
-                      const isPlanetASelected = selectedNatalPlanetIds.some(id => {
-                        const p = filteredNatalPlanets.find(x => x.id === id);
-                        return p && (a.planetA.includes(p.name) || a.planetB.includes(p.name));
-                      });
-                      const isPlanetBSelected = selectedNatalPlanetIds.some(id => {
-                        const p = filteredNatalPlanets.find(x => x.id === id);
-                        return p && (b.planetA.includes(p.name) || b.planetB.includes(p.name));
-                      });
-                      if (isPlanetASelected && !isPlanetBSelected) return -1;
-                      if (!isPlanetASelected && isPlanetBSelected) return 1;
-                      return 0;
-                    });
-
-                    if (sortedAspects.length === 0) {
-                      return (
-                        <div className="h-[120px] flex flex-col justify-center items-center text-center text-slate-500 italic text-xs">
-                          <p>本命星盤盤內暫無顯著相位（設定範圍內）。</p>
-                        </div>
-                      );
-                    }
-
-                    const highlightNames: string[] = [];
-                    selectedNatalPlanetIds.forEach(id => {
-                      const p = filteredNatalPlanets.find(x => x.id === id);
-                      if (p) {
-                        highlightNames.push(p.name);
-                      }
-                    });
-
-                    return sortedAspects.map((aspect, index) => {
-                      let badgeBg = 'bg-amber-500/10 border-amber-500/30 text-amber-400';
-                      let badgeTitle = '🌀 本命相位';
-                      if (aspect.harmony === 'positive') {
-                        badgeBg = 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400';
-                        badgeTitle = '🍀 本命和諧相';
-                      } else if (aspect.harmony === 'challenging') {
-                        badgeBg = 'bg-red-500/10 border-red-500/20 text-red-400';
-                        badgeTitle = '⚠️ 本命挑戰相';
-                      }
-
-                      const natalAspectGuide = getNatalAspectGuide(aspect.planetA, aspect.planetB, aspect.harmony);
-
-                      return (
-                        <div
-                          key={`natal-natal-asp-${index}`}
-                          className="p-3 bg-black/45 border border-white/5 rounded-2xl flex flex-col space-y-1.5 hover:border-[#c5a059]/20 transition-all shadow-inner animate-fade-in"
-                        >
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs font-bold text-slate-200 font-mono">
-                              {highlightText(aspect.planetA, highlightNames)} ✖ {highlightText(aspect.planetB, highlightNames)}
-                            </span>
-                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${badgeBg} whitespace-nowrap`}>
-                              {badgeTitle} • {aspect.name}
-                            </span>
-                          </div>
-                          <p className="text-[10px] text-slate-350 leading-relaxed font-sans">
-                            {highlightText(aspect.description, highlightNames)} (精算誤差: {aspect.orb.toFixed(2)}°)
-                          </p>
-                          {natalAspectGuide && (
-                            <div className="p-2 bg-amber-950/20 rounded-xl border border-amber-500/20 text-slate-350 text-[10px] leading-relaxed font-sans mt-1">
-                              {highlightText(natalAspectGuide, highlightNames)}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    });
-                  })()}
-                </div>
-              </div>
-            )}
-
-            {activeAspectTab === 'transit' && (
-              <div className="space-y-4 animate-fade-in">
-                <p className="text-xs text-slate-400 leading-normal">
-                  列出此刻<strong>流年天象星盤內部（Transit Chart）</strong>天體之間形成的相位。這象徵天空中集體意識的直接共振與當前大眾環境的流動氣場：
-                </p>
-
-                {/* Planet Multi-select/Highlight for Transit */}
-                <div className="space-y-2.5 p-3.5 bg-black/35 rounded-2xl border border-white/5 text-[11px] no-print">
-                  <div>
-                    <span className="text-[#c5a059] font-bold block mb-1 text-[10px]">🪐 流年天體過濾與優先級 (多選)</span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {filteredTransitPlanets.map(p => {
-                        const isSelected = selectedTransitPlanetIds.includes(p.id);
-                        return (
-                          <button
-                            key={`transit-sel-${p.id}`}
-                            onClick={() => {
-                              setSelectedTransitPlanetIds(prev =>
-                                prev.includes(p.id) ? prev.filter(id => id !== p.id) : [...prev, p.id]
-                              );
-                            }}
-                            className={`px-2 py-1 rounded text-[10px] transition-all flex items-center space-x-1 border cursor-pointer ${
-                              isSelected
-                                ? 'bg-[#c5a059]/20 border-[#c5a059] text-[#e5c583] font-bold shadow'
-                                : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'
-                            }`}
-                          >
-                            <span className="font-serif">{p.symbol}</span>
-                            <span>{p.name.substring(0, 2)}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                  <div className="text-[9px] text-slate-500 italic mt-1 leading-snug">
-                    * 勾選的星體會在下方相位中排在最前方並以 <strong>古銅金黃色</strong> 高亮。
-                  </div>
-                </div>
-
-                <div className="space-y-3 overflow-y-auto max-h-[390px] pr-1.5">
-                  {(() => {
-                    const sortedAspects = [...transitTransitAspects].sort((a, b) => {
-                      const isPlanetASelected = selectedTransitPlanetIds.some(id => {
-                        const p = filteredTransitPlanets.find(x => x.id === id);
-                        return p && (a.planetA.includes(p.name) || a.planetB.includes(p.name));
-                      });
-                      const isPlanetBSelected = selectedTransitPlanetIds.some(id => {
-                        const p = filteredTransitPlanets.find(x => x.id === id);
-                        return p && (b.planetA.includes(p.name) || b.planetB.includes(p.name));
-                      });
-                      if (isPlanetASelected && !isPlanetBSelected) return -1;
-                      if (!isPlanetASelected && isPlanetBSelected) return 1;
-                      return 0;
-                    });
-
-                    if (sortedAspects.length === 0) {
-                      return (
-                        <div className="h-[120px] flex flex-col justify-center items-center text-center text-slate-500 italic text-xs">
-                          <p>天空中暫無顯著相位物像。大氣平穩安和。</p>
-                        </div>
-                      );
-                    }
-
-                    const highlightNames: string[] = [];
-                    selectedTransitPlanetIds.forEach(id => {
-                      const p = filteredTransitPlanets.find(x => x.id === id);
-                      if (p) {
-                        highlightNames.push(`流年 ${p.name}`);
-                        highlightNames.push(p.name);
-                      }
-                    });
-
-                    return sortedAspects.map((aspect, index) => {
-                      let badgeBg = 'bg-amber-500/10 border-amber-500/30 text-amber-400';
-                      let badgeTitle = '🌀 天象相位';
-                      if (aspect.harmony === 'positive') {
-                        badgeBg = 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400';
-                        badgeTitle = '🍀 天象和諧相';
-                      } else if (aspect.harmony === 'challenging') {
-                        badgeBg = 'bg-red-500/10 border-red-500/20 text-red-400';
-                        badgeTitle = '⚠️ 天象挑戰相';
-                      }
-
-                      const transitAspectGuide = getTransitAspectGuide(aspect.planetA, aspect.planetB, aspect.harmony);
-
-                      return (
-                        <div
-                          key={`transit-transit-asp-${index}`}
-                          className="p-3 bg-black/45 border border-white/5 rounded-2xl flex flex-col space-y-2 hover:border-[#c5a059]/20 transition-all shadow-inner animate-fade-in"
-                        >
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs font-bold text-slate-200 font-mono">
-                              {highlightText(aspect.planetA, highlightNames)} ✖ {highlightText(aspect.planetB, highlightNames)}
-                            </span>
-                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${badgeBg} whitespace-nowrap`}>
-                              {badgeTitle} • {aspect.name}
-                            </span>
-                          </div>
-                          <p className="text-[10px] text-slate-350 leading-relaxed font-sans">
-                            {highlightText(aspect.description, highlightNames)} (精算誤差: {aspect.orb.toFixed(2)}°)
-                          </p>
-                          {transitAspectGuide && (
-                            <div className="p-2 bg-amber-950/20 rounded-xl border border-amber-500/20 text-slate-350 text-[10px] leading-relaxed font-sans">
-                              {highlightText(transitAspectGuide, highlightNames)}
-                            </div>
-                          )}
-                          <div className="flex flex-col sm:flex-row justify-between text-[9px] text-slate-400 font-mono pt-1.5 border-t border-white/5 gap-1">
-                            {aspect.ingressTime && (
-                              <span className="flex items-center gap-1">🟢 進入相位：<strong className="text-[#e2ca9c]">{aspect.ingressTime}</strong></span>
-                            )}
-                            {aspect.egressTime && (
-                              <span className="flex items-center gap-1">🔴 離開相位：<strong className="text-[#e2ca9c]">{aspect.egressTime}</strong></span>
-                            )}
-                          </div>
-                          {aspect.futureAspects && aspect.futureAspects.length > 0 && (
-                            <div className="pt-2 border-t border-white/5 space-y-1">
-                              <span className="block text-[8px] font-bold text-[#e5c583]/80 uppercase tracking-wider">🌟 該配對未來三次特殊交會預測：</span>
-                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 w-full text-[8.5px] font-mono text-slate-350">
-                                {aspect.futureAspects.map((fut, fIdx) => (
-                                  <div key={`fut-asp-${index}-${fIdx}`} className="bg-white/[0.02] border border-white/5 rounded-lg p-1.5 flex flex-col justify-between hover:border-[#c5a059]/25 transition-all">
-                                    <span className="font-bold text-[#e2ca9c]">{fut.name}</span>
-                                    <span className="text-slate-400 mt-0.5 text-[8px]">{fut.time}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    });
-                  })()}
-                </div>
-              </div>
-            )}
           </div>
+
+          {activeAspectTab === 'double' && (
+            <div className="space-y-4 animate-fade-in">
+              <p className="text-xs sm:text-sm text-slate-400 leading-normal max-w-4xl">
+                列出此刻流年星體與您本命星體之間正形成的<strong>強烈相位（角度）</strong>。這象徵外界宇宙氣場對您本命潛能與生活產生的直接共振：
+              </p>
+
+              {/* Planet Multi-select Buttons */}
+              <div className="space-y-2.5 p-4 bg-black/35 rounded-2xl border border-white/5 text-[11px] no-print">
+                <div>
+                  <span className="text-[#c5a059] font-bold block mb-1 text-[11px]">🪐 流年天體高亮與優先 (多選)</span>
+                  <div className="flex flex-wrap gap-1.5 font-mono">
+                    {filteredTransitPlanets.map(p => {
+                      const isSelected = selectedTransitPlanetIds.includes(p.id);
+                      return (
+                        <button
+                          key={`sel-tr-${p.id}`}
+                          onClick={() => {
+                            setSelectedTransitPlanetIds(prev =>
+                              prev.includes(p.id) ? prev.filter(id => id !== p.id) : [...prev, p.id]
+                            );
+                          }}
+                          className={`px-2.5 py-1 rounded text-[11px] transition-all flex items-center space-x-1 border cursor-pointer ${
+                            isSelected
+                              ? 'bg-[#c5a059]/20 border-[#c5a059] text-[#e5c583] font-bold shadow'
+                              : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'
+                          }`}
+                        >
+                          <span className="font-serif">{p.symbol}</span>
+                          <span>{p.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-[#c5a059] font-bold block mb-1 text-[11px]">🏡 本命天體高亮與優先 (多選)</span>
+                  <div className="flex flex-wrap gap-1.5 font-mono">
+                    {filteredNatalPlanets.map(p => {
+                      const isSelected = selectedNatalPlanetIds.includes(p.id);
+                      return (
+                        <button
+                          key={`sel-na-${p.id}`}
+                          onClick={() => {
+                            setSelectedNatalPlanetIds(prev =>
+                              prev.includes(p.id) ? prev.filter(id => id !== p.id) : [...prev, p.id]
+                            );
+                          }}
+                          className={`px-2.5 py-1 rounded text-[11px] transition-all flex items-center space-x-1 border cursor-pointer ${
+                            isSelected
+                              ? 'bg-[#c5a059]/20 border-[#c5a059] text-[#e5c583] font-bold shadow'
+                              : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'
+                          }`}
+                        >
+                          <span className="font-serif">{p.symbol}</span>
+                          <span>{p.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="text-[10px] text-slate-500 italic mt-1 leading-snug">
+                  * 點擊上述按鈕進行多選/反選。勾選星體將在下方報告中以<strong>古銅金黃色</strong>高亮，並排序最優先顯示。
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(() => {
+                  const sortedAspects = [...transitNatalAspects].sort((a, b) => {
+                    const isPlanetASelected = selectedTransitPlanetIds.some(id => {
+                      const p = filteredTransitPlanets.find(x => x.id === id);
+                      return p && a.planetA.includes(p.name);
+                    });
+                    const isPlanetBSelected = selectedNatalPlanetIds.some(id => {
+                      const p = filteredNatalPlanets.find(x => x.id === id);
+                      return p && a.planetB.includes(p.name);
+                    });
+
+                    const isPlanetASelectedB = selectedTransitPlanetIds.some(id => {
+                      const p = filteredTransitPlanets.find(x => x.id === id);
+                      return p && b.planetA.includes(p.name);
+                    });
+                    const isPlanetBSelectedB = selectedNatalPlanetIds.some(id => {
+                      const p = filteredNatalPlanets.find(x => x.id === id);
+                      return p && b.planetB.includes(p.name);
+                    });
+
+                    const getPriority = (isTransitSelected: boolean, isNatalSelected: boolean) => {
+                      if (isTransitSelected && isNatalSelected) return 1;
+                      if (isTransitSelected && !isNatalSelected) return 2;
+                      if (!isTransitSelected && isNatalSelected) return 3;
+                      return 4;
+                    };
+
+                    const prioA = getPriority(isPlanetASelected, isPlanetBSelected);
+                    const prioB = getPriority(isPlanetASelectedB, isPlanetBSelectedB);
+
+                    return prioA - prioB;
+                  });
+
+                  if (sortedAspects.length === 0) {
+                    return (
+                      <div className="col-span-full h-[120px] flex flex-col justify-center items-center text-center text-slate-500 italic text-xs">
+                        <p>當下暫無顯著合相與沖刑，天象安和無兆。</p>
+                      </div>
+                    );
+                  }
+
+                  const highlightNames: string[] = [];
+                  selectedTransitPlanetIds.forEach(id => {
+                    const p = filteredTransitPlanets.find(x => x.id === id);
+                    if (p) {
+                      highlightNames.push(`流年 ${p.name}`);
+                      highlightNames.push(p.name);
+                    }
+                  });
+                  selectedNatalPlanetIds.forEach(id => {
+                    const p = filteredNatalPlanets.find(x => x.id === id);
+                    if (p) {
+                      highlightNames.push(`本命 ${p.name}`);
+                      highlightNames.push(p.name);
+                    }
+                  });
+
+                  return sortedAspects.map((aspect, index) => {
+                    let badgeBg = 'bg-amber-500/10 border-amber-500/30 text-amber-400';
+                    let badgeTitle = '🌀 交匯相位';
+                    if (aspect.harmony === 'positive') {
+                      badgeBg = 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400';
+                      badgeTitle = '🍀 順流相 (吉)';
+                    } else if (aspect.harmony === 'challenging') {
+                      badgeBg = 'bg-red-500/10 border-red-500/20 text-red-400';
+                      badgeTitle = '⚠️ 考驗相 (凶)';
+                    }
+
+                    return (
+                      <div
+                        key={`transit-natal-asp-${index}`}
+                        className="p-4 bg-black/45 border border-white/5 rounded-2xl flex flex-col space-y-2.5 hover:border-[#c5a059]/20 transition-all shadow-inner"
+                      >
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs sm:text-sm font-bold text-slate-200 font-mono">
+                            {highlightText(aspect.planetA, highlightNames)} ✖ {highlightText(aspect.planetB, highlightNames)}
+                          </span>
+                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${badgeBg} whitespace-nowrap`}>
+                            {badgeTitle} • {aspect.name}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-350 leading-relaxed font-sans">
+                          {highlightText(aspect.description, highlightNames)} (精算相差: {aspect.orb.toFixed(2)}°)
+                        </p>
+                        {getPlanetAspectTransitGuide(aspect.planetA, aspect.planetB, aspect.harmony) && (
+                          <div className="p-2.5 bg-amber-950/20 rounded-xl border border-amber-500/20 text-slate-300 text-xs whitespace-pre-line leading-relaxed font-sans">
+                            {highlightText(getPlanetAspectTransitGuide(aspect.planetA, aspect.planetB, aspect.harmony), highlightNames)}
+                          </div>
+                        )}
+                        <div className="flex flex-col sm:flex-row justify-between text-[10px] text-slate-400 font-mono pt-2 border-t border-white/5 gap-1">
+                          {aspect.ingressTime && (
+                            <span className="flex items-center gap-1">🟢 進入相位：<strong className="text-[#e2ca9c]">{aspect.ingressTime}</strong></span>
+                          )}
+                          {aspect.egressTime && (
+                            <span className="flex items-center gap-1">🔴 離開相位：<strong className="text-[#e2ca9c]">{aspect.egressTime}</strong></span>
+                          )}
+                        </div>
+                        {aspect.futureAspects && aspect.futureAspects.length > 0 && (
+                          <div className="pt-2 border-t border-white/5 space-y-1.5">
+                            <span className="block text-[9px] font-bold text-[#e5c583]/80 uppercase tracking-wider">🌟 該配對未來三次特殊交會預測：</span>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 w-full text-[9px] font-mono text-slate-350">
+                              {aspect.futureAspects.map((fut, fIdx) => (
+                                <div key={`fut-asp-${index}-${fIdx}`} className="bg-white/[0.02] border border-white/5 rounded-lg p-2 flex flex-col justify-between hover:border-[#c5a059]/25 transition-all">
+                                  <span className="font-bold text-[#e2ca9c]">{fut.name}</span>
+                                  <span className="text-slate-400 mt-0.5 text-[8.5px]">{fut.time}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </div>
+          )}
+
+          {activeAspectTab === 'natal' && (
+            <div className="space-y-4 animate-fade-in">
+              <p className="text-xs sm:text-sm text-slate-400 leading-normal max-w-4xl">
+                列出您<strong>本命星盤內部（Natal Chart）</strong>天體之間形成的相位。這象徵您先天性格中不同力量的交織融合、天賦資源或內在心理張力摩擦：
+              </p>
+
+              {/* Planet Multi-select/Highlight for Natal */}
+              <div className="space-y-2.5 p-4 bg-black/35 rounded-2xl border border-white/5 text-[11px] no-print">
+                <div>
+                  <span className="text-[#c5a059] font-bold block mb-1 text-[11px]">🏡 本命天體過濾與優先級 (多選)</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {filteredNatalPlanets.map(p => {
+                      const isSelected = selectedNatalPlanetIds.includes(p.id);
+                      return (
+                        <button
+                          key={`natal-sel-${p.id}`}
+                          onClick={() => {
+                            setSelectedNatalPlanetIds(prev =>
+                              prev.includes(p.id) ? prev.filter(id => id !== p.id) : [...prev, p.id]
+                            );
+                          }}
+                          className={`px-2.5 py-1 rounded text-[11px] transition-all flex items-center space-x-1 border cursor-pointer ${
+                            isSelected
+                              ? 'bg-[#c5a059]/20 border-[#c5a059] text-[#e5c583] font-bold shadow'
+                              : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'
+                          }`}
+                        >
+                          <span className="font-serif">{p.symbol}</span>
+                          <span>{p.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="text-[10px] text-slate-500 italic mt-1 leading-snug">
+                  * 勾選的星體會在下方相位中排在最前方並以 <strong>古銅金黃色</strong> 高亮。
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(() => {
+                  const sortedAspects = [...natalNatalAspects].sort((a, b) => {
+                    const isPlanetASelected = selectedNatalPlanetIds.some(id => {
+                      const p = filteredNatalPlanets.find(x => x.id === id);
+                      return p && (a.planetA.includes(p.name) || a.planetB.includes(p.name));
+                    });
+                    const isPlanetBSelected = selectedNatalPlanetIds.some(id => {
+                      const p = filteredNatalPlanets.find(x => x.id === id);
+                      return p && (b.planetA.includes(p.name) || b.planetB.includes(p.name));
+                    });
+                    if (isPlanetASelected && !isPlanetBSelected) return -1;
+                    if (!isPlanetASelected && isPlanetBSelected) return 1;
+                    return 0;
+                  });
+
+                  if (sortedAspects.length === 0) {
+                    return (
+                      <div className="col-span-full h-[120px] flex flex-col justify-center items-center text-center text-slate-500 italic text-xs">
+                        <p>本命星盤盤內暫無顯著相位（設定範圍內）。</p>
+                      </div>
+                    );
+                  }
+
+                  const highlightNames: string[] = [];
+                  selectedNatalPlanetIds.forEach(id => {
+                    const p = filteredNatalPlanets.find(x => x.id === id);
+                    if (p) {
+                      highlightNames.push(p.name);
+                    }
+                  });
+
+                  return sortedAspects.map((aspect, index) => {
+                    let badgeBg = 'bg-amber-500/10 border-amber-500/30 text-amber-400';
+                    let badgeTitle = '🌀 本命相位';
+                    if (aspect.harmony === 'positive') {
+                      badgeBg = 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400';
+                      badgeTitle = '🍀 本命和諧相';
+                    } else if (aspect.harmony === 'challenging') {
+                      badgeBg = 'bg-red-500/10 border-red-500/20 text-red-400';
+                      badgeTitle = '⚠️ 本命挑戰相';
+                    }
+
+                    const natalAspectGuide = getNatalAspectGuide(aspect.planetA, aspect.planetB, aspect.harmony);
+
+                    return (
+                      <div
+                        key={`natal-natal-asp-${index}`}
+                        className="p-4 bg-black/45 border border-white/5 rounded-2xl flex flex-col space-y-2 hover:border-[#c5a059]/20 transition-all shadow-inner animate-fade-in"
+                      >
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs sm:text-sm font-bold text-slate-200 font-mono">
+                            {highlightText(aspect.planetA, highlightNames)} ✖ {highlightText(aspect.planetB, highlightNames)}
+                          </span>
+                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${badgeBg} whitespace-nowrap`}>
+                            {badgeTitle} • {aspect.name}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-350 leading-relaxed font-sans">
+                          {highlightText(aspect.description, highlightNames)} (精算誤差: {aspect.orb.toFixed(2)}°)
+                        </p>
+                        {natalAspectGuide && (
+                          <div className="p-2.5 bg-amber-950/20 rounded-xl border border-amber-500/20 text-slate-350 text-xs leading-relaxed font-sans mt-1">
+                            {highlightText(natalAspectGuide, highlightNames)}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </div>
+          )}
+
+          {activeAspectTab === 'transit' && (
+            <div className="space-y-4 animate-fade-in">
+              <p className="text-xs sm:text-sm text-slate-400 leading-normal max-w-4xl">
+                列出此刻<strong>流年天象星盤內部（Transit Chart）</strong>天體之間形成的相位。這象徵天空中集體意識的直接共振與當前大眾環境的流動氣場：
+              </p>
+
+              {/* Planet Multi-select/Highlight for Transit */}
+              <div className="space-y-2.5 p-4 bg-black/35 rounded-2xl border border-white/5 text-[11px] no-print">
+                <div>
+                  <span className="text-[#c5a059] font-bold block mb-1 text-[11px]">🪐 流年天體過濾與優先級 (多選)</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {filteredTransitPlanets.map(p => {
+                      const isSelected = selectedTransitPlanetIds.includes(p.id);
+                      return (
+                        <button
+                          key={`transit-sel-${p.id}`}
+                          onClick={() => {
+                            setSelectedTransitPlanetIds(prev =>
+                              prev.includes(p.id) ? prev.filter(id => id !== p.id) : [...prev, p.id]
+                            );
+                          }}
+                          className={`px-2.5 py-1 rounded text-[11px] transition-all flex items-center space-x-1 border cursor-pointer ${
+                            isSelected
+                              ? 'bg-[#c5a059]/20 border-[#c5a059] text-[#e5c583] font-bold shadow'
+                              : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'
+                          }`}
+                        >
+                          <span className="font-serif">{p.symbol}</span>
+                          <span>{p.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="text-[10px] text-slate-500 italic mt-1 leading-snug">
+                  * 勾選的星體會在下方相位中排在最前方並以 <strong>古銅金黃色</strong> 高亮。
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(() => {
+                  const sortedAspects = [...transitTransitAspects].sort((a, b) => {
+                    const isPlanetASelected = selectedTransitPlanetIds.some(id => {
+                      const p = filteredTransitPlanets.find(x => x.id === id);
+                      return p && (a.planetA.includes(p.name) || a.planetB.includes(p.name));
+                    });
+                    const isPlanetBSelected = selectedTransitPlanetIds.some(id => {
+                      const p = filteredTransitPlanets.find(x => x.id === id);
+                      return p && (b.planetA.includes(p.name) || b.planetB.includes(p.name));
+                    });
+                    if (isPlanetASelected && !isPlanetBSelected) return -1;
+                    if (!isPlanetASelected && isPlanetBSelected) return 1;
+                    return 0;
+                  });
+
+                  if (sortedAspects.length === 0) {
+                    return (
+                      <div className="col-span-full h-[120px] flex flex-col justify-center items-center text-center text-slate-500 italic text-xs">
+                        <p>天空中暫無顯著相位物像。大氣平穩安和。</p>
+                      </div>
+                    );
+                  }
+
+                  const highlightNames: string[] = [];
+                  selectedTransitPlanetIds.forEach(id => {
+                    const p = filteredTransitPlanets.find(x => x.id === id);
+                    if (p) {
+                      highlightNames.push(`流年 ${p.name}`);
+                      highlightNames.push(p.name);
+                    }
+                  });
+
+                  return sortedAspects.map((aspect, index) => {
+                    let badgeBg = 'bg-amber-500/10 border-amber-500/30 text-amber-400';
+                    let badgeTitle = '🌀 天象相位';
+                    if (aspect.harmony === 'positive') {
+                      badgeBg = 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400';
+                      badgeTitle = '🍀 天象和諧相';
+                    } else if (aspect.harmony === 'challenging') {
+                      badgeBg = 'bg-red-500/10 border-red-500/20 text-red-400';
+                      badgeTitle = '⚠️ 天象挑戰相';
+                    }
+
+                    const transitAspectGuide = getTransitAspectGuide(aspect.planetA, aspect.planetB, aspect.harmony);
+
+                    return (
+                      <div
+                        key={`transit-transit-asp-${index}`}
+                        className="p-4 bg-black/45 border border-white/5 rounded-2xl flex flex-col space-y-2.5 hover:border-[#c5a059]/20 transition-all shadow-inner animate-fade-in"
+                      >
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs sm:text-sm font-bold text-slate-200 font-mono">
+                            {highlightText(aspect.planetA, highlightNames)} ✖ {highlightText(aspect.planetB, highlightNames)}
+                          </span>
+                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${badgeBg} whitespace-nowrap`}>
+                            {badgeTitle} • {aspect.name}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-350 leading-relaxed font-sans">
+                          {highlightText(aspect.description, highlightNames)} (精算誤差: {aspect.orb.toFixed(2)}°)
+                        </p>
+                        {transitAspectGuide && (
+                          <div className="p-2.5 bg-amber-950/20 rounded-xl border border-amber-500/20 text-slate-350 text-xs leading-relaxed font-sans">
+                            {highlightText(transitAspectGuide, highlightNames)}
+                          </div>
+                        )}
+                        <div className="flex flex-col sm:flex-row justify-between text-[10px] text-slate-400 font-mono pt-2 border-t border-white/5 gap-1">
+                          {aspect.ingressTime && (
+                            <span className="flex items-center gap-1">🟢 進入相位：<strong className="text-[#e2ca9c]">{aspect.ingressTime}</strong></span>
+                          )}
+                          {aspect.egressTime && (
+                            <span className="flex items-center gap-1">🔴 離開相位：<strong className="text-[#e2ca9c]">{aspect.egressTime}</strong></span>
+                          )}
+                        </div>
+                        {aspect.futureAspects && aspect.futureAspects.length > 0 && (
+                          <div className="pt-2 border-t border-white/5 space-y-1.5">
+                            <span className="block text-[9px] font-bold text-[#e5c583]/80 uppercase tracking-wider">🌟 該配對未來三次特殊交會預測：</span>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 w-full text-[9px] font-mono text-slate-350">
+                              {aspect.futureAspects.map((fut, fIdx) => (
+                                <div key={`fut-asp-${index}-${fIdx}`} className="bg-white/[0.02] border border-white/5 rounded-lg p-2 flex flex-col justify-between hover:border-[#c5a059]/25 transition-all">
+                                  <span className="font-bold text-[#e2ca9c]">{fut.name}</span>
+                                  <span className="text-slate-400 mt-0.5 text-[8.5px]">{fut.time}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+
 
           {/* Divination Commentary / Notes Section */}
           <section className="no-print max-w-7xl w-full mx-auto">
