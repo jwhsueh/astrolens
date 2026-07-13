@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   calculateAstrology,
-  getPlanetSignInterpretation,
-  getPlanetHouseInterpretation,
   formatTimeRange,
   generatePredictiveReport,
   ZODIAC_SIGNS,
@@ -11,6 +9,12 @@ import {
   Aspect,
   PLANETS_METADATA
 } from './utils/astrology';
+import {
+  PLANET_SIGN_INTERPRETATIONS,
+  PLANET_HOUSE_INTERPRETATIONS,
+  getPlanetSignInterpretation,
+  getPlanetHouseInterpretation
+} from './utils/planetInterpretations';
 import { ALL_TAROT_CARDS, getTarotCardById } from './utils/tarot';
 import AstrologyWheel from './components/AstrologyWheel';
 import {
@@ -2677,10 +2681,14 @@ export default function App() {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                       {pred.sensitivePoints.map((pt, i) => (
-                        <div key={`sp-main-${i}`} className="bg-white/5 p-3 rounded-xl border border-white/5">
+                        <div key={`sp-main-${i}`} className="bg-white/5 p-3 rounded-xl border border-white/5 space-y-1.5">
                           <span className="font-bold text-slate-200 block text-xs">{pt.symbol} {pt.name}</span>
-                          <div className="text-[11px] text-slate-400 font-mono mt-1">
+                          <div className="text-[11px] text-[#e5c583] font-mono">
                             {pt.sign} {pt.degree.toFixed(1)}° (第 {pt.house} 宮)
+                          </div>
+                          <div className="text-[10px] text-slate-300 leading-snug pt-1 border-t border-white/5 space-y-1">
+                            <p className="text-amber-200/90">🔹 {getPlanetSignInterpretation(pt.name, pt.sign)}</p>
+                            <p className="text-emerald-200/90">🔸 {getPlanetHouseInterpretation(pt.name, pt.house)}</p>
                           </div>
                         </div>
                       ))}
@@ -2788,6 +2796,8 @@ export default function App() {
                       </div>
                     </div>
                   </div>
+
+
                 </div>
               );
             })()}
@@ -2941,6 +2951,60 @@ export default function App() {
                       <div key={`p-main-2-${idx}`} className="flex justify-between items-center bg-white/5 p-2 rounded">
                         <span className="font-bold text-slate-200">{p.symbol} {p.name}</span>
                         <span className="text-slate-400 text-right">{p.meaning}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Planet x Sign & Planet x House Full Reference Guide */}
+            <div className="space-y-3 pt-6 border-t border-[#c5a059]/20">
+              <h3 className="font-extrabold text-[#e5c583] flex items-center gap-2 text-sm border-b border-[#c5a059]/20 pb-2">
+                <span>📖</span><span>行星 × 星座 與 行星 × 宮位 完整解讀對照資料庫 (Reference Guide)</span>
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                占星解讀中，行星落入不同星座與宮位所代表的核心涵義與生命課題對照基準：
+              </p>
+              
+              <div className="space-y-6 pt-2">
+                <div>
+                  <h4 className="text-xs font-bold text-amber-300 uppercase tracking-wider mb-3">🌟 第一部：行星 × 星座對照 (Planet × Sign)</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {PLANET_SIGN_INTERPRETATIONS.map((ps, idx) => (
+                      <div key={`psi-enc-${idx}`} className="bg-white/5 p-3.5 rounded-xl border border-white/5 space-y-2">
+                        <div className="font-bold text-slate-200 text-xs flex items-center gap-2 border-b border-white/5 pb-1.5">
+                          <span className="text-base text-[#e5c583]">{ps.symbol}</span>
+                          <span className="text-[#e5c583]">{ps.planet} × {ps.theme}</span>
+                        </div>
+                        <ul className="space-y-1.5 text-[11px] text-slate-300 pl-1">
+                          {Object.entries(ps.signs).map(([signName, desc], sIdx) => (
+                            <li key={`s-enc-${sIdx}`} className="leading-snug bg-black/20 p-1.5 rounded-lg border border-white/5">
+                              <strong className="text-amber-300 font-semibold">{signName}</strong>: {desc}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/10">
+                  <h4 className="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-3">🏛️ 第二部：行星 × 宮位對照 (Planet × House)</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {PLANET_HOUSE_INTERPRETATIONS.map((ph, idx) => (
+                      <div key={`phi-enc-${idx}`} className="bg-white/5 p-3.5 rounded-xl border border-white/5 space-y-2">
+                        <div className="font-bold text-slate-200 text-xs flex items-center gap-2 border-b border-white/5 pb-1.5">
+                          <span className="text-base text-emerald-400">{ph.symbol}</span>
+                          <span className="text-emerald-300">{ph.planet} × {ph.theme}</span>
+                        </div>
+                        <ul className="space-y-1.5 text-[11px] text-slate-300 pl-1">
+                          {Object.entries(ph.houses).map(([hNum, desc], hIdx) => (
+                            <li key={`h-enc-${hIdx}`} className="leading-snug bg-black/20 p-1.5 rounded-lg border border-white/5">
+                              <strong className="text-emerald-300 font-semibold">第 {hNum} 宮</strong>: {desc}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     ))}
                   </div>

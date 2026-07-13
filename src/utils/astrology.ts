@@ -771,3 +771,4 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
   };
 }
 
+
