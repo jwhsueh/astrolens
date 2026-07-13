@@ -2854,6 +2854,9 @@ export default function App() {
                             <span>{r.symbol} {r.type}</span>
                             <span className="text-[#e5c583] font-mono">{r.period}</span>
                           </div>
+                          <div className="text-[11px] text-amber-200 font-semibold bg-amber-950/30 px-2 py-1 rounded border border-amber-500/20 inline-block">
+                            📍 逆行通行星座與宮位：{r.sign}（第 {r.house} 宮）
+                          </div>
                           <div className="p-2 bg-black/40 rounded-lg border border-white/5 font-mono text-xs text-amber-300 whitespace-pre-line">
                             📅 影響時段：{r.exactDates}
                           </div>

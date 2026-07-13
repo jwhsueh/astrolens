@@ -558,6 +558,8 @@ export interface AstrologicalPredictionReport {
     stationPoint: string;
     type: string;
     description: string;
+    sign: string;
+    house: number;
   }[];
   monthlyTimeline: MonthlyForecastItem[];
   lunarNodes: {
@@ -720,11 +722,35 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
     {
       planet: '水星',
       symbol: '☿',
-      period: '每年 3 次 (每次約 3 週)',
-      exactDates: `第1次：${transitYear}/02/26 ~ ${transitYear}/03/20\n第2次：${transitYear}/06/29 ~ ${transitYear}/07/23\n第3次：${transitYear}/10/24 ~ ${transitYear}/11/13`,
+      period: '第1次逆行（春季）',
+      exactDates: `${transitYear}年02月26日 ~ ${transitYear}年03月20日`,
       stationPoint: `精確轉向停滯期（前後各 3 天影響最強）`,
-      type: '水星逆行 (溝通、合約、交通、電子設備)',
-      description: '建議重要簽約與採購避開此期，利用「Re-」回頭檢視、修改企劃、與舊人重逢。'
+      type: '水星逆行第1次 (溝通、合約、交通)',
+      description: '建議重要簽約與採購避開此期，利用「Re-」回頭檢視、修改企劃、與舊人重逢。',
+      sign: ZODIAC_SIGNS[(srSunHouse + 0) % 12].name,
+      house: srSunHouse
+    },
+    {
+      planet: '水星',
+      symbol: '☿',
+      period: '第2次逆行（夏季）',
+      exactDates: `${transitYear}年06月29日 ~ ${transitYear}年07月23日`,
+      stationPoint: `精確轉向停滯期（前後各 3 天影響最強）`,
+      type: '水星逆行第2次 (交通、旅遊、決策重審)',
+      description: '出行與溝通易有延誤，適合深度複盤日常工作流程與合約細節。',
+      sign: ZODIAC_SIGNS[(srSunHouse + 4) % 12].name,
+      house: ((srSunHouse + 3) % 12) + 1
+    },
+    {
+      planet: '水星',
+      symbol: '☿',
+      period: '第3次逆行（秋季）',
+      exactDates: `${transitYear}年10月24日 ~ ${transitYear}年11月13日`,
+      stationPoint: `精確轉向停滯期（前後各 3 天影響最強）`,
+      type: '水星逆行第3次 (財務、合作、舊案覆核)',
+      description: '人際與財務交接易有反覆，保持耐心核對帳目與重要資訊。',
+      sign: ZODIAC_SIGNS[(srSunHouse + 8) % 12].name,
+      house: ((srSunHouse + 6) % 12) + 1
     },
     {
       planet: '火星 / 金星',
@@ -733,7 +759,9 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
       exactDates: `火星逆行：${transitYear - 1}年12月 ~ ${transitYear}年02月24日`,
       stationPoint: `火星停滯點：${transitYear}年02月下旬（行動力內轉與慾望重整）`,
       type: '行動與情感價值重審',
-      description: '考驗行動力受阻、熱情內轉或價值觀的深層變革。'
+      description: '考驗行動力受阻、熱情內轉或價值觀的深層變革。',
+      sign: ZODIAC_SIGNS[(srSunHouse + 2) % 12].name,
+      house: ((srSunHouse + 1) % 12) + 1
     },
     {
       planet: '木星',
@@ -742,7 +770,9 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
       exactDates: `${transitYear}年11月上旬 ~ ${transitYear + 1}年3月`,
       stationPoint: `停滯點：${transitYear}年11月（擴張與信念的內部沈澱）`,
       type: '木星逆行 (心智哲學與機會重整)',
-      description: '外行星三次觸發中第一波，檢視過去一年獲得的機會與擴張是否過度。'
+      description: '外行星三次觸發中第一波，檢視過去一年獲得的機會與擴張是否過度。',
+      sign: ZODIAC_SIGNS[(srSunHouse + 7) % 12].name,
+      house: ((srSunHouse + 4) % 12) + 1
     },
     {
       planet: '土星',
@@ -751,7 +781,9 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
       exactDates: `${transitYear}年07月中旬 ~ ${transitYear}年11月下旬`,
       stationPoint: `停滯點：${transitYear}年07月中與11月下旬（結構、責任與壓力測試）`,
       type: '土星逆行 (責任與現實考驗的三次觸發)',
-      description: '對本命敏感點形成三部曲（順行碰 ➔ 逆行碰 ➔ 順行定案），經歷結構重組。'
+      description: '對本命敏感點形成三部曲（順行碰 ➔ 逆行碰 ➔ 順行定案），經歷結構重組。',
+      sign: ZODIAC_SIGNS[(srSunHouse + 9) % 12].name,
+      house: ((srSunHouse + 6) % 12) + 1
     },
     {
       planet: '天王星 / 海王星 / 冥王星',
@@ -760,7 +792,9 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
       exactDates: `冥王星：${transitYear}年05月 ~ ${transitYear}年10月\n海王星：${transitYear}年06月 ~ ${transitYear}年11月\n天王星：${transitYear}年09月 ~ ${transitYear + 1}年01月`,
       stationPoint: `長期世代轉化停滯點（年度心靈與體制轉折關鍵週）`,
       type: '遠行星集體潛意識與世代變革',
-      description: '流年冥王星在本命宮位長期停留並多次逆行折返，促成數年長期的深層重整。'
+      description: '流年冥王星在本命宮位長期停留並多次逆行折返，促成數年長期的深層重整。',
+      sign: ZODIAC_SIGNS[(srSunHouse + 10) % 12].name,
+      house: ((srSunHouse + 9) % 12) + 1
     }
   ];
 
