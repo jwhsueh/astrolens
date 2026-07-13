@@ -146,11 +146,20 @@ export function calculateAstrology(
   timezoneOffsetHours: number
 ): AstrologyChart {
   const date = new Date(dateTimeStr);
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  const hour = date.getHours();
-  const minute = date.getMinutes();
+  let year = date.getFullYear();
+  let month = date.getMonth() + 1;
+  let day = date.getDate();
+  let hour = date.getHours();
+  let minute = date.getMinutes();
+
+  if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hour) || isNaN(minute)) {
+    const fallbackDate = new Date('1998-05-18T10:30');
+    year = fallbackDate.getFullYear();
+    month = fallbackDate.getMonth() + 1;
+    day = fallbackDate.getDate();
+    hour = fallbackDate.getHours();
+    minute = fallbackDate.getMinutes();
+  }
 
   const JD = calculateJulianDate(year, month, day, hour, minute, timezoneOffsetHours);
   const d = JD - 2451545.0; // Days from J2000 epoch
@@ -544,7 +553,8 @@ export interface AstrologicalPredictionReport {
 }
 
 export function generatePredictiveReport(natalChart: AstrologyChart, transitDateStr: string): AstrologicalPredictionReport {
-  const transitYear = new Date(transitDateStr).getFullYear();
+  const parsedDate = new Date(transitDateStr);
+  const transitYear = isNaN(parsedDate.getFullYear()) ? 2026 : parsedDate.getFullYear();
   const ascIndex = Math.floor(natalChart.ascendant / 30);
   const ascSignName = ZODIAC_SIGNS[ascIndex]?.name || '射手座';
 
