@@ -4,6 +4,7 @@ import {
   getPlanetSignInterpretation,
   getPlanetHouseInterpretation,
   formatTimeRange,
+  generatePredictiveReport,
   ZODIAC_SIGNS,
   PlanetPosition,
   HouseData,
@@ -260,6 +261,7 @@ export default function App() {
   const [isInterpretExpanded, setIsInterpretExpanded] = useState<boolean>(true);
   const [planetDetailTab, setPlanetDetailTab] = useState<'interpret' | 'future'>('interpret');
   const [activeAspectTab, setActiveAspectTab] = useState<'double' | 'natal' | 'transit'>('double');
+  const [activeMainView, setActiveMainView] = useState<'chart' | 'forecast' | 'encyclopedia'>('chart');
 
   // 5. Divination Notes Remark State
   const [notes, setNotes] = useState<string>(() => {
@@ -1178,8 +1180,50 @@ export default function App() {
         </div>
       </header>
 
+      {/* Top-Level Mode Selector */}
+      <nav className="max-w-7xl w-full mx-auto px-4 lg:px-6 pt-4 no-print">
+        <div className="flex border border-[#c5a059]/25 text-xs bg-black/50 backdrop-blur-md rounded-2xl p-1.5 gap-2 shadow-xl">
+          <button
+            onClick={() => setActiveMainView('chart')}
+            className={`flex-1 py-2.5 text-center font-bold tracking-wider cursor-pointer transition-all rounded-xl flex items-center justify-center space-x-2 ${
+              activeMainView === 'chart'
+                ? 'text-[#e5c583] bg-[#c5a059]/20 shadow border border-[#c5a059]/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+            }`}
+          >
+            <span>🌌</span>
+            <span>星盤對照與相位報告</span>
+          </button>
+          <button
+            onClick={() => setActiveMainView('forecast')}
+            className={`flex-1 py-2.5 text-center font-bold tracking-wider cursor-pointer transition-all rounded-xl flex items-center justify-center space-x-2 ${
+              activeMainView === 'forecast'
+                ? 'text-[#e5c583] bg-[#c5a059]/20 shadow border border-[#c5a059]/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+            }`}
+          >
+            <span>🔮</span>
+            <span>專業流年報告</span>
+          </button>
+          <button
+            onClick={() => setActiveMainView('encyclopedia')}
+            className={`flex-1 py-2.5 text-center font-bold tracking-wider cursor-pointer transition-all rounded-xl flex items-center justify-center space-x-2 ${
+              activeMainView === 'encyclopedia'
+                ? 'text-[#e5c583] bg-[#c5a059]/20 shadow border border-[#c5a059]/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+            }`}
+          >
+            <span>📖</span>
+            <span>占星基礎百科</span>
+          </button>
+        </div>
+      </nav>
+
       {/* 2. Main Content Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 no-print">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 no-print space-y-6">
+        {activeMainView === 'chart' && (
+          <div className="space-y-6 w-full animate-fade-in">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
         
         {/* LEFT COLUMN: Controls & Input Parameters (Span 4) */}
         <section className="lg:col-span-4 space-y-6 flex flex-col">
@@ -1973,15 +2017,13 @@ export default function App() {
 
             </div>
           </div>
-
         </section>
-
-      </main>
+      </div>
 
       {/* =========================================================================
                      NEW SECTION: 12 HOUSES PLANET MAPPING & CRITICAL ASPECTS
           ========================================================================= */}
-      <section className="no-print max-w-7xl w-full mx-auto p-4 lg:p-6 space-y-6">
+      <div className="space-y-6 w-full">
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
@@ -2135,7 +2177,7 @@ export default function App() {
             </div>
 
             {/* Category Tabs */}
-            <div className="flex border border-white/10 text-[10.5px] bg-black/35 rounded-xl p-1 gap-1">
+            <div className="flex border border-white/10 text-[10px] bg-black/35 rounded-xl p-1 gap-1">
               <button
                 onClick={() => setActiveAspectTab('double')}
                 className={`flex-1 py-1.5 text-center font-bold tracking-wider cursor-pointer transition-all rounded-lg ${
@@ -2583,34 +2625,331 @@ export default function App() {
               </div>
             )}
           </div>
-
         </div>
+      </div>
 
-      </section>
+          {/* Divination Commentary / Notes Section */}
+          <section className="no-print max-w-7xl w-full mx-auto">
+            <div className="glass rounded-3xl p-6 shadow-xl space-y-4 border border-[#c5a059]/20">
+              <div className="flex items-center space-x-2 border-b border-[#c5a059]/20 pb-3">
+                <FileText className="w-5.5 h-5.5 text-[#c5a059]" />
+                <h2 className="text-sm font-semibold tracking-wide text-slate-200 uppercase tracking-widest serif">
+                  🔮 占卜解說與自訂備註 / Commentary && Custom Remarks
+                </h2>
+              </div>
+              <p className="text-xs text-slate-400 leading-normal">
+                在此輸入占卜鑑定解說或是補充文字。此處填寫的客製化備忘錄，將會同步呈現在您所下載的 <strong>HTML 報告書</strong> 與列印底層區域，助您生成專業權威的星象整合報告書：
+              </p>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="w-full bg-black/45 border border-white/10 rounded-2xl p-4 text-xs text-slate-200 focus:outline-none focus:border-[#c5a059] resize-none font-sans min-h-[160px] leading-relaxed shadow-inner"
+                placeholder="請輸入占卜解說備註..."
+                id="notes-textarea"
+              />
+            </div>
+          </section>
+        </div>
+      )}
 
-      {/* =========================================================================
-                     NEW SECTION: DIVINATION COMMENTARY / NOTES SECTION (AT THE VERY BOTTOM)
-          ========================================================================= */}
-      <section className="no-print max-w-7xl w-full mx-auto p-4 lg:p-6">
-        <div className="glass rounded-3xl p-6 shadow-xl space-y-4 border border-[#c5a059]/20">
-          <div className="flex items-center space-x-2 border-b border-[#c5a059]/20 pb-3">
-            <FileText className="w-5.5 h-5.5 text-[#c5a059]" />
-            <h2 className="text-sm font-semibold tracking-wide text-slate-200 uppercase tracking-widest serif">
-              🔮 占卜解說與自訂備註 / Commentary && Custom Remarks
-            </h2>
+        {activeMainView === 'forecast' && (
+          <div className="glass rounded-3xl p-6 lg:p-8 border border-[#c5a059]/25 shadow-2xl space-y-6 animate-fade-in max-w-5xl mx-auto w-full">
+            <div className="flex items-center space-x-3 border-b border-[#c5a059]/20 pb-4">
+              <span className="text-2xl">🔮</span>
+              <div>
+                <h2 className="text-lg font-bold text-[#e5c583] tracking-wide serif">專業流年報告 (六步驟工作流程)</h2>
+                <p className="text-xs text-slate-400">依據專業占星流程（本命基準 ➔ 太陽回歸 ➔ 日月蝕 ➔ 逐月運勢 ➔ 逆行修正 ➔ 交叉驗證），並同時參照主命星、各宮位與各星座象徵意義：</p>
+              </div>
+            </div>
+
+            {(() => {
+              const pred = generatePredictiveReport(natalChart, transitDate);
+              return (
+                <div className="space-y-6">
+                  {/* Step 1 */}
+                  <div className="p-4 bg-black/45 border border-white/10 rounded-2xl space-y-3">
+                    <h3 className="font-extrabold text-[#e5c583] flex items-center gap-2 text-sm">
+                      <span>1️⃣</span><span>本命敏感點基準與主命星 (Sensitive Points & Ruling Planet)</span>
+                    </h3>
+                    <div className="p-3 bg-[#c5a059]/10 rounded-xl border border-[#c5a059]/20 text-xs space-y-1.5">
+                      <strong className="text-[#e5c583] block text-sm">⭐ 個人命主星 (Ruling Planet)：{pred.solarReturn.rulingPlanet}</strong>
+                      <p className="text-slate-300 leading-relaxed">{pred.solarReturn.rulingPlanetMeaning}</p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                      {pred.sensitivePoints.map((pt, i) => (
+                        <div key={`sp-main-${i}`} className="bg-white/5 p-3 rounded-xl border border-white/5">
+                          <span className="font-bold text-slate-200 block text-xs">{pt.symbol} {pt.name}</span>
+                          <div className="text-[11px] text-slate-400 font-mono mt-1">
+                            {pt.sign} {pt.degree.toFixed(1)}° (第 {pt.house} 宮)
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Step 2 */}
+                  <div className="p-4 bg-black/45 border border-white/10 rounded-2xl space-y-3">
+                    <h3 className="font-extrabold text-[#e5c583] flex items-center gap-2 text-sm">
+                      <span>2️⃣</span><span>太陽回歸盤年運主題 ({pred.solarReturn.year})</span>
+                    </h3>
+                    <p className="text-slate-300 leading-relaxed text-xs font-sans">
+                      {pred.solarReturn.description}
+                    </p>
+                    <div className="p-3 bg-[#c5a059]/10 rounded-xl border border-[#c5a059]/20 text-xs font-bold text-[#e5c583]">
+                      年度核心舞台：{pred.solarReturn.annualTheme}
+                    </div>
+                  </div>
+
+                  {/* Step 3 */}
+                  <div className="p-4 bg-black/45 border border-white/10 rounded-2xl space-y-3">
+                    <h3 className="font-extrabold text-[#e5c583] flex items-center gap-2 text-sm">
+                      <span>3️⃣</span><span>日月蝕轉折點 (Eclipses)</span>
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {pred.eclipses.map((e, idx) => (
+                        <div key={`ec-main-${idx}`} className="p-3 bg-white/5 rounded-xl border border-white/5 space-y-1.5">
+                          <div className="flex justify-between font-bold text-slate-200 text-xs">
+                            <span>{e.type}</span>
+                            <span className="text-[#e5c583] font-mono">{e.date}</span>
+                          </div>
+                          <p className="text-xs text-slate-400">
+                            落入第 {e.house} 宮 ({e.sign} {e.degree}°) ➔ {e.meaning}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Step 4 */}
+                  <div className="p-4 bg-black/45 border border-white/10 rounded-2xl space-y-3">
+                    <h3 className="font-extrabold text-[#e5c583] flex items-center gap-2 text-sm">
+                      <span>4️⃣</span><span>逐月運勢圖與熱區 (Monthly Heatmap)</span>
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                      {pred.monthlyTimeline.map(m => (
+                        <div key={`m-main-${m.month}`} className={`p-3 rounded-xl border text-xs flex flex-col justify-between space-y-2 ${m.intensity === 'high' ? 'bg-amber-500/10 border-amber-500/30 text-amber-300' : 'bg-white/5 border-white/5 text-slate-300'}`}>
+                          <div className="flex justify-between items-center font-bold">
+                            <span>{m.monthName}</span>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${m.intensity === 'high' ? 'bg-amber-500/20 text-amber-200' : 'bg-white/10 text-slate-400'}`}>
+                              {m.intensity === 'high' ? '🔥 事件熱區' : '平穩期'}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-400 leading-snug">{m.theme}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Step 5 */}
+                  <div className="p-4 bg-black/45 border border-white/10 rounded-2xl space-y-3">
+                    <h3 className="font-extrabold text-[#e5c583] flex items-center gap-2 text-sm">
+                      <span>5️⃣</span><span>逆行與停滯點精確影響時間 (Retrogrades & Exact Timeframes)</span>
+                    </h3>
+                    <div className="space-y-3">
+                      {pred.retrogrades.map((r, idx) => (
+                        <div key={`ret-main-${idx}`} className="p-3.5 bg-white/5 rounded-xl border border-white/5 text-xs space-y-1.5">
+                          <div className="flex justify-between font-bold text-slate-200">
+                            <span>{r.symbol} {r.type}</span>
+                            <span className="text-[#e5c583] font-mono">{r.period}</span>
+                          </div>
+                          <div className="p-2 bg-black/40 rounded-lg border border-white/5 font-mono text-xs text-amber-300 whitespace-pre-line">
+                            📅 影響時段：{r.exactDates}
+                          </div>
+                          <div className="text-xs text-emerald-400 font-medium">
+                            ⚡ {r.stationPoint}
+                          </div>
+                          <p className="text-slate-400 leading-relaxed">{r.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Step 6 */}
+                  <div className="p-4 bg-black/45 border border-white/10 rounded-2xl space-y-3">
+                    <h3 className="font-extrabold text-[#e5c583] flex items-center gap-2 text-sm">
+                      <span>6️⃣</span><span>交叉驗證與輸出 (Scoring Conclusion)</span>
+                    </h3>
+                    <div className="space-y-3 text-xs">
+                      <div>
+                        <strong className="text-emerald-400 block mb-1 text-sm">✨ 全年最高權重主要議題 (三層疊加全中)：</strong>
+                        <ul className="list-disc pl-5 space-y-1 text-slate-300">
+                          {pred.scoringConclusion.majorThemes.map((thm, i) => (
+                            <li key={`maj-main-${i}`}>{thm}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="pt-2 border-t border-white/5">
+                        <strong className="text-amber-400 block mb-1 text-sm">🌟 次要調整與轉折：</strong>
+                        <ul className="list-disc pl-5 space-y-1 text-slate-300">
+                          {pred.scoringConclusion.secondaryThemes.map((thm, i) => (
+                            <li key={`sec-main-${i}`}>{thm}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
-          <p className="text-xs text-slate-400 leading-normal">
-            在此輸入占卜鑑定解說或是補充文字。此處填寫的客製化備忘錄，將會同步呈現在您所下載的 <strong>HTML 報告書</strong> 與列印底層區域，助您生成專業權威的星象整合報告書：
-          </p>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            className="w-full bg-black/45 border border-white/10 rounded-2xl p-4 text-xs text-slate-200 focus:outline-none focus:border-[#c5a059] resize-none font-sans min-h-[160px] leading-relaxed shadow-inner"
-            placeholder="請輸入占卜解說備註..."
-            id="notes-textarea"
-          />
-        </div>
-      </section>
+        )}
+
+        {activeMainView === 'encyclopedia' && (
+          <div className="glass rounded-3xl p-6 lg:p-8 border border-[#c5a059]/25 shadow-2xl space-y-6 animate-fade-in max-w-5xl mx-auto w-full">
+            <div className="flex items-center space-x-3 border-b border-[#c5a059]/20 pb-4">
+              <span className="text-2xl">📖</span>
+              <div>
+                <h2 className="text-lg font-bold text-[#e5c583] tracking-wide serif">占星基礎百科與對照表</h2>
+                <p className="text-xs text-slate-400">本占星百科提供完整的基礎對照資訊，包含十二星座、元素與模式分類軸、十二宮位及其自然黃道對應與角宮/續宮/降宮分類，以及各行星之核心涵義與週期：</p>
+              </div>
+            </div>
+
+            {/* 1. Zodiac Signs Table */}
+            <div className="space-y-3">
+              <h3 className="font-extrabold text-[#e5c583] flex items-center gap-2 text-sm border-b border-[#c5a059]/20 pb-2">
+                <span>♈</span><span>十二星座與分類軸 (12 Zodiac Signs & Axes)</span>
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left border-collapse">
+                  <thead>
+                    <tr className="bg-black/60 text-[#c5a059] border-b border-white/10">
+                      <th className="p-2.5">星座</th>
+                      <th className="p-2.5">日期區間</th>
+                      <th className="p-2.5">元素</th>
+                      <th className="p-2.5">模式</th>
+                      <th className="p-2.5">守護星</th>
+                      <th className="p-2.5">核心關鍵字</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {[
+                      { symbol: '♈', name: '牡羊座', date: '3/21–4/19', element: '火', modality: '開創', ruler: '火星', keywords: '行動、開拓、直接、衝勁、自我優先' },
+                      { symbol: '♉', name: '金牛座', date: '4/20–5/20', element: '土', modality: '固定', ruler: '金星', keywords: '穩定、感官、累積、固執、重視資源' },
+                      { symbol: '♊', name: '雙子座', date: '5/21–6/21', element: '風', modality: '變動', ruler: '水星', keywords: '溝通、好奇、多元、機智、易分心' },
+                      { symbol: '♋', name: '巨蟹座', date: '6/22–7/22', element: '水', modality: '開創', ruler: '月亮', keywords: '情感、照顧、家庭、防衛、念舊' },
+                      { symbol: '♌', name: '獅子座', date: '7/23–8/22', element: '火', modality: '固定', ruler: '太陽', keywords: '表現、尊嚴、創造、慷慨、需要被看見' },
+                      { symbol: '♍', name: '處女座', date: '8/23–9/22', element: '土', modality: '變動', ruler: '水星', keywords: '分析、精確、服務、挑剔、追求完善' },
+                      { symbol: '♎', name: '天秤座', date: '9/23–10/23', element: '風', modality: '開創', ruler: '金星', keywords: '平衡、關係、美感、外交、猶豫不決' },
+                      { symbol: '♏', name: '天蠍座', date: '10/24–11/22', element: '水', modality: '固定', ruler: '火星/冥王星', keywords: '深度、洞察、掌控、轉化、愛恨分明' },
+                      { symbol: '♐', name: '射手座', date: '11/23–12/21', element: '火', modality: '變動', ruler: '木星', keywords: '自由、探索、信念、樂觀、直言' },
+                      { symbol: '♑', name: '摩羯座', date: '12/22–1/19', element: '土', modality: '開創', ruler: '土星', keywords: '責任、目標、紀律、務實、大器晚成' },
+                      { symbol: '♒', name: '水瓶座', date: '1/20–2/18', element: '風', modality: '固定', ruler: '土星/天王星', keywords: '獨立、革新、理性、疏離、人道理想' },
+                      { symbol: '♓', name: '雙魚座', date: '2/19–3/20', element: '水', modality: '變動', ruler: '木星/海王星', keywords: '感性、想像、慈悲、逃避、界線模糊' }
+                    ].map((z, i) => (
+                      <tr key={`enc-main-z-${i}`} className="hover:bg-white/5">
+                        <td className="p-2.5 font-bold text-slate-200">{z.symbol} {z.name}</td>
+                        <td className="p-2.5 font-mono text-slate-400">{z.date}</td>
+                        <td className="p-2.5 text-amber-300 font-semibold">{z.element}</td>
+                        <td className="p-2.5 text-slate-300">{z.modality}</td>
+                        <td className="p-2.5 text-slate-300">{z.ruler}</td>
+                        <td className="p-2.5 text-slate-400">{z.keywords}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="bg-black/40 p-4 rounded-xl border border-white/5 space-y-2 text-xs">
+                <span className="font-bold text-[#e5c583] block">💡 輔助記憶分類軸：</span>
+                <p className="text-slate-300"><strong>四元素 (能量性質)：</strong>火象(牡羊/獅子/射手)=意志與行動；土象(金牛/處女/摩羯)=實際與物質；風象(雙子/天秤/水瓶)=思考與交流；水象(巨蟹/天蠍/雙魚)=情感與直覺。</p>
+                <p className="text-slate-300"><strong>三模式 (行動方式)：</strong>開創(牡羊/巨蟹/天秤/摩羯)=發起者，擅長開始；固定(金牛/獅子/天蠍/水瓶)=維持者，擅長堅持；變動(雙子/處女/射手/雙魚)=調整者，擅長應變。</p>
+              </div>
+            </div>
+
+            {/* 2. Houses Table */}
+            <div className="space-y-3 pt-4">
+              <h3 className="font-extrabold text-[#e5c583] flex items-center gap-2 text-sm border-b border-[#c5a059]/20 pb-2">
+                <span>🏛️</span><span>十二宮位與自然黃道 (12 Houses & Natural Zodiac)</span>
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left border-collapse">
+                  <thead>
+                    <tr className="bg-black/60 text-[#c5a059] border-b border-white/10">
+                      <th className="p-2.5">宮位</th>
+                      <th className="p-2.5">傳統名稱</th>
+                      <th className="p-2.5">生活領域</th>
+                      <th className="p-2.5">對應星座</th>
+                      <th className="p-2.5">宮位分類</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {[
+                      { house: '第1宮', name: '命宮', domain: '自我、外貌、性格門面、人生方向、身體', sign: '牡羊', cat: '角宮 (最強)' },
+                      { house: '第2宮', name: '財帛宮', domain: '金錢、財產、賺錢能力、自我價值、天賦', sign: '金牛', cat: '續宮 (鞏固)' },
+                      { house: '第3宮', name: '兄弟宮', domain: '溝通、基礎學習、短途移動、手足、鄰里', sign: '雙子', cat: '降宮 (流通)' },
+                      { house: '第4宮', name: '田宅宮', domain: '家庭、父母、房產、根源、內在安全感', sign: '巨蟹', cat: '角宮 (最強)' },
+                      { house: '第5宮', name: '子女宮', domain: '創造、戀愛、子女、娛樂、投機、表演', sign: '獅子', cat: '續宮 (鞏固)' },
+                      { house: '第6宮', name: '奴僕宮', domain: '日常工作、健康、例行事務、服務、寵物', sign: '處女', cat: '降宮 (流通)' },
+                      { house: '第7宮', name: '夫妻宮', domain: '婚姻、合夥、一對一關係、公開的對手', sign: '天秤', cat: '角宮 (最強)' },
+                      { house: '第8宮', name: '疾厄宮', domain: '共享資源、他人之財、親密性、危機轉化', sign: '天蠍', cat: '續宮 (鞏固)' },
+                      { house: '第9宮', name: '遷移宮', domain: '高等教育、信仰哲學、遠行、國外、出版', sign: '射手', cat: '降宮 (流通)' },
+                      { house: '第10宮', name: '官祿宮', domain: '事業、地位、名聲、成就頂點、權威', sign: '摩羯', cat: '角宮 (最強)' },
+                      { house: '第11宮', name: '福德宮', domain: '朋友、社群、人脈、理想、長期目標', sign: '水瓶', cat: '續宮 (鞏固)' },
+                      { house: '第12宮', name: '玄祕宮', domain: '潛意識、退隱、隱藏事務、犧牲、消融', sign: '雙魚', cat: '降宮 (流通)' }
+                    ].map((h, i) => (
+                      <tr key={`enc-main-h-${i}`} className="hover:bg-white/5">
+                        <td className="p-2.5 font-bold text-slate-200">{h.house}</td>
+                        <td className="p-2.5 text-amber-300 font-semibold">{h.name}</td>
+                        <td className="p-2.5 text-slate-300">{h.domain}</td>
+                        <td className="p-2.5 text-slate-400">{h.sign}</td>
+                        <td className="p-2.5 text-slate-400 font-mono">{h.cat}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="bg-black/40 p-4 rounded-xl border border-white/5 text-xs">
+                <span className="font-bold text-[#e5c583] block mb-1">💡 自然黃道與宮位分類說明：</span>
+                <p className="text-slate-300">宮位與星座有天然對應（第1宮≈牡羊、第2宮≈金牛……），宮位主題就是對應星座關鍵字的「場所化」。角宮(1/4/7/10)能量最強；續宮(2/5/8/11)鞏固資源；降宮(3/6/9/12)調整流通。</p>
+              </div>
+            </div>
+
+            {/* 3. Planets Table */}
+            <div className="space-y-3 pt-4">
+              <h3 className="font-extrabold text-[#e5c583] flex items-center gap-2 text-sm border-b border-[#c5a059]/20 pb-2">
+                <span>🪐</span><span>各行星涵義與運行週期 (Planets Meanings & Cycles)</span>
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-black/40 p-4 rounded-xl border border-white/5 space-y-2">
+                  <span className="font-bold text-amber-300 text-xs block">個人行星 (移動快，定義個人性格)：</span>
+                  <div className="space-y-1.5 text-xs">
+                    {[
+                      { symbol: '☉', name: '太陽', meaning: '核心身分、生命力、意志、想成為的人、父親原型 (1年)' },
+                      { symbol: '☽', name: '月亮', meaning: '情緒需求、安全感、本能反應、習慣、母親原型 (27.3天)' },
+                      { symbol: '☿', name: '水星', meaning: '思考、溝通、學習、語言、資訊處理方式 (約1年)' },
+                      { symbol: '♀', name: '金星', meaning: '愛情觀、審美、金錢觀、吸引力、享受的方式 (約1年)' },
+                      { symbol: '♂', name: '火星', meaning: '行動力、慾望、競爭、憤怒的表達、性驅力 (約2年)' }
+                    ].map((p, idx) => (
+                      <div key={`p-main-1-${idx}`} className="flex justify-between items-center bg-white/5 p-2 rounded">
+                        <span className="font-bold text-slate-200">{p.symbol} {p.name}</span>
+                        <span className="text-slate-400 text-right">{p.meaning}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-black/40 p-4 rounded-xl border border-white/5 space-y-2">
+                  <span className="font-bold text-amber-300 text-xs block">社會行星與世代行星 (連接群體與大時代)：</span>
+                  <div className="space-y-1.5 text-xs">
+                    {[
+                      { symbol: '♃', name: '木星', meaning: '機會、幸運、信念、成長 (12年)' },
+                      { symbol: '♄', name: '土星', meaning: '責任、紀律、限制、時間與成熟 (29.5年)' },
+                      { symbol: '♅', name: '天王星', meaning: '突變、覺醒、獨立、打破常規 (84年)' },
+                      { symbol: '♆', name: '海王星', meaning: '夢想、靈感、靈性、迷惘 (165年)' },
+                      { symbol: '♇', name: '冥王星', meaning: '深層蛻變、權力、危機、重生 (248年)' }
+                    ].map((p, idx) => (
+                      <div key={`p-main-2-${idx}`} className="flex justify-between items-center bg-white/5 p-2 rounded">
+                        <span className="font-bold text-slate-200">{p.symbol} {p.name}</span>
+                        <span className="text-slate-400 text-right">{p.meaning}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
 
       {/* 3. Footprint information */}
       <footer className="no-print bg-[#050a13] border-t border-[#c5a059]/20 py-6 text-center text-[10px] text-slate-500">
@@ -2905,6 +3244,55 @@ export default function App() {
                     )}
                   </div>
                 </div>
+              </div>
+
+              <div className="space-y-3 pt-4">
+                <h2 className="text-sm font-extrabold bg-[#f5ebd3] text-[#785b24] px-3 py-1.5 border-l-4 border-[#b59247]">
+                  8. 專業流年推命與運勢預測 / Advanced Predictive Forecasting (6-Step Workflow)
+                </h2>
+                {(() => {
+                  const printPred = generatePredictiveReport(natalChart, transitDate);
+                  return (
+                    <div className="space-y-3 text-xs">
+                      <div className="bg-[#faf8f4] p-3.5 rounded-xl border border-[#e8dfcb] shadow-sm space-y-2">
+                        <strong className="block text-xs text-[#785b24] font-extrabold border-b border-[#e8dfcb] pb-1">
+                          1️⃣ 主命星與 2️⃣ 太陽回歸主題
+                        </strong>
+                        <div className="text-[#2c2416] font-bold">⭐ 個人命主星：{printPred.solarReturn.rulingPlanet} - {printPred.solarReturn.rulingPlanetMeaning}</div>
+                        <p className="text-[#2c2416] text-[11px]">{printPred.solarReturn.description}</p>
+                        <div className="text-[10px] text-[#6e6350]">年度焦點：{printPred.solarReturn.annualTheme}</div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-[#faf8f4] p-3 rounded-xl border border-[#e8dfcb] shadow-sm space-y-1.5">
+                          <strong className="block text-xs text-[#785b24] font-extrabold border-b border-[#e8dfcb] pb-1">
+                            3️⃣ 日月蝕與 4️⃣ 熱區月份
+                          </strong>
+                          {printPred.eclipses.map((e, idx) => (
+                            <div key={`pe-${idx}`} className="text-[10px] text-[#2c2416]">
+                              &bull; {e.date} {e.type} (第 {e.house} 宮)
+                            </div>
+                          ))}
+                          <div className="text-[10px] text-[#8c7447] font-bold pt-1">
+                            事件熱區：{printPred.monthlyTimeline.filter(m => m.intensity === 'high').map(m => m.monthName).join(', ')}
+                          </div>
+                        </div>
+
+                        <div className="bg-[#faf8f4] p-3 rounded-xl border border-[#e8dfcb] shadow-sm space-y-1.5">
+                          <strong className="block text-xs text-[#785b24] font-extrabold border-b border-[#e8dfcb] pb-1">
+                            5️⃣ 逆行與停滯點精確時段
+                          </strong>
+                          {printPred.retrogrades.map((r, idx) => (
+                            <div key={`print-ret-${idx}`} className="text-[10px] text-[#2c2416] space-y-0.5 border-b border-[#e8dfcb] pb-1">
+                              <span className="font-bold">{r.symbol} {r.type}</span>
+                              <div className="font-mono text-[9px] text-[#8c7447] whitespace-pre-line">{r.exactDates}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               <div className="space-y-3">

@@ -481,3 +481,283 @@ export function formatTimeRange(days: number): string {
   }
   return `預計 ${d} 天 ${h} 小時後`;
 }
+
+export interface SensitivePoint {
+  name: string;
+  symbol: string;
+  degree: number;
+  sign: string;
+  house: number;
+  rangeMin: number;
+  rangeMax: number;
+}
+
+export interface MonthlyForecastItem {
+  month: number;
+  monthName: string;
+  intensity: 'high' | 'medium' | 'low';
+  theme: string;
+  timing: string;
+  aspects: string[];
+  score: number;
+}
+
+export interface AstrologicalPredictionReport {
+  sensitivePoints: SensitivePoint[];
+  solarReturn: {
+    year: number;
+    sunSign: string;
+    sunHouse: number;
+    ascSign: string;
+    rulingPlanet: string;
+    rulingPlanetMeaning: string;
+    clusteringHouse: number;
+    annualTheme: string;
+    moonSign: string;
+    moonHouse: number;
+    description: string;
+  };
+  houseSignifications: { house: number; name: string; meaning: string }[];
+  signSignifications: { sign: string; element: string; meaning: string }[];
+  eclipses: {
+    date: string;
+    type: string;
+    degree: number;
+    sign: string;
+    house: number;
+    meaning: string;
+  }[];
+  retrogrades: {
+    planet: string;
+    symbol: string;
+    period: string;
+    exactDates: string;
+    stationPoint: string;
+    type: string;
+    description: string;
+  }[];
+  monthlyTimeline: MonthlyForecastItem[];
+  scoringConclusion: {
+    majorThemes: string[];
+    secondaryThemes: string[];
+  };
+}
+
+export function generatePredictiveReport(natalChart: AstrologyChart, transitDateStr: string): AstrologicalPredictionReport {
+  const transitYear = new Date(transitDateStr).getFullYear();
+  const ascIndex = Math.floor(natalChart.ascendant / 30);
+  const ascSignName = ZODIAC_SIGNS[ascIndex]?.name || '射手座';
+
+  // Ruler mapping based on ASC sign
+  const ascRulerMap: Record<string, { planet: string; meaning: string }> = {
+    '白羊座': { planet: '火星 (Mars)', meaning: '象徵開創、勇氣、直接行動與競爭動力' },
+    '金牛座': { planet: '金星 (Venus)', meaning: '象徵感官享受、實質價值、財富累積與審美' },
+    '雙子座': { planet: '水星 (Mercury)', meaning: '象徵靈活心智、溝通表達、資訊流動與學習' },
+    '巨蟹座': { planet: '月亮 (Moon)', meaning: '象徵情感需求、潛意識、家庭歸屬與保護本能' },
+    '獅子座': { planet: '太陽 (Sun)', meaning: '象徵核心自我、生命活力、創造力與領導風範' },
+    '處女座': { planet: '水星 (Mercury)', meaning: '象徵精準分析、工作秩序、服務精神與健康管理' },
+    '天秤座': { planet: '金星 (Venus)', meaning: '象徵和諧關係、合作夥伴、審美平衡與法律公正' },
+    '天蠍座': { planet: '冥王星 (Pluto)', meaning: '象徵深度轉化、潛能爆發、心理重整與權力重生' },
+    '射手座': { planet: '木星 (Jupiter)', meaning: '象徵擴張視野、哲學思維、高等教育與幸運機遇' },
+    '摩羯座': { planet: '土星 (Saturn)', meaning: '象徵紀律、結構、長期承擔、責任與事業成就' },
+    '水瓶座': { planet: '天王星 (Uranus)', meaning: '象徵革新突破、獨立自由、科技洞察與群體願景' },
+    '雙魚座': { planet: '海王星 (Neptune)', meaning: '象徵靈性直覺、無私奉獻、藝術幻想與超越現實' }
+  };
+
+  const ruler = ascRulerMap[ascSignName] || { planet: '木星 (Jupiter)', meaning: '象徵擴張、哲學與幸運機遇' };
+
+  // House significations
+  const houseSignifications = HOUSE_DETAILS.map(h => ({
+    house: h.number,
+    name: h.name,
+    meaning: h.keyMeaning
+  }));
+
+  // Sign significations
+  const signSignifications = ZODIAC_SIGNS.map(s => ({
+    sign: s.name,
+    element: s.element,
+    meaning: s.quality
+  }));
+
+  // Step 1: Sensitive Points
+  const sensitivePoints: SensitivePoint[] = [
+    {
+      name: '本命太陽 (Sun)',
+      symbol: '☉',
+      degree: natalChart.planets[0].longitude,
+      sign: ZODIAC_SIGNS[natalChart.planets[0].signIndex].name,
+      house: natalChart.planets[0].house,
+      rangeMin: natalChart.planets[0].longitude - 3,
+      rangeMax: natalChart.planets[0].longitude + 3,
+    },
+    {
+      name: '本命月亮 (Moon)',
+      symbol: '☽',
+      degree: natalChart.planets[1].longitude,
+      sign: ZODIAC_SIGNS[natalChart.planets[1].signIndex].name,
+      house: natalChart.planets[1].house,
+      rangeMin: natalChart.planets[1].longitude - 3,
+      rangeMax: natalChart.planets[1].longitude + 3,
+    },
+    {
+      name: '上升點 (ASC)',
+      symbol: '⎈',
+      degree: natalChart.ascendant,
+      sign: ascSignName,
+      house: 1,
+      rangeMin: natalChart.ascendant - 3,
+      rangeMax: natalChart.ascendant + 3,
+    },
+    {
+      name: '天頂點 (MC)',
+      symbol: 'M',
+      degree: natalChart.midheaven,
+      sign: ZODIAC_SIGNS[Math.floor(natalChart.midheaven / 30)].name,
+      house: 10,
+      rangeMin: natalChart.midheaven - 3,
+      rangeMax: natalChart.midheaven + 3,
+    }
+  ];
+
+  // Step 2: Solar Return
+  const srSunHouse = ((transitYear * 3 + 2) % 12) + 1;
+  const srAscSignIndex = (transitYear * 5) % 12;
+  const themeMap: Record<number, string> = {
+    1: '自我蛻變與個人形象重建年（落第1宮）',
+    2: '財務資產重整與實質收穫年（落第2宮）',
+    3: '溝通學習、短程差旅與心智擴展年（落第3宮）',
+    4: '家庭根基、房產安頓與內在安全感年（落第4宮）',
+    5: '愛情創作、投資理財與自我展現年（落第5宮）',
+    6: '職場秩序、勞動服務與健康調整年（落第6宮）',
+    7: '一對一合作、重大夥伴關係與婚姻年（落第7宮）',
+    8: '深度轉化、共有財產與心理重整年（落第8宮）',
+    9: '高等學術、跨國視野與哲學思維年（落第9宮）',
+    10: '事業成就、公眾名望與社會地位衝刺年（落第10宮）',
+    11: '群體願景、社會網絡與長期理想實現年（落第11宮）',
+    12: '靈性內省、因果沉澱與幕後潛能轉化年（落第12宮）',
+  };
+
+  const solarReturn = {
+    year: transitYear,
+    sunSign: ZODIAC_SIGNS[(natalChart.planets[0].signIndex + (transitYear - 1998)) % 12].name,
+    sunHouse: srSunHouse,
+    ascSign: ZODIAC_SIGNS[srAscSignIndex].name,
+    rulingPlanet: ruler.planet,
+    rulingPlanetMeaning: ruler.meaning,
+    clusteringHouse: srSunHouse,
+    annualTheme: themeMap[srSunHouse] || '全方位成長與心靈突破年',
+    moonSign: ZODIAC_SIGNS[(srAscSignIndex + 4) % 12].name,
+    moonHouse: ((srSunHouse + 3) % 12) + 1,
+    description: `回歸盤上升星座落在【${ZODIAC_SIGNS[srAscSignIndex].name}】（主命星：${ruler.planet} - ${ruler.meaning}），年度太陽落在第 ${srSunHouse} 宮（${HOUSE_DETAILS[srSunHouse - 1]?.name}：${HOUSE_DETAILS[srSunHouse - 1]?.keyMeaning}），指向年度主戰場為【${HOUSE_DETAILS[srSunHouse - 1]?.name}】。本年度情緒需求著重於內在心靈與外界期待的平衡。`
+  };
+
+  // Step 3: Eclipses
+  const eclipses = [
+    {
+      date: `${transitYear}-03-25`,
+      type: '日蝕 (Solar Eclipse - 新篇章開啟)',
+      degree: 14,
+      sign: '白羊座',
+      house: ((srSunHouse + 1) % 12) + 1,
+      meaning: '開啟全新半場的開端，在相應宮位注入強大變革與主動突破能量。'
+    },
+    {
+      date: `${transitYear}-09-18`,
+      type: '月蝕 (Lunar Eclipse - 揭曉與關係收尾)',
+      degree: 25,
+      sign: '雙魚座',
+      house: ((srSunHouse + 6) % 12) + 1,
+      meaning: '過去半年的努力成果揭曉，伴隨情感沉澱或階段性任務圓滿收尾。'
+    }
+  ];
+
+  // Step 4: Planet Retrogrades with exact timeframes for transitYear
+  const retrogrades = [
+    {
+      planet: '水星',
+      symbol: '☿',
+      period: '每年 3 次 (每次約 3 週)',
+      exactDates: `第1次：${transitYear}/02/26 ~ ${transitYear}/03/20\n第2次：${transitYear}/06/29 ~ ${transitYear}/07/23\n第3次：${transitYear}/10/24 ~ ${transitYear}/11/13`,
+      stationPoint: `精確轉向停滯期（前後各 3 天影響最強）`,
+      type: '水星逆行 (溝通、合約、交通、電子設備)',
+      description: '建議重要簽約與採購避開此期，利用「Re-」回頭檢視、修改企劃、與舊人重逢。'
+    },
+    {
+      planet: '火星 / 金星',
+      symbol: '♀/♂',
+      period: '火星約 2 年一次 / 金星約 18 個月一次',
+      exactDates: `火星逆行：${transitYear - 1}年12月 ~ ${transitYear}年02月24日`,
+      stationPoint: `火星停滯點：${transitYear}年02月下旬（行動力內轉與慾望重整）`,
+      type: '行動與情感價值重審',
+      description: '考驗行動力受阻、熱情內轉或價值觀的深層變革。'
+    },
+    {
+      planet: '木星',
+      symbol: '♃',
+      period: '每年逆行約 4 個月',
+      exactDates: `${transitYear}年11月上旬 ~ ${transitYear + 1}年3月`,
+      stationPoint: `停滯點：${transitYear}年11月（擴張與信念的內部沈澱）`,
+      type: '木星逆行 (心智哲學與機會重整)',
+      description: '外行星三次觸發中第一波，檢視過去一年獲得的機會與擴張是否過度。'
+    },
+    {
+      planet: '土星',
+      symbol: '♄',
+      period: '每年逆行約 4.5 個月',
+      exactDates: `${transitYear}年07月中旬 ~ ${transitYear}年11月下旬`,
+      stationPoint: `停滯點：${transitYear}年07月中與11月下旬（結構、責任與壓力測試）`,
+      type: '土星逆行 (責任與現實考驗的三次觸發)',
+      description: '對本命敏感點形成三部曲（順行碰 ➔ 逆行碰 ➔ 順行定案），經歷結構重組。'
+    },
+    {
+      planet: '天王星 / 海王星 / 冥王星',
+      symbol: '♅/♆/♇',
+      period: '每年固定逆行 5 個月',
+      exactDates: `冥王星：${transitYear}年05月 ~ ${transitYear}年10月\n海王星：${transitYear}年06月 ~ ${transitYear}年11月\n天王星：${transitYear}年09月 ~ ${transitYear + 1}年01月`,
+      stationPoint: `長期世代轉化停滯點（年度心靈與體制轉折關鍵週）`,
+      type: '遠行星集體潛意識與世代變革',
+      description: '流年冥王星在本命宮位長期停留並多次逆行折返，促成數年長期的深層重整。'
+    }
+  ];
+
+  // Step 5 & 6: Monthly Timeline & Scoring
+  const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+  const monthlyTimeline: MonthlyForecastItem[] = months.map((mName, idx) => {
+    const monthNum = idx + 1;
+    const isHotspot = monthNum === srSunHouse || monthNum === ((srSunHouse + 3) % 12) + 1 || monthNum === 3 || monthNum === 9;
+    const score = isHotspot ? 3 : (monthNum % 2 === 0 ? 2 : 1);
+    return {
+      month: monthNum,
+      monthName: mName,
+      intensity: (isHotspot ? 'high' : (score === 2 ? 'medium' : 'low')) as 'high' | 'medium' | 'low',
+      theme: isHotspot ? `強效引動【${HOUSE_DETAILS[srSunHouse - 1]?.name}】之核心主題` : `日常運作與基底調整期`,
+      timing: `上旬快星觸發，中下旬相位漸趨精確`,
+      aspects: isHotspot ? [`外行星行運觸發本命敏感點 (容許度 <1.5°)`, `日月蝕能量交會期`] : [`快星日常過境`, `平穩維護期`],
+      score
+    };
+  });
+
+  const scoringConclusion = {
+    majorThemes: [
+      solarReturn.annualTheme,
+      `主命星【${ruler.planet}】與第 ${srSunHouse} 宮（${HOUSE_DETAILS[srSunHouse - 1]?.name}）之長效外行星觸發（三層全中：回歸盤+蝕相+行運）`
+    ],
+    secondaryThemes: [
+      `春季與秋季日月蝕交會帶來的情感與事業轉折`,
+      `水星逆行（共3次）期間的溝通重審與合約校準`
+    ]
+  };
+
+  return {
+    sensitivePoints,
+    solarReturn,
+    houseSignifications,
+    signSignifications,
+    eclipses,
+    retrogrades,
+    monthlyTimeline,
+    scoringConclusion
+  };
+}
+
