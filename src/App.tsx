@@ -2857,6 +2857,11 @@ export default function App() {
                           <div className="text-[11px] text-amber-200 font-semibold bg-amber-950/30 px-2 py-1 rounded border border-amber-500/20 inline-block">
                             📍 逆行通行星座與宮位：{r.sign}（第 {r.house} 宮）
                           </div>
+                          {r.guideQuote && (
+                            <div className="p-2.5 bg-amber-950/20 rounded-lg border border-amber-500/20 text-slate-300 text-xs whitespace-pre-line leading-relaxed">
+                              📖 逆行與宮位指引對照：{r.guideQuote}
+                            </div>
+                          )}
                           <div className="p-2 bg-black/40 rounded-lg border border-white/5 font-mono text-xs text-amber-300 whitespace-pre-line">
                             📅 影響時段：{r.exactDates}
                           </div>

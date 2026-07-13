@@ -1,4 +1,4 @@
-import { PLANET_ASPECT_TRANSITS } from './planetInterpretations';
+import { PLANET_ASPECT_TRANSITS, PLANET_RETROGRADE_GUIDE } from './planetInterpretations';
 
 /**
  * Astrology Calculation Engine and Interpretation Content
@@ -560,6 +560,7 @@ export interface AstrologicalPredictionReport {
     description: string;
     sign: string;
     house: number;
+    guideQuote?: string;
   }[];
   monthlyTimeline: MonthlyForecastItem[];
   lunarNodes: {
@@ -728,7 +729,8 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
       type: '水星逆行第1次 (溝通、合約、交通)',
       description: '建議重要簽約與採購避開此期，利用「Re-」回頭檢視、修改企劃、與舊人重逢。',
       sign: ZODIAC_SIGNS[(srSunHouse + 0) % 12].name,
-      house: srSunHouse
+      house: srSunHouse,
+      guideQuote: PLANET_RETROGRADE_GUIDE.find(g => g.planet === '水星')?.houses[srSunHouse] || ''
     },
     {
       planet: '水星',
@@ -739,7 +741,8 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
       type: '水星逆行第2次 (交通、旅遊、決策重審)',
       description: '出行與溝通易有延誤，適合深度複盤日常工作流程與合約細節。',
       sign: ZODIAC_SIGNS[(srSunHouse + 4) % 12].name,
-      house: ((srSunHouse + 3) % 12) + 1
+      house: ((srSunHouse + 3) % 12) + 1,
+      guideQuote: PLANET_RETROGRADE_GUIDE.find(g => g.planet === '水星')?.houses[((srSunHouse + 3) % 12) + 1] || ''
     },
     {
       planet: '水星',
@@ -750,7 +753,8 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
       type: '水星逆行第3次 (財務、合作、舊案覆核)',
       description: '人際與財務交接易有反覆，保持耐心核對帳目與重要資訊。',
       sign: ZODIAC_SIGNS[(srSunHouse + 8) % 12].name,
-      house: ((srSunHouse + 6) % 12) + 1
+      house: ((srSunHouse + 6) % 12) + 1,
+      guideQuote: PLANET_RETROGRADE_GUIDE.find(g => g.planet === '水星')?.houses[((srSunHouse + 6) % 12) + 1] || ''
     },
     {
       planet: '火星 / 金星',
@@ -761,7 +765,8 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
       type: '行動與情感價值重審',
       description: '考驗行動力受阻、熱情內轉或價值觀的深層變革。',
       sign: ZODIAC_SIGNS[(srSunHouse + 2) % 12].name,
-      house: ((srSunHouse + 1) % 12) + 1
+      house: ((srSunHouse + 1) % 12) + 1,
+      guideQuote: `金星：${PLANET_RETROGRADE_GUIDE.find(g => g.planet === '金星')?.houses[((srSunHouse + 1) % 12) + 1] || ''}\n火星：${PLANET_RETROGRADE_GUIDE.find(g => g.planet === '火星')?.houses[((srSunHouse + 1) % 12) + 1] || ''}`
     },
     {
       planet: '木星',
@@ -772,7 +777,8 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
       type: '木星逆行 (心智哲學與機會重整)',
       description: '外行星三次觸發中第一波，檢視過去一年獲得的機會與擴張是否過度。',
       sign: ZODIAC_SIGNS[(srSunHouse + 7) % 12].name,
-      house: ((srSunHouse + 4) % 12) + 1
+      house: ((srSunHouse + 4) % 12) + 1,
+      guideQuote: PLANET_RETROGRADE_GUIDE.find(g => g.planet === '木星')?.houses[((srSunHouse + 4) % 12) + 1] || ''
     },
     {
       planet: '土星',
@@ -783,7 +789,8 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
       type: '土星逆行 (責任與現實考驗的三次觸發)',
       description: '對本命敏感點形成三部曲（順行碰 ➔ 逆行碰 ➔ 順行定案），經歷結構重組。',
       sign: ZODIAC_SIGNS[(srSunHouse + 9) % 12].name,
-      house: ((srSunHouse + 6) % 12) + 1
+      house: ((srSunHouse + 6) % 12) + 1,
+      guideQuote: PLANET_RETROGRADE_GUIDE.find(g => g.planet === '土星')?.houses[((srSunHouse + 6) % 12) + 1] || ''
     },
     {
       planet: '天王星 / 海王星 / 冥王星',
@@ -794,7 +801,8 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
       type: '遠行星集體潛意識與世代變革',
       description: '流年冥王星在本命宮位長期停留並多次逆行折返，促成數年長期的深層重整。',
       sign: ZODIAC_SIGNS[(srSunHouse + 10) % 12].name,
-      house: ((srSunHouse + 9) % 12) + 1
+      house: ((srSunHouse + 9) % 12) + 1,
+      guideQuote: `天王星：${PLANET_RETROGRADE_GUIDE.find(g => g.planet === '天王星')?.houses[((srSunHouse + 9) % 12) + 1] || ''}\n海王星：${PLANET_RETROGRADE_GUIDE.find(g => g.planet === '海王星')?.houses[((srSunHouse + 9) % 12) + 1] || ''}\n冥王星：${PLANET_RETROGRADE_GUIDE.find(g => g.planet === '冥王星')?.houses[((srSunHouse + 9) % 12) + 1] || ''}`
     }
   ];
 
