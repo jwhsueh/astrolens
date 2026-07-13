@@ -65,6 +65,8 @@ app.post('/api/astrology/interpret', async (req, res) => {
 ${birthData.planetDetails?.map((p: any) => `  * ${p.name}: ${p.signName} ${Math.floor(p.degreeInSign)}度, 落入第 ${p.house} 宮 (${p.houseMeaning}) ${p.isRetrograde ? '(逆行)' : ''}`).join('\n')}
 - 本命相位分佈 (Natal Aspects):
 ${birthData.aspects?.map((a: any) => `  * ${a.planetA} 與 ${a.planetB} 呈 ${a.name} (${Math.floor(a.angle)}度): ${a.description}`).join('\n')}
+- 月亮南北交點業力軸線 (Lunar Nodes):
+${birthData.planetDetails?.filter((p: any) => p.id === 'rahu' || p.id === 'ketu' || p.name.includes('交點')).map((p: any) => `  * ${p.name}: ${p.signName} ${Math.floor(p.degreeInSign)}度, 落入第 ${p.house} 宮 (${p.houseMeaning})`).join('\n') || ''}
 
 【當下求問時刻流年星盤數據 (Transit Chart)】：
 - 流年時間: ${transitData.localTime}
@@ -74,10 +76,11 @@ ${transitData.planetDetails?.map((p: any) => `  * 流年 ${p.name}: 落入本命
 【求問者當下占卜解說備註與關注點】：
 "${userQuestion || '無特定提問，請針對整個人生格局、近期事業、財運與感情發展給予綜合洞察。'}"
 
-請撰寫一份結構極其清晰、言之有物理性且文筆典雅細膩的「星盤占卜解說報告」。必須包含以下三個向度：
+請撰寫一份結構極其清晰、言之有物理性且文筆典雅細膩的「星盤占卜解說報告」。必須包含以下四個向度：
 1. 【本命格局與人格天賦分析】：解讀太陽、月亮與上升星座的交織作用，剖析核心性格優勢、隱藏盲點與今生特徵。
 2. 【當下星宿流年運勢剖析】：說明當前流年星宿進入本命宮位帶來的急迫課題，包含面臨何種機遇與如何化解磨難。
-3. 【大師指引與專屬占卜建議】：針對求問者的問題或近期生活，給予在事業發展、財富儲備、情感和心靈狀態上的具體指引，指出近期適合開拓的事項。
+3. 【月亮南北交點業力軸線指引】：基於北交點☊（今生成長方向、陌生功課）與南交點☋（與生俱來慣性、舒適圈與壓力下的退路），指引求問者如何突破慣性、朝北交點邁進。
+4. 【大師指引與專屬占卜建議】：針對求問者的問題或近期生活，給予在事業發展、財富儲備、情感和心靈狀態上的具體指引，指出近期適合開拓的事項。
 
 請使用「繁體中文（台灣）」書寫，语气要真誠、包容、充滿智慧且具有啟發性。
 `;

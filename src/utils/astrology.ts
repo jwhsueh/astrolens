@@ -534,6 +534,10 @@ export interface AstrologicalPredictionReport {
     degree: number;
     sign: string;
     house: number;
+    sunSign: string;
+    sunHouse: number;
+    moonSign: string;
+    moonHouse: number;
     meaning: string;
   }[];
   retrogrades: {
@@ -546,6 +550,17 @@ export interface AstrologicalPredictionReport {
     description: string;
   }[];
   monthlyTimeline: MonthlyForecastItem[];
+  lunarNodes: {
+    northSign: string;
+    northHouse: number;
+    southSign: string;
+    southHouse: number;
+    title: string;
+    lesson: string;
+    inertia: string;
+    growthDirection: string;
+    houseLesson: string;
+  };
   scoringConclusion: {
     majorThemes: string[];
     secondaryThemes: string[];
@@ -670,6 +685,10 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
       degree: 14,
       sign: '白羊座',
       house: ((srSunHouse + 1) % 12) + 1,
+      sunSign: '白羊座',
+      sunHouse: ((srSunHouse + 1) % 12) + 1,
+      moonSign: '白羊座',
+      moonHouse: ((srSunHouse + 1) % 12) + 1,
       meaning: '開啟全新半場的開端，在相應宮位注入強大變革與主動突破能量。'
     },
     {
@@ -678,6 +697,10 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
       degree: 25,
       sign: '雙魚座',
       house: ((srSunHouse + 6) % 12) + 1,
+      sunSign: '處女座',
+      sunHouse: srSunHouse,
+      moonSign: '雙魚座',
+      moonHouse: ((srSunHouse + 6) % 12) + 1,
       meaning: '過去半年的努力成果揭曉，伴隨情感沉澱或階段性任務圓滿收尾。'
     }
   ];
@@ -759,6 +782,57 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
     ]
   };
 
+  const rahuPlanet = natalChart.planets.find(p => p.id === 'rahu' || p.name === '北交點');
+  const ketuPlanet = natalChart.planets.find(p => p.id === 'ketu' || p.name === '南交點');
+  const northSign = rahuPlanet ? ZODIAC_SIGNS[rahuPlanet.signIndex]?.name : '牡羊座';
+  const northHouse = rahuPlanet ? rahuPlanet.house : 1;
+  const southSign = ketuPlanet ? ZODIAC_SIGNS[ketuPlanet.signIndex]?.name : '天秤座';
+  const southHouse = ketuPlanet ? ketuPlanet.house : 7;
+
+  const nodeMap: Record<string, { lesson: string; inertia: string; growth: string }> = {
+    '牡羊座': { lesson: '學會獨立與為自己作主', inertia: '過度依賴關係、以他人意見定義自己', growth: '先成為完整的自己，再進入關係' },
+    '金牛座': { lesson: '建立簡單穩定的自足生活與自我價值', inertia: '沉溺於危機、糾葛與依賴他人資源', growth: '從動盪中走向平靜的累積' },
+    '雙子座': { lesson: '傾聽、提問與接納多元觀點', inertia: '急於下結論、說教、抱持真理在握的姿態', growth: '從「我知道」走向「我好奇」' },
+    '巨蟹座': { lesson: '滋養情感、建立家的連結、允許脆弱', inertia: '以成就與控制取代情感、過度扛責', growth: '從「做到」走向「感受到」' },
+    '獅子座': { lesson: '勇敢站上舞台、活出個人創造力', inertia: '躲進群體、以旁觀者姿態疏離自己的心', growth: '從「大家」走向「我」' },
+    '處女座': { lesson: '落實、分辨與建立日常秩序', inertia: '逃避、混沌、以「隨緣」迴避責任', growth: '把靈感化為具體的服務與作品' },
+    '天秤座': { lesson: '合作、傾聽與在關係中成全雙方', inertia: '單打獨鬥、衝動行事、凡事以自己優先', growth: '從「我」走向「我們」' },
+    '天蠍座': { lesson: '深度交融、共享資源、擁抱蛻變', inertia: '死守既有的安逸與財物、抗拒改變', growth: '放掉抓緊的，才能獲得更深的' },
+    '射手座': { lesson: '建立自己的信念與人生大方向', inertia: '漂浮在資訊與八卦中、想法隨風搖擺', growth: '從碎片走向整體視野' },
+    '摩羯座': { lesson: '承擔責任、走向社會成就與成熟自立', inertia: '躲回家庭與情緒的舒適圈、依賴被照顧', growth: '從被撫養者成為承擔者' },
+    '水瓶座': { lesson: '為群體與理想貢獻、學會平等協作', inertia: '需要聚光燈、以自我為中心索取認同', growth: '從「看我」走向「我們一起」' },
+    '雙魚座': { lesson: '信任直覺、學會放手與慈悲', inertia: '焦慮控制細節、以批判與完美主義自苦', growth: '從「分析」走向「臣服」' }
+  };
+
+  const nodeInfo = nodeMap[northSign] || { lesson: '學會獨立與自我覺察', inertia: '依賴舒適圈與舊有模式', growth: '朝向全新目標與心靈整合前進' };
+
+  const houseNodeMap: Record<number, string> = {
+    1: '今生功課在「自我認同」——學會獨立決斷、發展個人特質；慣性是活在伴侶或他人期待裡。',
+    2: '今生功課在「自食其力」——建立自己的財務與價值體系；慣性是依賴他人資源。',
+    3: '今生功課在「落地的學習與溝通」——向身邊人事物學習、好好說話；慣性是高談闊論理念。',
+    4: '今生功課在「回家」——建立內在根基、經營家庭與私領域；慣性是把全部人生押在事業與社會形象上。',
+    5: '今生功課在「個人的創造與心動」——談自己的戀愛、做自己的作品；慣性是隱身於朋友圈與集體目標中。',
+    6: '今生功課在「規律與服務」——建立健康的日常秩序、在具體工作中修行；慣性是退隱、做夢、以逃避面對現實。',
+    7: '今生功課在「關係與合作」——學會妥協、傾聽與長期承諾；慣性是獨來獨往、凡事靠自己。',
+    8: '今生功課在「深度交付」——學會與人共享資源、經歷親密與轉化；慣性是死守自己的錢與價值觀。',
+    9: '今生功課在「建立信念與遠見」——進修、遠行、發展人生哲學；慣性是困在日常瑣訊、人云亦云。',
+    10: '今生功課在「社會成就」——走出家門、承擔公共角色與名聲；慣性是躲在家庭舒適圈。',
+    11: '今生功課在「群體與願景」——把個人才華貢獻給更大的目標；慣性是沉溺於個人的浪漫與玩樂。',
+    12: '今生功課在「放下與內在整合」——學習獨處、靈性成長；慣性是以忙碌工作與控制細節填滿人生。'
+  };
+
+  const lunarNodes = {
+    northSign,
+    northHouse,
+    southSign,
+    southHouse,
+    title: `北交 ${northSign} (南交 ${southSign}) ── 第 ${northHouse}宮 / 第 ${southHouse}宮軸線`,
+    lesson: nodeInfo.lesson,
+    inertia: nodeInfo.inertia,
+    growthDirection: nodeInfo.growth,
+    houseLesson: houseNodeMap[northHouse] || '尋求靈魂演化與平衡發展。'
+  };
+
   return {
     sensitivePoints,
     solarReturn,
@@ -767,6 +841,7 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
     eclipses,
     retrogrades,
     monthlyTimeline,
+    lunarNodes,
     scoringConclusion
   };
 }

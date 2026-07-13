@@ -2698,31 +2698,98 @@ export default function App() {
                   {/* Step 2 */}
                   <div className="p-4 bg-black/45 border border-white/10 rounded-2xl space-y-3">
                     <h3 className="font-extrabold text-[#e5c583] flex items-center gap-2 text-sm">
-                      <span>2️⃣</span><span>太陽回歸盤年運主題 ({pred.solarReturn.year})</span>
+                      <span>2️⃣</span><span>太陽回歸盤年運主題 ({pred.solarReturn.year}) (Solar Return Theme)</span>
                     </h3>
-                    <p className="text-slate-300 leading-relaxed text-xs font-sans">
-                      {pred.solarReturn.description}
-                    </p>
-                    <div className="p-3 bg-[#c5a059]/10 rounded-xl border border-[#c5a059]/20 text-xs font-bold text-[#e5c583]">
-                      年度核心舞台：{pred.solarReturn.annualTheme}
+                    <div className="p-3 bg-[#c5a059]/10 rounded-xl border border-[#c5a059]/20 text-xs space-y-1.5">
+                      <strong className="text-[#e5c583] block text-sm">🌟 年度核心舞台：{pred.solarReturn.annualTheme}</strong>
+                      <p className="text-slate-300 leading-relaxed">{pred.solarReturn.description}</p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                      {[
+                        {
+                          name: '回歸太陽 (Solar Sun)',
+                          symbol: '☉',
+                          sign: pred.solarReturn.sunSign,
+                          house: pred.solarReturn.sunHouse,
+                          signDesc: getPlanetSignInterpretation('太陽', pred.solarReturn.sunSign),
+                          houseDesc: getPlanetHouseInterpretation('太陽', pred.solarReturn.sunHouse)
+                        },
+                        {
+                          name: '回歸月亮 (Solar Moon)',
+                          symbol: '☽',
+                          sign: pred.solarReturn.moonSign,
+                          house: pred.solarReturn.moonHouse,
+                          signDesc: getPlanetSignInterpretation('月亮', pred.solarReturn.moonSign),
+                          houseDesc: getPlanetHouseInterpretation('月亮', pred.solarReturn.moonHouse)
+                        },
+                        {
+                          name: '回歸上升 (Solar ASC)',
+                          symbol: '⎈',
+                          sign: pred.solarReturn.ascSign,
+                          house: 1,
+                          signDesc: `回歸盤上升星座設定年度面具與起手式，主導對外動能。`,
+                          houseDesc: `主命星：${pred.solarReturn.rulingPlanet}`
+                        },
+                        {
+                          name: '年度主命星 (Ruling Planet)',
+                          symbol: '⭐',
+                          sign: pred.solarReturn.rulingPlanet,
+                          house: pred.solarReturn.sunHouse,
+                          signDesc: pred.solarReturn.rulingPlanetMeaning,
+                          houseDesc: `主導該年度生命能量流轉的核心指引星。`
+                        }
+                      ].map((item, i) => (
+                        <div key={`sr-card-${i}`} className="bg-white/5 p-3 rounded-xl border border-white/5 space-y-1.5">
+                          <span className="font-bold text-slate-200 block text-xs">{item.symbol} {item.name}</span>
+                          <div className="text-[11px] text-[#e5c583] font-mono">
+                            {item.sign} {item.house !== 1 ? `(第 ${item.house} 宮)` : ''}
+                          </div>
+                          <div className="text-[10px] text-slate-300 leading-snug pt-1 border-t border-white/5 space-y-1">
+                            <p className="text-amber-200/90">🔹 {item.signDesc}</p>
+                            <p className="text-emerald-200/90">🔸 {item.houseDesc}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
                   {/* Step 3 */}
                   <div className="p-4 bg-black/45 border border-white/10 rounded-2xl space-y-3">
                     <h3 className="font-extrabold text-[#e5c583] flex items-center gap-2 text-sm">
-                      <span>3️⃣</span><span>日月蝕轉折點 (Eclipses)</span>
+                      <span>3️⃣</span><span>日月蝕轉折點 (Eclipses & Turning Points)</span>
                     </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-4">
                       {pred.eclipses.map((e, idx) => (
-                        <div key={`ec-main-${idx}`} className="p-3 bg-white/5 rounded-xl border border-white/5 space-y-1.5">
-                          <div className="flex justify-between font-bold text-slate-200 text-xs">
-                            <span>{e.type}</span>
-                            <span className="text-[#e5c583] font-mono">{e.date}</span>
+                        <div key={`ec-main-${idx}`} className="p-3.5 bg-white/5 rounded-xl border border-white/5 space-y-3">
+                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 border-b border-white/10 pb-2">
+                            <span className="font-bold text-slate-200 text-xs text-[#e5c583]">{e.type}</span>
+                            <span className="text-amber-200/90 font-mono text-xs">📅 {e.date} (度數：{e.degree}°)</span>
                           </div>
-                          <p className="text-xs text-slate-400">
-                            落入第 {e.house} 宮 ({e.sign} {e.degree}°) ➔ {e.meaning}
+                          <p className="text-xs text-slate-300 leading-relaxed">
+                            💡 <strong>轉折意涵：</strong>{e.meaning}
                           </p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                            <div className="bg-black/30 p-2.5 rounded-lg border border-white/5 space-y-1">
+                              <span className="font-bold text-slate-200 text-xs block">☉ 太陽 (Sun) 能量核心</span>
+                              <div className="text-[11px] text-[#e5c583] font-mono">
+                                {e.sunSign} (第 {e.sunHouse} 宮)
+                              </div>
+                              <div className="text-[10px] text-slate-300 leading-snug space-y-0.5 pt-1 border-t border-white/5">
+                                <p className="text-amber-200/90">🔹 {getPlanetSignInterpretation('太陽', e.sunSign)}</p>
+                                <p className="text-emerald-200/90">🔸 {getPlanetHouseInterpretation('太陽', e.sunHouse)}</p>
+                              </div>
+                            </div>
+                            <div className="bg-black/30 p-2.5 rounded-lg border border-white/5 space-y-1">
+                              <span className="font-bold text-slate-200 text-xs block">☽ 月亮 (Moon) 情感潮汐</span>
+                              <div className="text-[11px] text-[#e5c583] font-mono">
+                                {e.moonSign} (第 {e.moonHouse} 宮)
+                              </div>
+                              <div className="text-[10px] text-slate-300 leading-snug space-y-0.5 pt-1 border-t border-white/5">
+                                <p className="text-amber-200/90">🔹 {getPlanetSignInterpretation('月亮', e.moonSign)}</p>
+                                <p className="text-emerald-200/90">🔸 {getPlanetHouseInterpretation('月亮', e.moonHouse)}</p>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -2796,6 +2863,8 @@ export default function App() {
                       </div>
                     </div>
                   </div>
+
+
 
 
                 </div>
@@ -3007,6 +3076,71 @@ export default function App() {
                         </ul>
                       </div>
                     ))}
+                  </div>
+                </div>
+
+                {/* 第三部：月亮南北交點 (業力軸線) */}
+                <div className="pt-6 border-t border-white/15">
+                  <h4 className="text-xs font-bold text-amber-200 uppercase tracking-wider mb-3">☊ 第三部：月亮南北交點 (業力軸線)</h4>
+                  <div className="bg-black/30 p-4 rounded-xl border border-[#c5a059]/30 text-xs text-slate-300 space-y-2 mb-4 leading-relaxed">
+                    <strong className="text-[#e5c583] block">🔮 概念說明：</strong>
+                    <p>南北交點不是實體行星，而是月亮軌道與黃道的兩個交會點，永遠正對（相差180°）。傳統（尤其受印度占星與演化占星影響）的詮釋是：南交點☋ = 與生俱來的慣性、舒適圈、前世/早年已熟練的模式；北交點☊ = 今生要走向的成長方向、陌生但必要的功課。</p>
+                    <p className="text-amber-200/90 font-medium">💡 解讀口訣：南交點是「起點與退路」，北交點是「終點與功課」——人在壓力下會退回南交點模式，而人生的滿足感來自朝北交點移動。因兩點永遠成對，以下以「北交點所在」為標題，每條同時說明南交點。</p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <h5 className="text-[11px] font-bold text-amber-300 mb-2 uppercase tracking-wide">☊ 北交點 × 十二星座軸 (Zodiac Axis)</h5>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                        {[
+                          { title: '北交牡羊 (南交天秤)', lesson: '學會獨立與為自己作主', inertia: '過度依賴關係、以他人意見定義自己', growth: '先成為完整的自己，再進入關係' },
+                          { title: '北交金牛 (南交天蠍)', lesson: '建立簡單穩定的自足生活與自我價值', inertia: '沉溺於危機、糾葛與依賴他人資源', growth: '從動盪中走向平靜的累積' },
+                          { title: '北交雙子 (南交射手)', lesson: '傾聽、提問與接納多元觀點', inertia: '急於下結論、說教、抱持真理在握的姿態', growth: '從「我知道」走向「我好奇」' },
+                          { title: '北交巨蟹 (南交摩羯)', lesson: '滋養情感、建立家的連結、允許脆弱', inertia: '以成就與控制取代情感、過度扛責', growth: '從「做到」走向「感受到」' },
+                          { title: '北交獅子 (南交水瓶)', lesson: '勇敢站上舞台、活出個人創造力', inertia: '躲進群體、以旁觀者姿態疏離自己的心', growth: '從「大家」走向「我」' },
+                          { title: '北交處女 (南交雙魚)', lesson: '落實、分辨與建立日常秩序', inertia: '逃避、混沌、以「隨緣」迴避責任', growth: '把靈感化為具體的服務與作品' },
+                          { title: '北交天秤 (南交牡羊)', lesson: '合作、傾聽與在關係中成全雙方', inertia: '單打獨鬥、衝動行事、凡事以自己優先', growth: '從「我」走向「我們」' },
+                          { title: '北交天蠍 (南交金牛)', lesson: '深度交融、共享資源、擁抱蛻變', inertia: '死守既有的安逸與財物、抗拒改變', growth: '放掉抓緊的，才能獲得更深的' },
+                          { title: '北交射手 (南交雙子)', lesson: '建立自己的信念與人生大方向', inertia: '漂浮在資訊與八卦中、想法隨風搖擺', growth: '從碎片走向整體視野' },
+                          { title: '北交摩羯 (南交巨蟹)', lesson: '承擔責任、走向社會成就與成熟自立', inertia: '躲回家庭與情緒的舒適圈、依賴被照顧', growth: '從被撫養者成為承擔者' },
+                          { title: '北交水瓶 (南交獅子)', lesson: '為群體與理想貢獻、學會平等協作', inertia: '需要聚光燈、以自我為中心索取認同', growth: '從「看我」走向「我們一起」' },
+                          { title: '北交雙魚 (南交處女)', lesson: '信任直覺、學會放手與慈悲', inertia: '焦慮控制細節、以批判與完美主義自苦', growth: '從「分析」走向「臣服」' }
+                        ].map((item, idx) => (
+                          <div key={`node-sign-${idx}`} className="bg-black/25 p-3 rounded-xl border border-white/5 space-y-1 text-[11px]">
+                            <strong className="text-[#e5c583] block text-xs">{item.title}</strong>
+                            <p className="text-slate-300">🎯 <strong>功課：</strong>{item.lesson}</p>
+                            <p className="text-slate-400">⚓ <strong>慣性：</strong>{item.inertia}</p>
+                            <p className="text-emerald-300">✨ <strong>成長方向：</strong>{item.growth}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-white/10">
+                      <h5 className="text-[11px] font-bold text-amber-300 mb-2 uppercase tracking-wide">☊ 北交點 × 十二宮位軸 (House Axis)</h5>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                        {[
+                          { title: '北交1宮 (南交7宮)', lesson: '自我認同——學會獨立決斷、發展個人特質', inertia: '活在伴侶或他人期待裡 (關係重要，但須先站穩自己)' },
+                          { title: '北交2宮 (南交8宮)', lesson: '自食其力——建立自己的財務與價值體系', inertia: '依賴他人資源(伴侶財、家產、借貸)或沉溺深層糾葛' },
+                          { title: '北交3宮 (南交9宮)', lesson: '落地的學習與溝通——向身邊人事物學習、好好說話', inertia: '高談闊論理念、心繫遠方而忽略眼前' },
+                          { title: '北交4宮 (南交10宮)', lesson: '回家——建立內在根基、經營家庭與私領域', inertia: '把全部人生押在事業與社會形象上' },
+                          { title: '北交5宮 (南交11宮)', lesson: '個人的創造與心動——談自己的戀愛、做自己的作品', inertia: '隱身於朋友圈與集體目標中，不敢突出自己' },
+                          { title: '北交6宮 (南交12宮)', lesson: '規律與服務——建立健康的日常秩序、在具體工作中修行', inertia: '退隱、做夢、以逃避面對現實' },
+                          { title: '北交7宮 (南交1宮)', lesson: '關係與合作——學會妥協、傾聽與長期承諾', inertia: '獨來獨往、凡事靠自己、不讓人靠近' },
+                          { title: '北交8宮 (南交2宮)', lesson: '深度交付——學會與人共享資源、經歷親密與轉化', inertia: '死守自己的錢與價值觀、停在物質安全區' },
+                          { title: '北交9宮 (南交3宮)', lesson: '建立信念與遠見——進修、遠行、發展人生哲學', inertia: '困在日常瑣訊、人云亦云、想太多走不遠' },
+                          { title: '北交10宮 (南交4宮)', lesson: '社會成就——走出家門、承擔公共角色與名聲', inertia: '躲在家庭舒適圈、被家族議題絆住' },
+                          { title: '北交11宮 (南交5宮)', lesson: '群體與願景——把個人才華貢獻給更大的目標、經營志同道合社群', inertia: '沉溺於個人的浪漫、掌聲與玩樂' },
+                          { title: '北交12宮 (南交6宮)', lesson: '放下與內在整合——學習獨處、靈性成長、信任無形安排', inertia: '以忙碌工作與控制細節填滿人生' }
+                        ].map((item, idx) => (
+                          <div key={`node-house-${idx}`} className="bg-black/25 p-3 rounded-xl border border-white/5 space-y-1 text-[11px]">
+                            <strong className="text-emerald-300 block text-xs">{item.title}</strong>
+                            <p className="text-slate-300">🌟 <strong>今生功課：</strong>{item.lesson}</p>
+                            <p className="text-slate-400">⚓ <strong>慣性：</strong>{item.inertia}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
