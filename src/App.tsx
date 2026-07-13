@@ -2314,9 +2314,9 @@ export default function App() {
                         <p className="text-xs text-slate-350 leading-relaxed font-sans">
                           {highlightText(aspect.description, highlightNames)} (精算相差: {aspect.orb.toFixed(2)}°)
                         </p>
-                        {getPlanetAspectTransitGuide(aspect.planetA, aspect.planetB, aspect.harmony) && (
+                        {getPlanetAspectTransitGuide(aspect.planetA, aspect.planetB, aspect.harmony, aspect.name) && (
                           <div className="p-2.5 bg-amber-950/20 rounded-xl border border-amber-500/20 text-slate-300 text-xs whitespace-pre-line leading-relaxed font-sans">
-                            {highlightText(getPlanetAspectTransitGuide(aspect.planetA, aspect.planetB, aspect.harmony), highlightNames)}
+                            {highlightText(getPlanetAspectTransitGuide(aspect.planetA, aspect.planetB, aspect.harmony, aspect.name), highlightNames)}
                           </div>
                         )}
                         <div className="flex flex-col sm:flex-row justify-between text-[10px] text-slate-400 font-mono pt-2 border-t border-white/5 gap-1">
@@ -2430,7 +2430,7 @@ export default function App() {
                       badgeTitle = '⚠️ 本命挑戰相';
                     }
 
-                    const natalAspectGuide = getNatalAspectGuide(aspect.planetA, aspect.planetB, aspect.harmony);
+                    const natalAspectGuide = getNatalAspectGuide(aspect.planetA, aspect.planetB, aspect.harmony, aspect.name);
 
                     return (
                       <div
@@ -2544,7 +2544,7 @@ export default function App() {
                       badgeTitle = '⚠️ 天象挑戰相';
                     }
 
-                    const transitAspectGuide = getTransitAspectGuide(aspect.planetA, aspect.planetB, aspect.harmony);
+                    const transitAspectGuide = getTransitAspectGuide(aspect.planetA, aspect.planetB, aspect.harmony, aspect.name);
 
                     return (
                       <div
