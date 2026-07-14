@@ -212,6 +212,98 @@ const ZODIAC_CORE_MEANINGS: Record<string, string> = {
   '雙魚座': '靈性夢幻、超強共情、藝術想像、自我犧牲與包容溫柔（水象 / 變動）',
 };
 
+const INQUIRY_HOUSE_LOOKUP = [
+  {
+    category: '感情婚姻',
+    items: [
+      { detail: '桃花/新戀情', mainHouse: '5宮', matchHouse: '7宮、11宮', reason: '7宮看能否定下來;11宮看朋友變情人' },
+      { detail: '婚姻/長期關係狀態', mainHouse: '7宮', matchHouse: '4宮、8宮', reason: '4宮=成家;8宮=親密與共同財務' },
+      { detail: '曖昧/隱密感情', mainHouse: '12宮', matchHouse: '5宮', reason: '12宮主隱藏, 5宮主戀愛本身' },
+      { detail: '分手/離婚', mainHouse: '7宮', matchHouse: '8宮、12宮', reason: '8宮=財產分配;12宮=放下與收尾' },
+      { detail: '復合', mainHouse: '7宮', matchHouse: '5宮、12宮', reason: '逆行(尤其金星逆行)常是觸發背景' }
+    ]
+  },
+  {
+    category: '財務',
+    items: [
+      { detail: '正財/薪資', mainHouse: '2宮', matchHouse: '10宮、6宮', reason: '10宮=升遷加薪源頭;6宮=職務內容' },
+      { detail: '投資理財(穩健型)', mainHouse: '2宮', matchHouse: '8宮', reason: '8宮=金融工具、槓桿' },
+      { detail: '投機/短線/彩券', mainHouse: '5宮', matchHouse: '2宮、8宮', reason: '2宮=本金;8宮=盈虧結算' },
+      { detail: '遺產/保險/贈與', mainHouse: '8宮', matchHouse: '4宮', reason: '4宮=家族來源' },
+      { detail: '貸款/融資', mainHouse: '8宮', matchHouse: '2宮', reason: '2宮=償還能力' },
+      { detail: '獎金/人脈財', mainHouse: '11宮', matchHouse: '10宮、2宮', reason: '11宮=事業的財帛宮' },
+      { detail: '債務/破財', mainHouse: '8宮', matchHouse: '12宮、2宮', reason: '12宮=暗耗、看不見的漏財' }
+    ]
+  },
+  {
+    category: '事業',
+    items: [
+      { detail: '升遷/成就/名聲', mainHouse: '10宮', matchHouse: '6宮、1宮', reason: '6宮=實際表現;1宮=個人狀態' },
+      { detail: '換工作', mainHouse: '10宮', matchHouse: '6宮、2宮', reason: '6宮=新職務環境;2宮=薪資變化' },
+      { detail: '創業', mainHouse: '10宮', matchHouse: '1宮、2宮、7宮', reason: '1宮=自立;2宮=資金;7宮=合夥' },
+      { detail: '職場人際', mainHouse: '6宮', matchHouse: '7宮、11宮', reason: '7宮=客戶與對等合作;11宮=團隊與上司/權威的關係' },
+      { detail: '與上司/權威的關係', mainHouse: '10宮', matchHouse: '6宮', reason: '10宮兼管老闆與權威' }
+    ]
+  },
+  {
+    category: '學業與考試',
+    items: [
+      { detail: '考試/基礎學業', mainHouse: '3宮', matchHouse: '9宮', reason: '3宮=學習與應試;9宮=學位層級' },
+      { detail: '研究所/高等教育', mainHouse: '9宮', matchHouse: '3宮、10宮', reason: '10宮=學位對職涯的效果' },
+      { detail: '留學', mainHouse: '9宮', matchHouse: '4宮、12宮', reason: '4宮=離家;12宮=異鄉的適應' },
+      { detail: '證照/專業進修', mainHouse: '9宮', matchHouse: '6宮、10宮', reason: '6宮=技能實務' }
+    ]
+  },
+  {
+    category: '居住與遷移',
+    items: [
+      { detail: '買房置產', mainHouse: '4宮', matchHouse: '2宮、8宮', reason: '2宮=頭期資金;8宮=房貸' },
+      { detail: '搬家(近距離)', mainHouse: '4宮', matchHouse: '3宮', reason: '3宮=鄰里環境變化' },
+      { detail: '搬遷至遠地/移民', mainHouse: '9宮', matchHouse: '4宮、12宮', reason: '4宮=根基重建;12宮=離散與適應' },
+      { detail: '租屋', mainHouse: '4宮', matchHouse: '3宮、2宮', reason: '2宮=租金負擔' },
+      { detail: '裝修', mainHouse: '4宮', matchHouse: '6宮', reason: '6宮=工程執行與細節' }
+    ]
+  },
+  {
+    category: '家庭與子女',
+    items: [
+      { detail: '與父母/家人關係', mainHouse: '4宮', matchHouse: '10宮、3宮', reason: '4/10軸=雙親軸;3宮=手足' },
+      { detail: '生育', mainHouse: '5宮', matchHouse: '4宮', reason: '4宮=家庭擴編;並看本命月亮' },
+      { detail: '子女發展', mainHouse: '5宮', matchHouse: '9宮', reason: '9宮=子女的教育' }
+    ]
+  },
+  {
+    category: '健康',
+    items: [
+      { detail: '一般健康/體況', mainHouse: '6宮', matchHouse: '1宮', reason: '1宮=身體本體與活力' },
+      { detail: '慢性病/住院療養', mainHouse: '12宮', matchHouse: '6宮', reason: '12宮=封閉場所與慢性消耗' },
+      { detail: '手術/重大醫療', mainHouse: '8宮', matchHouse: '6宮、1宮', reason: '8宮=危機與侵入性處置' },
+      { detail: '心理狀態', mainHouse: '12宮', matchHouse: '3宮', reason: '並看本命月亮與水星的流年引動' }
+    ]
+  },
+  {
+    category: '人際與是非',
+    items: [
+      { detail: '朋友/社群經營', mainHouse: '11宮', matchHouse: '3宮', reason: '3宮=日常往來' },
+      { detail: '貴人', mainHouse: '11宮', matchHouse: '9宮、10宮', reason: '9宮=遠方貴人;10宮=上位提拔' },
+      { detail: '公開的競爭對手', mainHouse: '7宮', matchHouse: '10宮', reason: '7宮兼管「公開的敵人」' },
+      { detail: '暗中小人', mainHouse: '12宮', matchHouse: '7宮', reason: '12宮=隱藏的敵意' },
+      { detail: '訴訟官司', mainHouse: '7宮', matchHouse: '9宮、10宮', reason: '9宮=法律;10宮=判決與官方' }
+    ]
+  },
+  {
+    category: '其他常見問事',
+    items: [
+      { detail: '短途旅行', mainHouse: '3宮', matchHouse: '—', reason: '數日的移動' },
+      { detail: '出國長途旅行', mainHouse: '9宮', matchHouse: '3宮', reason: '3宮=交通銜接' },
+      { detail: '購車/3C', mainHouse: '3宮', matchHouse: '2宮', reason: '2宮=購置預算' },
+      { detail: '寵物', mainHouse: '6宮', matchHouse: '—', reason: '傳統6宮管小動物' },
+      { detail: '遺失物', mainHouse: '2宮', matchHouse: '8宮、12宮', reason: '12宮=隱匿處;8宮=他人取走' },
+      { detail: '靈修/身心靈', mainHouse: '12宮', matchHouse: '9宮', reason: '9宮=信仰體系;12宮=修行本身' }
+    ]
+  }
+];
+
 const highlightText = (text: string, highlightNames: string[]) => {
   if (!highlightNames.length) return <span>{text}</span>;
   const sortedNames = [...new Set(highlightNames)]
@@ -236,6 +328,10 @@ const highlightText = (text: string, highlightNames: string[]) => {
 };
 
 export default function App() {
+  // Inquiry House Lookup state
+  const [activeInquiryCat, setActiveInquiryCat] = useState('all');
+  const [inquirySearch, setInquirySearch] = useState('');
+
   // 1. App State for Birth (Natal) Input
   const [birthDate, setBirthDate] = useState('1998-05-18');
   const [birthTime, setBirthTime] = useState('10:30');
@@ -2989,18 +3085,18 @@ export default function App() {
                   </thead>
                   <tbody className="divide-y divide-white/5">
                     {[
-                      { house: '第 1 宮', sign: '白羊座', meaning: '自我外表、人格特質、生命活力、第一印象', type: '角宮 (Angular)' },
-                      { house: '第 2 宮', sign: '金牛座', meaning: '價值資產、財富金錢、感官享受、個人資產', type: '續宮 (Succedent)' },
-                      { house: '第 3 宮', sign: '雙子座', meaning: '溝通學習、短途旅行、兄弟姊妹、周遭鄰里', type: '果宮 (Cadent)' },
-                      { house: '第 4 宮', sign: '巨蟹座', meaning: '家庭根源、原生家庭、安全感、晚年居所', type: '角宮 (Angular)' },
-                      { house: '第 5 宮', sign: '獅子座', meaning: '愛情創意、子女娛樂、投機賭運、個人創作', type: '續宮 (Succedent)' },
-                      { house: '第 6 宮', sign: '處女座', meaning: '日常工作、勞健醫療、生活秩序、寵物部屬', type: '果宮 (Cadent)' },
-                      { house: '第 7 宮', sign: '天秤座', meaning: '夫妻伴侶、合夥合約、公開敵人、對事人際', type: '角宮 (Angular)' },
-                      { house: '第 8 宮', sign: '天蠍座', meaning: '他人資源、遺產保險、神祕玄學、深層轉化與性', type: '續宮 (Succedent)' },
-                      { house: '第 9 宮', sign: '射手座', meaning: '高等哲學、遠行深造、法律宗教、出版外國', type: '果宮 (Cadent)' },
-                      { house: '第 10 宮', sign: '摩羯座', meaning: '事業名望、社會地位、官祿成就、人生標竿', type: '角宮 (Angular)' },
-                      { house: '第 11 宮', sign: '水瓶座', meaning: '群眾社會、福德人脈、志同道合社群、願景', type: '續宮 (Succedent)' },
-                      { house: '第 12 宮', sign: '雙魚座', meaning: '隱密玄秘、因果業力、靈性直覺、潛意識與小人', type: '果宮 (Cadent)' }
+                      { house: '第 1 宮（命宮）', sign: '白羊座', meaning: '自我外表、人格特質、生命活力、第一印象', type: '角宮 (Angular)' },
+                      { house: '第 2 宮（財帛宮）', sign: '金牛座', meaning: '價值資產、財富金錢、感官享受、個人資產', type: '續宮 (Succedent)' },
+                      { house: '第 3 宮（兄弟宮）', sign: '雙子座', meaning: '溝通學習、短途旅行、兄弟姊妹、周遭鄰里', type: '果宮 (Cadent)' },
+                      { house: '第 4 宮（田宅宮）', sign: '巨蟹座', meaning: '家庭根源、原生家庭、安全感、晚年居所', type: '角宮 (Angular)' },
+                      { house: '第 5 宮（子女宮 / 戀愛創意宮）', sign: '獅子座', meaning: '愛情創意、子女娛樂、投機賭運、個人創作', type: '續宮 (Succedent)' },
+                      { house: '第 6 宮（奴僕宮 / 工作健康宮）', sign: '處女座', meaning: '日常工作、勞健醫療、生活秩序、寵物部屬', type: '果宮 (Cadent)' },
+                      { house: '第 7 宮（夫妻宮 / 伴侶宮）', sign: '天秤座', meaning: '夫妻伴侶、合夥合約、公開敵人、對事人際', type: '角宮 (Angular)' },
+                      { house: '第 8 宮（疾厄宮 / 他人資源宮）', sign: '天蠍座', meaning: '他人資源、遺產保險、神祕玄學、深層轉化與性', type: '續宮 (Succedent)' },
+                      { house: '第 9 宮（遷移宮 / 高等教育宮）', sign: '射手座', meaning: '高等哲學、遠行深造、法律宗教、出版外國', type: '果宮 (Cadent)' },
+                      { house: '第 10 宮（官祿宮 / 事業成就宮）', sign: '摩羯座', meaning: '事業名望、社會地位、官祿成就、人生標竿', type: '角宮 (Angular)' },
+                      { house: '第 11 宮（福德宮 / 團體交友宮）', sign: '水瓶座', meaning: '群眾社會、福德人脈、志同道合社群、願景', type: '續宮 (Succedent)' },
+                      { house: '第 12 宮（玄秘宮 / 潛意識宮）', sign: '雙魚座', meaning: '隱密玄秘、因果業力、靈性直覺、潛意識與小人', type: '果宮 (Cadent)' }
                     ].map((h, i) => (
                       <tr key={`enc-main-h-${i}`} className="hover:bg-white/5">
                         <td className="p-2.5 font-bold text-emerald-400">{h.house}</td>
@@ -3009,6 +3105,111 @@ export default function App() {
                         <td className="p-2.5 text-slate-400 font-mono">{h.type}</td>
                       </tr>
                     ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* 2.5 問事宮位速查表 */}
+            <div className="space-y-4 pt-4 border-t border-white/10">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#c5a059]/20 pb-2">
+                <h3 className="font-extrabold text-[#e5c583] flex items-center gap-2 text-sm">
+                  <span>📋</span><span>問事宮位速查表 (Inquiry Houses Quick Lookup)</span>
+                </h3>
+                {/* Search box */}
+                <div className="relative max-w-xs w-full">
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                    <Search className="w-3.5 h-3.5" />
+                  </span>
+                  <input
+                    type="text"
+                    value={inquirySearch}
+                    onChange={(e) => setInquirySearch(e.target.value)}
+                    placeholder="搜尋問事細項/宮位/關鍵字..."
+                    className="w-full pl-9 pr-3 py-1.5 bg-black/40 border border-white/10 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-[#c5a059]/60"
+                  />
+                </div>
+              </div>
+
+              {/* Category Filters */}
+              <div className="flex flex-wrap gap-1.5">
+                {['all', '感情婚姻', '財務', '事業', '學業與考試', '居住與遷移', '家庭與子女', '健康', '人際與是非', '其他常見問事'].map((cat) => (
+                  <button
+                    key={`inq-cat-${cat}`}
+                    onClick={() => setActiveInquiryCat(cat)}
+                    className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all ${
+                      activeInquiryCat === cat
+                        ? 'bg-[#c5a059]/25 text-[#e5c583] border border-[#c5a059]/40'
+                        : 'bg-white/5 text-slate-400 border border-transparent hover:bg-white/10 hover:text-slate-200'
+                    }`}
+                  >
+                    {cat === 'all' ? '全部問事' : cat}
+                  </button>
+                ))}
+              </div>
+
+              {/* Data Table */}
+              <div className="overflow-x-auto bg-black/30 rounded-xl border border-white/5 max-h-[400px] overflow-y-auto">
+                <table className="w-full text-xs text-left border-collapse">
+                  <thead>
+                    <tr className="bg-black/60 text-[#c5a059] border-b border-white/10 sticky top-0 z-10">
+                      <th className="p-2.5 bg-black/90">領域分類</th>
+                      <th className="p-2.5 bg-black/90">問事細項</th>
+                      <th className="p-2.5 text-center bg-black/90">主宮位</th>
+                      <th className="p-2.5 bg-black/90">搭配宮位</th>
+                      <th className="p-2.5 bg-black/90">搭配理由與解析</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {(() => {
+                      const list: any[] = [];
+                      INQUIRY_HOUSE_LOOKUP.forEach(catGroup => {
+                        if (activeInquiryCat !== 'all' && catGroup.category !== activeInquiryCat) return;
+                        catGroup.items.forEach(it => {
+                          const matchesSearch = !inquirySearch || 
+                            it.detail.toLowerCase().includes(inquirySearch.toLowerCase()) ||
+                            it.mainHouse.toLowerCase().includes(inquirySearch.toLowerCase()) ||
+                            it.matchHouse.toLowerCase().includes(inquirySearch.toLowerCase()) ||
+                            it.reason.toLowerCase().includes(inquirySearch.toLowerCase()) ||
+                            catGroup.category.toLowerCase().includes(inquirySearch.toLowerCase());
+                          if (matchesSearch) {
+                            list.push({ category: catGroup.category, ...it });
+                          }
+                        });
+                      });
+
+                      if (list.length === 0) {
+                        return (
+                          <tr>
+                            <td colSpan={5} className="p-8 text-center text-slate-500 font-medium">
+                              找不到符合的問事主題。試試其他關鍵字吧！
+                            </td>
+                          </tr>
+                        );
+                      }
+
+                      return list.map((item, idx) => (
+                        <tr key={`inq-lookup-row-${idx}`} className="hover:bg-white/5 transition-colors">
+                          <td className="p-2.5 text-[#c5a059] font-medium text-[11px] whitespace-nowrap">
+                            {item.category}
+                          </td>
+                          <td className="p-2.5 font-bold text-slate-200 text-[11px]">
+                            {item.detail}
+                          </td>
+                          <td className="p-2.5 text-center font-extrabold text-emerald-400 whitespace-nowrap">
+                            <span className="bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-500/20">
+                              {item.mainHouse}
+                            </span>
+                          </td>
+                          <td className="p-2.5 font-semibold text-amber-300 text-[11px]">
+                            {item.matchHouse}
+                          </td>
+                          <td className="p-2.5 text-slate-300 leading-relaxed max-w-sm">
+                            {item.reason}
+                          </td>
+                        </tr>
+                      ));
+                    })()}
                   </tbody>
                 </table>
               </div>
