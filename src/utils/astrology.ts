@@ -525,6 +525,21 @@ export interface MonthlyForecastItem {
   };
 }
 
+export interface SolarReturnPlanet {
+  name: string;
+  symbol: string;
+  sign: string;
+  isRetrograde?: boolean;
+}
+
+export interface SolarReturnHouseDetail {
+  number: number;
+  name: string;
+  signName: string;
+  meaning: string;
+  planets: SolarReturnPlanet[];
+}
+
 export interface AstrologicalPredictionReport {
   sensitivePoints: SensitivePoint[];
   solarReturn: {
@@ -539,6 +554,7 @@ export interface AstrologicalPredictionReport {
     moonSign: string;
     moonHouse: number;
     description: string;
+    houses: SolarReturnHouseDetail[];
   };
   houseSignifications: { house: number; name: string; meaning: string }[];
   signSignifications: { sign: string; element: string; meaning: string }[];
@@ -681,6 +697,100 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
     12: '靈性內省、因果沉澱與幕後潛能轉化年（落第12宮）',
   };
 
+  const getSolarReturnPlanetPlacements = (tYear: number, srSunH: number, moonH: number) => {
+    const placements = [
+      { name: '太陽', symbol: '☉', house: srSunH },
+      { name: '月亮', symbol: '☽', house: moonH },
+      {
+        name: '水星',
+        symbol: '☿',
+        house: ((srSunH - 1 + (tYear % 3) - 1 + 12) % 12) + 1,
+        isRetrograde: (tYear % 3 === 0)
+      },
+      {
+        name: '金星',
+        symbol: '♀',
+        house: ((srSunH - 1 + (tYear % 5) - 2 + 12) % 12) + 1,
+        isRetrograde: (tYear % 8 === 0)
+      },
+      {
+        name: '火星',
+        symbol: '♂',
+        house: ((srSunH - 1 + 2 + (tYear % 11)) % 12) + 1,
+        isRetrograde: (tYear % 2 === 0)
+      },
+      {
+        name: '木星',
+        symbol: '♃',
+        house: ((srSunH - 1 + 4 + (tYear % 7)) % 12) + 1,
+        isRetrograde: (tYear % 3 !== 1)
+      },
+      {
+        name: '土星',
+        symbol: '♄',
+        house: ((srSunH - 1 + 6 + (tYear % 9)) % 12) + 1,
+        isRetrograde: (tYear % 2 === 1)
+      },
+      {
+        name: '天王星',
+        symbol: '♅',
+        house: ((srSunH - 1 + 8 + (tYear % 4)) % 12) + 1,
+        isRetrograde: true
+      },
+      {
+        name: '海王星',
+        symbol: '♆',
+        house: ((srSunH - 1 + 10 + (tYear % 3)) % 12) + 1,
+        isRetrograde: true
+      },
+      {
+        name: '冥王星',
+        symbol: '♇',
+        house: ((srSunH - 1 + 1 + (tYear % 6)) % 12) + 1,
+        isRetrograde: true
+      },
+      {
+        name: '北交點',
+        symbol: '☊',
+        house: ((srSunH - 1 + 5 + (tYear % 12)) % 12) + 1
+      },
+    ];
+
+    const rahuH = placements.find(p => p.name === '北交點')!.house;
+    const ketuH = ((rahuH - 1 + 6) % 12) + 1;
+    placements.push({ name: '南交點', symbol: '☋', house: ketuH });
+
+    return placements;
+  };
+
+  const srSunH = srSunHouse;
+  const moonH = ((srSunH + 3) % 12) + 1;
+  const srPlacements = getSolarReturnPlanetPlacements(transitYear, srSunH, moonH);
+
+  const solarReturnHouses: SolarReturnHouseDetail[] = [];
+  for (let h = 1; h <= 12; h++) {
+    const signIndex = (srAscSignIndex + h - 1) % 12;
+    const signName = ZODIAC_SIGNS[signIndex].name;
+    const houseMeaning = HOUSE_DETAILS[h - 1].keyMeaning;
+
+    const planetsInHouse = srPlacements
+      .filter(p => p.house === h)
+      .map(p => ({
+        name: p.name,
+        symbol: p.symbol,
+        sign: signName,
+        isRetrograde: p.isRetrograde
+      }));
+
+    solarReturnHouses.push({
+      number: h,
+      name: HOUSE_DETAILS[h - 1].name,
+      signName: signName,
+      meaning: houseMeaning,
+      planets: planetsInHouse
+    });
+  }
+
   const solarReturn = {
     year: transitYear,
     sunSign: ZODIAC_SIGNS[(natalChart.planets[0].signIndex + (transitYear - 1998)) % 12].name,
@@ -691,8 +801,9 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
     clusteringHouse: srSunHouse,
     annualTheme: themeMap[srSunHouse] || '全方位成長與心靈突破年',
     moonSign: ZODIAC_SIGNS[(srAscSignIndex + 4) % 12].name,
-    moonHouse: ((srSunHouse + 3) % 12) + 1,
-    description: `回歸盤上升星座落在【${ZODIAC_SIGNS[srAscSignIndex].name}】（主命星：${ruler.planet} - ${ruler.meaning}），年度太陽落在第 ${srSunHouse} 宮（${HOUSE_DETAILS[srSunHouse - 1]?.name}：${HOUSE_DETAILS[srSunHouse - 1]?.keyMeaning}），指向年度主戰場為【${HOUSE_DETAILS[srSunHouse - 1]?.name}】。本年度情緒需求著重於內在心靈與外界期待的平衡。`
+    moonHouse: moonH,
+    description: `回歸盤上升星座落在【${ZODIAC_SIGNS[srAscSignIndex].name}】（主命星：${ruler.planet} - ${ruler.meaning}），年度太陽落在第 ${srSunHouse} 宮（${HOUSE_DETAILS[srSunHouse - 1]?.name}：${HOUSE_DETAILS[srSunHouse - 1]?.keyMeaning}），指向年度主戰場為【${HOUSE_DETAILS[srSunHouse - 1]?.name}】。本年度情緒需求著重於內在心靈與外界期待的平衡。`,
+    houses: solarReturnHouses
   };
 
   // Step 3: Eclipses

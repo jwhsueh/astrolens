@@ -2850,6 +2850,101 @@ export default function App() {
                         </div>
                       ))}
                     </div>
+
+                    {/* 太陽回歸盤十二宮位細節 */}
+                    <div className="space-y-3 pt-4 border-t border-white/10">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <h4 className="font-bold text-[#e5c583] text-xs flex items-center gap-1.5">
+                          <span>🪐</span><span>回歸盤十二宮星體落位細節 (Solar Return 12 Houses Placements)</span>
+                        </h4>
+                        <span className="text-[10px] text-slate-400 font-mono bg-white/5 px-2.5 py-0.5 rounded-full border border-white/10 self-start sm:self-auto">
+                          回歸盤等宮制 (Solar Return Equal House)
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 leading-relaxed">
+                        以下為此太陽回歸年（{pred.solarReturn.year}年）各生活領域（十二宮位）的能量焦點、星體落入情況與年度運勢深度解析：
+                      </p>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pt-1">
+                        {pred.solarReturn.houses.map((house) => {
+                          const hasPlanets = house.planets.length > 0;
+                          return (
+                            <div
+                              key={`sr-house-${house.number}`}
+                              className="bg-black/35 border border-white/5 rounded-2xl p-4 hover:border-[#c5a059]/30 transition-colors flex flex-col justify-between space-y-3"
+                            >
+                              <div>
+                                <div className="flex justify-between items-start border-b border-white/5 pb-1.5 mb-2">
+                                  <div>
+                                    <span className="font-mono text-[10px] font-extrabold text-[#c5a059]">
+                                      {String(house.number).padStart(2, '0')} House
+                                    </span>
+                                    <h5 className="text-[11px] font-bold text-slate-200">{house.name}</h5>
+                                  </div>
+                                  <span className="text-[9px] text-amber-300 font-mono bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 font-bold">
+                                    {house.signName}
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-slate-400 leading-normal mb-2 italic">
+                                  {house.meaning}
+                                </p>
+                              </div>
+
+                              <div className="space-y-2">
+                                <div className="flex items-start justify-between text-[10px] bg-black/20 p-2 rounded-xl border border-white/5">
+                                  <span className="text-slate-500 font-bold uppercase tracking-wider text-[9px] pt-0.5">🪐 回歸落位:</span>
+                                  <div className="text-right flex flex-wrap gap-1 justify-end">
+                                    {hasPlanets ? (
+                                      house.planets.map(p => (
+                                        <span
+                                          key={`sr-p-${p.name}`}
+                                          className="inline-flex items-center space-x-1 px-1.5 py-0.5 bg-[#c5a059]/10 border border-[#c5a059]/25 rounded text-[#e5c583] text-[10px] font-medium"
+                                          title={`${p.name}落入${p.sign}`}
+                                        >
+                                          <span className="font-serif text-[11px]">{p.symbol}</span>
+                                          <span>{p.name}</span>
+                                          {p.isRetrograde && <span className="text-[8px] text-red-400 font-bold ml-0.5">逆</span>}
+                                        </span>
+                                      ))
+                                    ) : (
+                                      <span className="text-slate-600 italic">空宮 (Empty)</span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {hasPlanets && (
+                                  <div className="space-y-1.5 pt-1">
+                                    {house.planets.map(p => {
+                                      const signInterpret = getPlanetSignInterpretation(p.name, p.sign);
+                                      const houseInterpret = getPlanetHouseInterpretation(p.name, house.number);
+                                      return (
+                                        <div key={`sr-interpret-${p.name}`} className="bg-black/40 p-2 rounded-lg border border-white/5 space-y-1 text-[9px] leading-relaxed">
+                                          <div className="flex items-center gap-1 text-slate-300 font-bold border-b border-white/5 pb-0.5 mb-1">
+                                            <span className="font-serif text-[#e5c583]">{p.symbol}</span>
+                                            <span className="text-slate-200">{p.name}</span>
+                                            <span className="text-slate-400 font-mono">({p.sign} 第 {house.number} 宮{p.isRetrograde ? ' 逆行' : ''})</span>
+                                          </div>
+                                          {signInterpret && (
+                                            <p className="text-amber-200/90 font-sans">
+                                              <strong className="text-amber-400/80 font-mono">🌟 星座：</strong>{signInterpret}
+                                            </p>
+                                          )}
+                                          {houseInterpret && (
+                                            <p className="text-emerald-200/90 font-sans">
+                                              <strong className="text-emerald-400/80 font-mono">📖 宮位：</strong>{houseInterpret}
+                                            </p>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
 
                   {/* Step 3 */}
