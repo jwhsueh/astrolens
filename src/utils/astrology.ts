@@ -507,6 +507,31 @@ export interface SensitivePoint {
   rangeMax: number;
 }
 
+export interface MonthlyInnerPlanetTransit {
+  planet: string;
+  symbol: string;
+  period: string;
+  isRetrograde: boolean;
+}
+
+export interface MonthlyHouseTransitDetail {
+  houseNumber: number;
+  houseName: string;
+  outerPlanet: {
+    name: string;
+    symbol: string;
+  };
+  innerPlanets: MonthlyInnerPlanetTransit[];
+  hasEclipse?: {
+    type: string;
+    date: string;
+  };
+  hasLuminaries?: {
+    type: '新月' | '滿月';
+    date: string;
+  };
+}
+
 export interface MonthlyForecastItem {
   month: number;
   monthName: string;
@@ -523,6 +548,7 @@ export interface MonthlyForecastItem {
     aspectType: 'soft' | 'hard';
     aspectMeaning: string;
   };
+  houseTransits?: MonthlyHouseTransitDetail[];
 }
 
 export interface SolarReturnPlanet {
@@ -967,6 +993,114 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
       };
     }
 
+    // Calculate Monthly House Transits for Outer Planets
+    const houseTransits: MonthlyHouseTransitDetail[] = [];
+    const outerNames = ['木星', '土星', '天王星', '海王星', '冥王星'];
+    const outerPlanetsList = srPlacements.filter(p => outerNames.includes(p.name));
+
+    // Sun house for this month
+    const sh = ((srSunHouse - 1 + (monthNum - 1)) % 12) + 1;
+    // Opposite house for Full Moon
+    const fh = ((sh + 5) % 12) + 1;
+
+    outerPlanetsList.forEach(op => {
+      const hNum = op.house;
+      const hName = HOUSE_DETAILS[hNum - 1]?.name || `第${hNum}宮`;
+      const innerPlanets: MonthlyInnerPlanetTransit[] = [];
+
+      // Check Sun entering this house
+      if (hNum === sh) {
+        innerPlanets.push({
+          planet: '太陽',
+          symbol: '☉',
+          period: `${monthNum}月20日 ~ ${monthNum === 12 ? 1 : monthNum + 1}月20日`,
+          isRetrograde: false
+        });
+      }
+
+      // Check Mercury entering this house
+      const mercH1 = sh;
+      const mercH2 = ((sh) % 12) + 1;
+      const isMercRetro = (monthNum === 3 || monthNum === 7 || monthNum === 11);
+      if (hNum === mercH1) {
+        innerPlanets.push({
+          planet: '水星',
+          symbol: '☿',
+          period: `${monthNum}月01日 ~ ${monthNum}月15日`,
+          isRetrograde: isMercRetro
+        });
+      }
+      if (hNum === mercH2 && mercH1 !== mercH2) {
+        innerPlanets.push({
+          planet: '水星',
+          symbol: '☿',
+          period: `${monthNum}月16日 ~ ${monthNum}月30日`,
+          isRetrograde: isMercRetro
+        });
+      }
+
+      // Check Venus entering this house
+      const venH1 = ((sh - 2 + 12) % 12) + 1;
+      const venH2 = sh;
+      const isVenRetro = (transitYear % 8 === 0 && monthNum === 5);
+      if (hNum === venH1) {
+        innerPlanets.push({
+          planet: '金星',
+          symbol: '♀',
+          period: `${monthNum}月01日 ~ ${monthNum}月12日`,
+          isRetrograde: isVenRetro
+        });
+      }
+      if (hNum === venH2 && venH1 !== venH2) {
+        innerPlanets.push({
+          planet: '金星',
+          symbol: '♀',
+          period: `${monthNum}月13日 ~ ${monthNum}月30日`,
+          isRetrograde: isVenRetro
+        });
+      }
+
+      // Check Mars entering this house
+      const marsH = ((srSunHouse - 1 + 2 + Math.floor(monthNum / 2)) % 12) + 1;
+      const isMarsRetro = (transitYear % 2 === 0 && (monthNum === 12 || monthNum === 1));
+      if (hNum === marsH) {
+        innerPlanets.push({
+          planet: '火星',
+          symbol: '♂',
+          period: `${monthNum}月01日 ~ ${monthNum}月30日`,
+          isRetrograde: isMarsRetro
+        });
+      }
+
+      // Check Eclipse
+      let hasEclipse: { type: string; date: string } | undefined = undefined;
+      if (monthNum === 3 && hNum === ((srSunHouse + 1) % 12) + 1) {
+        hasEclipse = { type: '日食 (新能量突破)', date: `${monthNum}月25日` };
+      } else if (monthNum === 9 && hNum === ((srSunHouse + 6) % 12) + 1) {
+        hasEclipse = { type: '月食 (關係收尾驗收)', date: `${monthNum}月18日` };
+      }
+
+      // Check New Moon / Full Moon
+      let hasLuminaries: { type: '新月' | '滿月'; date: string } | undefined = undefined;
+      if (hNum === sh) {
+        hasLuminaries = { type: '新月', date: `${monthNum}月08日` };
+      } else if (hNum === fh) {
+        hasLuminaries = { type: '滿月', date: `${monthNum}月23日` };
+      }
+
+      houseTransits.push({
+        houseNumber: hNum,
+        houseName: hName,
+        outerPlanet: {
+          name: op.name,
+          symbol: op.symbol
+        },
+        innerPlanets,
+        hasEclipse,
+        hasLuminaries
+      });
+    });
+
     return {
       month: monthNum,
       monthName: mName,
@@ -976,7 +1110,8 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
       aspects: isHotspot ? [`外行星行運觸發本命敏感點 (容許度 <1.5°)`, `日月蝕能量交會期`] : [`快星日常過境`, `平穩維護期`],
       triggerEvents,
       score,
-      aspectQuote
+      aspectQuote,
+      houseTransits
     };
   });
 

@@ -2873,7 +2873,7 @@ export default function App() {
                             <span>🔍</span> 選擇特定問事主題：以有色外框聚焦對應之回歸宮位
                           </span>
                           <p className="text-[10px] text-slate-500">
-                            選取後，下方十二宮會以 <span className="text-emerald-400 font-semibold">綠色(主宮)</span> 與 <span className="text-amber-400 font-semibold">橘色(搭配宮)</span> 外框聚焦，非相關宮位將會略微淡化，便於對照。
+                            選取後，下方十二宮會以 <span className="text-emerald-400 font-semibold">綠色(主宮)</span> 與 <span className="text-amber-400 font-semibold">橘色(搭配宮)</span> 外框聚焦，並保持全部宮位可見，便於對照。
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -2966,6 +2966,7 @@ export default function App() {
                                           </span>
                                         )}
                                       </div>
+
                                       <h5 className="text-[11px] font-bold text-slate-200">{house.name}</h5>
                                     </div>
                                     <span className="text-[9px] text-amber-300 font-mono bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 font-bold">
@@ -3082,7 +3083,7 @@ export default function App() {
                     <h3 className="font-extrabold text-[#e5c583] flex items-center gap-2 text-sm">
                       <span>4️⃣</span><span>逐月運勢圖與熱區 (Monthly Heatmap)</span>
                     </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {pred.monthlyTimeline.map(m => (
                         <div key={`m-main-${m.month}`} className={`p-3 rounded-xl border text-xs flex flex-col justify-between space-y-2.5 ${m.intensity === 'high' ? 'bg-amber-500/10 border-amber-500/30 text-amber-300' : 'bg-white/5 border-white/5 text-slate-300'}`}>
                           <div className="flex justify-between items-center font-bold">
@@ -3103,6 +3104,72 @@ export default function App() {
                               ))}
                             </ul>
                           </div>
+
+                          {/* 月度行運宮位星體與能量對照 */}
+                          {m.houseTransits && m.houseTransits.length > 0 && (
+                            <div className="pt-2 border-t border-white/10 space-y-1.5 text-[10px]">
+                              <span className="text-[10px] font-bold text-emerald-400/90 flex items-center gap-1">
+                                <span>🌌</span><span>本月行運星體與宮位對照：</span>
+                              </span>
+                              <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-white/10">
+                                {m.houseTransits.map((ht, htIdx) => {
+                                  const hasInner = ht.innerPlanets && ht.innerPlanets.length > 0;
+                                  const hasEclipse = !!ht.hasEclipse;
+                                  const hasLuminaries = !!ht.hasLuminaries;
+
+                                  return (
+                                    <div key={`ht-${m.month}-${htIdx}`} className="bg-black/35 border border-white/5 p-2 rounded-lg space-y-1 text-[9.5px] leading-relaxed text-slate-300">
+                                      {/* Outer Planet sitting in House */}
+                                      <div className="flex justify-between items-center text-slate-300 font-bold">
+                                        <span className="flex items-center gap-1 text-[#e5c583]">
+                                          <span className="font-serif text-[11px]">{ht.outerPlanet.symbol}</span>
+                                          <span>{ht.outerPlanet.name}</span>
+                                          <span className="text-slate-400 font-normal">→ 第 {ht.houseNumber} 宮</span>
+                                        </span>
+                                        <span className="text-[8.5px] bg-[#c5a059]/10 text-amber-300 border border-[#c5a059]/30 px-1 py-0.5 rounded font-medium">
+                                          {ht.houseName}
+                                        </span>
+                                      </div>
+
+                                      {/* Inner Planet transits in this month */}
+                                      {hasInner && (
+                                        <div className="space-y-0.5 pl-1.5 border-l border-[#c5a059]/30 mt-1">
+                                          <div className="text-[8px] text-slate-500 font-mono tracking-wider uppercase">內行星行經 (Inner Transits):</div>
+                                          {ht.innerPlanets.map((ip, ipIdx) => (
+                                            <div key={`ip-${ipIdx}`} className="flex items-center justify-between text-slate-300">
+                                              <span className="flex items-center gap-0.5">
+                                                <span className="font-serif text-[#e5c583] text-[10px]">{ip.symbol}</span>
+                                                <span>{ip.planet}</span>
+                                                {ip.isRetrograde && <span className="text-[8px] text-red-400 font-bold bg-red-500/10 px-0.5 rounded">逆</span>}
+                                              </span>
+                                              <span className="text-[8.5px] font-mono text-emerald-400/90">{ip.period}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+
+                                      {/* New Moon / Full Moon Marker */}
+                                      {hasLuminaries && (
+                                        <div className="flex items-center gap-1 text-[8.5px] bg-sky-500/5 border border-sky-500/15 p-1 rounded mt-0.5 text-sky-300 font-medium">
+                                          <span className="text-amber-300">{ht.hasLuminaries.type === '新月' ? '🌑' : '🌕'}</span>
+                                          <span>{ht.hasLuminaries.date} {ht.hasLuminaries.type}啟動本宮能量</span>
+                                        </div>
+                                      )}
+
+                                      {/* Eclipse Marker */}
+                                      {hasEclipse && (
+                                        <div className="flex items-center gap-1 text-[8.5px] bg-red-500/10 border border-red-500/20 p-1 rounded mt-0.5 text-red-300 font-extrabold animate-pulse">
+                                          <span>🔴</span>
+                                          <span>{ht.hasEclipse.date} {ht.hasEclipse.type}引爆本宮</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
                           {m.aspectQuote && (
                             <div className="pt-2 border-t border-[#c5a059]/20 space-y-1.5 bg-black/40 p-2.5 rounded-lg border border-[#c5a059]/30">
                               <div className="flex flex-col text-[9.5px] font-bold text-[#e5c583] space-y-0.5">
