@@ -969,7 +969,7 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
       if (monthNum % 3 === 0) {
         triggerEvents = [`水星逆行停滯期（檢視與舊案重審）`, `日常行政細節覆核與溝通校準`];
       } else {
-        triggerEvents = [`快星過境與平穩日程推進`, `穩扎穩打累積日常成果與基底調整`];
+        triggerEvents = [];
       }
     }
 
@@ -1105,7 +1105,7 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
       month: monthNum,
       monthName: mName,
       intensity: (isHotspot ? 'high' : (score === 2 ? 'medium' : 'low')) as 'high' | 'medium' | 'low',
-      theme: isHotspot ? `強效引動【${HOUSE_DETAILS[srSunHouse - 1]?.name}】之核心主題` : `日常運作與基底調整期`,
+      theme: isHotspot ? `強效引動【${HOUSE_DETAILS[srSunHouse - 1]?.name}】之核心主題` : `平穩期`,
       timing: `上旬快星觸發，中下旬相位漸趨精確`,
       aspects: isHotspot ? [`外行星行運觸發本命敏感點 (容許度 <1.5°)`, `日月蝕能量交會期`] : [`快星日常過境`, `平穩維護期`],
       triggerEvents,
