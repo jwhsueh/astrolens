@@ -706,8 +706,21 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
   ];
 
   // Step 2: Solar Return
-  const srSunHouse = ((transitYear * 3 + 2) % 12) + 1;
-  const srAscSignIndex = (transitYear * 5) % 12;
+  const birthDate = new Date(natalChart.localTime);
+  const birthYear = isNaN(birthDate.getTime()) ? 1995 : birthDate.getFullYear();
+  const age = Math.abs(transitYear - birthYear);
+
+  // Approximate Solar Return Ascendant:
+  // A typical shift is ~87.2 degrees per year.
+  const srAscLongitude = (natalChart.ascendant + age * 87.2) % 360;
+  const srAscSignIndex = Math.floor(srAscLongitude / 30);
+
+  // The Solar Return Sun is at the same longitude as the natal Sun:
+  const natalSunLong = natalChart.planets[0]?.longitude ?? 0;
+
+  // The Sun's house in the Solar Return chart is determined by its distance from the Solar Return Ascendant.
+  const srSunHouse = (Math.floor((natalSunLong - srAscLongitude + 360) % 360 / 30) % 12) + 1;
+
   const themeMap: Record<number, string> = {
     1: '自我蛻變與個人形象重建年（落第1宮）',
     2: '財務資產重整與實質收穫年（落第2宮）',
@@ -724,61 +737,88 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
   };
 
   const getSolarReturnPlanetPlacements = (tYear: number, srSunH: number, moonH: number) => {
+    const getPlanetHouse = (planetId: string, defaultOffset: number) => {
+      const natalP = natalChart.planets.find(p => p.id === planetId);
+      if (!natalP) return ((srSunH - 1 + defaultOffset) % 12) + 1;
+      let transitLong = natalP.longitude;
+      if (planetId === 'mercury') {
+        transitLong = (natalP.longitude + age * 30.5 + tYear * 1.2) % 360;
+      } else if (planetId === 'venus') {
+        transitLong = (natalP.longitude + age * 18.2 + tYear * 1.6) % 360;
+      } else if (planetId === 'mars') {
+        transitLong = (natalP.longitude + age * 5.6 + tYear * 2.1) % 360;
+      } else if (planetId === 'jupiter') {
+        transitLong = (natalP.longitude + age * 30.3) % 360;
+      } else if (planetId === 'saturn') {
+        transitLong = (natalP.longitude + age * 12.2) % 360;
+      } else if (planetId === 'uranus') {
+        transitLong = (natalP.longitude + age * 4.2) % 360;
+      } else if (planetId === 'neptune') {
+        transitLong = (natalP.longitude + age * 2.2) % 360;
+      } else if (planetId === 'pluto') {
+        transitLong = (natalP.longitude + age * 1.5) % 360;
+      } else if (planetId === 'rahu') {
+        transitLong = (natalP.longitude - age * 19.3) % 360;
+      }
+      if (transitLong < 0) transitLong += 360;
+      return (Math.floor((transitLong - srAscLongitude + 360) % 360 / 30) % 12) + 1;
+    };
+
     const placements = [
       { name: '太陽', symbol: '☉', house: srSunH },
       { name: '月亮', symbol: '☽', house: moonH },
       {
         name: '水星',
         symbol: '☿',
-        house: ((srSunH - 1 + (tYear % 3) - 1 + 12) % 12) + 1,
+        house: getPlanetHouse('mercury', 0),
         isRetrograde: (tYear % 3 === 0)
       },
       {
         name: '金星',
         symbol: '♀',
-        house: ((srSunH - 1 + (tYear % 5) - 2 + 12) % 12) + 1,
+        house: getPlanetHouse('venus', 2),
         isRetrograde: (tYear % 8 === 0)
       },
       {
         name: '火星',
         symbol: '♂',
-        house: ((srSunH - 1 + 2 + (tYear % 11)) % 12) + 1,
+        house: getPlanetHouse('mars', 4),
         isRetrograde: (tYear % 2 === 0)
       },
       {
         name: '木星',
         symbol: '♃',
-        house: ((srSunH - 1 + 4 + (tYear % 7)) % 12) + 1,
+        house: getPlanetHouse('jupiter', 6),
         isRetrograde: (tYear % 3 !== 1)
       },
       {
         name: '土星',
         symbol: '♄',
-        house: ((srSunH - 1 + 6 + (tYear % 9)) % 12) + 1,
+        house: getPlanetHouse('saturn', 8),
         isRetrograde: (tYear % 2 === 1)
       },
       {
         name: '天王星',
         symbol: '♅',
-        house: ((srSunH - 1 + 8 + (tYear % 4)) % 12) + 1,
+        house: getPlanetHouse('uranus', 10),
         isRetrograde: true
       },
       {
         name: '海王星',
         symbol: '♆',
-        house: ((srSunH - 1 + 10 + (tYear % 3)) % 12) + 1,
+        house: getPlanetHouse('neptune', 1),
         isRetrograde: true
       },
       {
         name: '冥王星',
         symbol: '♇',
-        house: ((srSunH - 1 + 1 + (tYear % 6)) % 12) + 1,
+        house: getPlanetHouse('pluto', 3),
         isRetrograde: true
       },
       {
         name: '北交點',
         symbol: '☊',
-        house: ((srSunH - 1 + 5 + (tYear % 12)) % 12) + 1
+        house: getPlanetHouse('rahu', 5)
       },
     ];
 
@@ -790,7 +830,9 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
   };
 
   const srSunH = srSunHouse;
-  const moonH = ((srSunH + 3) % 12) + 1;
+  const natalMoon = natalChart.planets.find(p => p.id === 'moon');
+  const approxMoonLong = natalMoon ? (natalMoon.longitude + age * 115.3 + transitYear * 13.1) % 360 : (natalSunLong + 90) % 360;
+  const moonH = (Math.floor((approxMoonLong - srAscLongitude + 360) % 360 / 30) % 12) + 1;
   const srPlacements = getSolarReturnPlanetPlacements(transitYear, srSunH, moonH);
 
   const solarReturnHouses: SolarReturnHouseDetail[] = [];
