@@ -924,7 +924,32 @@ export function getOuterPlanetAspectQuotes(
     const dayOffset = - (degDiff / speed);
     const exactPeakDay = Math.min(maxDays, Math.max(1, Math.round(15 + dayOffset)));
 
-    const exactPeriodStr = `${monthNum}月01日～${monthNum}月${String(maxDays).padStart(2, '0')}日（當月精確高峰：${monthNum}月${String(exactPeakDay).padStart(2, '0')}日）`;
+    const degDiffDay1 = degDiff - 14 * speed;
+    const degDiffDayEnd = degDiff + (maxDays - 15) * speed;
+
+    const fullMonthActive = Math.abs(degDiffDay1) <= orbMax && Math.abs(degDiffDayEnd) <= orbMax;
+
+    let exactPeriodStr = '';
+    if (fullMonthActive) {
+      // Duration >= 1 month: Do NOT show exact day dates for monthly predictions
+      exactPeriodStr = `${monthNum}月全月（背景長效影響）`;
+    } else {
+      // Active for less than 1 month: calculate and show exact date range
+      let startDay = 1;
+      let endDay = maxDays;
+      if (Math.abs(degDiffDay1) > orbMax) {
+        startDay = Math.min(maxDays, Math.max(1, Math.round(15 + (-orbMax - degDiff) / speed)));
+      }
+      if (Math.abs(degDiffDayEnd) > orbMax) {
+        endDay = Math.min(maxDays, Math.max(1, Math.round(15 + (orbMax - degDiff) / speed)));
+      }
+      if (startDay > endDay) {
+        const tmp = startDay;
+        startDay = endDay;
+        endDay = tmp;
+      }
+      exactPeriodStr = `${monthNum}月${String(startDay).padStart(2, '0')}日～${monthNum}月${String(endDay).padStart(2, '0')}日（當月精確高峰：${monthNum}月${String(exactPeakDay).padStart(2, '0')}日）`;
+    }
 
     const transitingLabel = `${tp.symbol} 流年${tp.name}`;
     const targetLabel = `本命${np.name}`;
@@ -1136,6 +1161,98 @@ export function getMonthlyAspectQuotes(
 }
 
 /**
+ * Finds the exact start year/month and end year/month across multi-year cycles
+ * for an outer planet aspect active during transitYear.
+ */
+export function findOuterAspectExactBounds(
+  opId: string,
+  opName: string,
+  npId: string,
+  npLong: number,
+  targetAngle: number,
+  orbMax: number,
+  transitYear: number,
+  transitLongitude: number = 121.5,
+  transitLatitude: number = 25.04,
+  transitTimezone: number = 8
+): { startY: number; startM: number; endY: number; endM: number } {
+  let startY = transitYear;
+  let startM = 1;
+  let endY = transitYear;
+  let endM = 12;
+
+  // Search backward up to 15 years
+  let prevActiveY = transitYear;
+  let prevActiveM = 1;
+  let inactiveYearCount = 0;
+
+  for (let y = transitYear; y >= transitYear - 15; y--) {
+    let activeInYear = false;
+    for (let m = 12; m >= 1; m--) {
+      const isoStr = `${y}-${String(m).padStart(2, '0')}-15T12:00`;
+      const chart = calculateAstrology(isoStr, transitLongitude, transitLatitude, transitTimezone);
+      const tp = chart.planets.find(p => p.id === opId || p.name.includes(opName));
+      if (!tp) continue;
+
+      const diff = normalizeDegrees(tp.longitude - npLong);
+      const angle = diff > 180 ? 360 - diff : diff;
+      const orb = Math.abs(angle - targetAngle);
+
+      if (orb <= orbMax) {
+        activeInYear = true;
+        prevActiveY = y;
+        prevActiveM = m;
+        inactiveYearCount = 0;
+      }
+    }
+    if (!activeInYear) {
+      inactiveYearCount++;
+      if (inactiveYearCount >= 1 && y < transitYear) {
+        break;
+      }
+    }
+  }
+  startY = prevActiveY;
+  startM = prevActiveM;
+
+  // Search forward up to 15 years
+  let prevEndY = transitYear;
+  let prevEndM = 12;
+  inactiveYearCount = 0;
+
+  for (let y = transitYear; y <= transitYear + 15; y++) {
+    let activeInYear = false;
+    for (let m = 1; m <= 12; m++) {
+      const isoStr = `${y}-${String(m).padStart(2, '0')}-15T12:00`;
+      const chart = calculateAstrology(isoStr, transitLongitude, transitLatitude, transitTimezone);
+      const tp = chart.planets.find(p => p.id === opId || p.name.includes(opName));
+      if (!tp) continue;
+
+      const diff = normalizeDegrees(tp.longitude - npLong);
+      const angle = diff > 180 ? 360 - diff : diff;
+      const orb = Math.abs(angle - targetAngle);
+
+      if (orb <= orbMax) {
+        activeInYear = true;
+        prevEndY = y;
+        prevEndM = m;
+        inactiveYearCount = 0;
+      }
+    }
+    if (!activeInYear) {
+      inactiveYearCount++;
+      if (inactiveYearCount >= 1 && y > transitYear) {
+        break;
+      }
+    }
+  }
+  endY = prevEndY;
+  endM = prevEndM;
+
+  return { startY, startM, endY, endM };
+}
+
+/**
  * Calculates active aspects for outer planets (Jupiter, Saturn, Uranus, Neptune, Pluto)
  * throughout the transit year, identifying exact date ranges/periods and long-term trend meanings.
  */
@@ -1159,83 +1276,62 @@ export function getAnnualOuterPlanetAspects(
     ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'].includes(p.id)
   );
 
-  // Generate prior year (transitYear - 1) and next year (transitYear + 1) monthly charts for multi-year tracking
-  const prevYearCharts: AstrologyChart[] = [];
-  const nextYearCharts: AstrologyChart[] = [];
-
-  for (let m = 1; m <= 12; m++) {
-    const prevStr = `${transitYear - 1}-${String(m).padStart(2, '0')}-15T12:00`;
-    prevYearCharts.push(calculateAstrology(prevStr, transitLongitude, transitLatitude, transitTimezone));
-
-    const nextStr = `${transitYear + 1}-${String(m).padStart(2, '0')}-15T12:00`;
-    nextYearCharts.push(calculateAstrology(nextStr, transitLongitude, transitLatitude, transitTimezone));
-  }
-
-  // Combined 36-month timeline:
-  // indices 0..11: transitYear - 1
-  // indices 12..23: transitYear
-  // indices 24..35: transitYear + 1
-  const multiYearCharts: { globalIdx: number; year: number; month: number; chart: AstrologyChart }[] = [];
-  prevYearCharts.forEach((chart, i) => multiYearCharts.push({ globalIdx: i, year: transitYear - 1, month: i + 1, chart }));
-  monthlyCharts.forEach((chart, i) => multiYearCharts.push({ globalIdx: 12 + i, year: transitYear, month: i + 1, chart }));
-  nextYearCharts.forEach((chart, i) => multiYearCharts.push({ globalIdx: 24 + i, year: transitYear + 1, month: i + 1, chart }));
-
   const orbMax = 4.5;
   const quotesMap = new Map<string, AspectQuoteItem>();
 
   for (const op of outerCheck) {
     for (const np of natalCheckList) {
-      const activeTimeline: {
-        globalIdx: number;
-        year: number;
+      const activeInTransitYear: {
         month: number;
         aspectName: string;
+        targetAngle: number;
         aspectType: 'soft' | 'hard';
         orb: number;
         opHouse: number;
       }[] = [];
 
-      multiYearCharts.forEach((item) => {
-        const tp = item.chart.planets.find(p => p.id === op.id || p.name.includes(op.name));
+      monthlyCharts.forEach((chart, idx) => {
+        const monthNum = idx + 1;
+        const tp = chart.planets.find(p => p.id === op.id || p.name.includes(op.name));
         if (!tp) return;
 
         const diff = normalizeDegrees(tp.longitude - np.longitude);
         const angle = diff > 180 ? 360 - diff : diff;
 
         let aspectName = '';
+        let targetAngle = 0;
         let aspectType: 'soft' | 'hard' = 'soft';
 
         if (Math.abs(angle - 0) <= orbMax) {
           aspectName = '合相 (0°)';
+          targetAngle = 0;
           const isBenefic = ['sun', 'moon', 'venus', 'jupiter', 'mercury'].includes(tp.id) && ['sun', 'moon', 'venus', 'jupiter'].includes(np.id);
           aspectType = isBenefic ? 'soft' : 'hard';
         } else if (Math.abs(angle - 60) <= orbMax - 0.5) {
           aspectName = '六分相 (60°)';
+          targetAngle = 60;
           aspectType = 'soft';
         } else if (Math.abs(angle - 90) <= orbMax - 0.5) {
           aspectName = '四分相 (90°)';
+          targetAngle = 90;
           aspectType = 'hard';
         } else if (Math.abs(angle - 120) <= orbMax - 0.5) {
           aspectName = '三分相 (120°)';
+          targetAngle = 120;
           aspectType = 'soft';
         } else if (Math.abs(angle - 180) <= orbMax) {
           aspectName = '對分相 (180°)';
+          targetAngle = 180;
           aspectType = 'hard';
         }
 
         if (aspectName) {
-          let orbVal = 99;
-          if (aspectName.includes('0°')) orbVal = Math.abs(angle - 0);
-          else if (aspectName.includes('60°')) orbVal = Math.abs(angle - 60);
-          else if (aspectName.includes('90°')) orbVal = Math.abs(angle - 90);
-          else if (aspectName.includes('120°')) orbVal = Math.abs(angle - 120);
-          else if (aspectName.includes('180°')) orbVal = Math.abs(angle - 180);
+          let orbVal = Math.abs(angle - targetAngle);
 
-          activeTimeline.push({
-            globalIdx: item.globalIdx,
-            year: item.year,
-            month: item.month,
+          activeInTransitYear.push({
+            month: monthNum,
             aspectName,
+            targetAngle,
             aspectType,
             orb: orbVal,
             opHouse: tp.house || 1
@@ -1243,16 +1339,30 @@ export function getAnnualOuterPlanetAspects(
         }
       });
 
-      // Filter: Must be active during the requested transitYear (globalIdx 12..23)
-      const activeInTransitYear = activeTimeline.filter(a => a.year === transitYear);
       if (activeInTransitYear.length === 0) continue;
-
-      // REQUIREMENT 1: Only display aspects lasting MORE THAN 1 MONTH in total!
-      if (activeTimeline.length <= 1) continue;
 
       const primaryAspect = activeInTransitYear[0];
       const aspectName = primaryAspect.aspectName;
+      const targetAngle = primaryAspect.targetAngle;
       const aspectType = primaryAspect.aspectType;
+
+      // Find exact multi-year start and end dates across years
+      const exactBounds = findOuterAspectExactBounds(
+        op.id,
+        op.name,
+        np.id,
+        np.longitude,
+        targetAngle,
+        orbMax,
+        transitYear,
+        transitLongitude,
+        transitLatitude,
+        transitTimezone
+      );
+
+      // REQUIREMENT 1: Must last MORE THAN 1 MONTH in total!
+      const totalMonths = (exactBounds.endY - exactBounds.startY) * 12 + (exactBounds.endM - exactBounds.startM) + 1;
+      if (totalMonths <= 1) continue;
 
       let minOrbInTransitYear = 99;
       activeInTransitYear.forEach(a => { if (a.orb < minOrbInTransitYear) minOrbInTransitYear = a.orb; });
@@ -1264,23 +1374,19 @@ export function getAnnualOuterPlanetAspects(
         ? peakMonthsInTransitYear.map(m => `${m}月`).join('、')
         : `${activeInTransitYear[0].month}月`;
 
-      // REQUIREMENT 3: Multi-year start/end dates
-      const startItem = activeTimeline[0];
-      const endItem = activeTimeline[activeTimeline.length - 1];
+      const startMonthStr = String(exactBounds.startM).padStart(2, '0');
+      const endMonthStr = String(exactBounds.endM).padStart(2, '0');
 
       let periodStr = '';
-      const isCrossYear = startItem.year < transitYear || endItem.year > transitYear;
-
-      const startMonthStr = String(startItem.month).padStart(2, '0');
-      const endMonthStr = String(endItem.month).padStart(2, '0');
+      const isCrossYear = exactBounds.startY < transitYear || exactBounds.endY > transitYear;
 
       if (isCrossYear) {
-        periodStr = `${startItem.year}年${startMonthStr}月～${endItem.year}年${endMonthStr}月（跨年度重大趨勢，問事年${transitYear}內精確高峰：${peakStr}）`;
+        periodStr = `${exactBounds.startY}年${startMonthStr}月～${exactBounds.endY}年${endMonthStr}月（跨年度重大趨勢，問事年${transitYear}內精確高峰：${peakStr}）`;
       } else {
         periodStr = `${transitYear}年${startMonthStr}月～${transitYear}年${endMonthStr}月（重點強烈效期，精確高峰：${peakStr}）`;
       }
 
-      // REQUIREMENT 4: Transiting Outer Planet House ✖ Natal Target Planet House
+      // Transiting Outer Planet House ✖ Natal Target Planet House
       const opHouseNum = primaryAspect.opHouse || 1;
       const npHouseNum = np.house || 1;
       const opHouseName = HOUSE_DETAILS[opHouseNum - 1]?.name || `第 ${opHouseNum} 宮`;
