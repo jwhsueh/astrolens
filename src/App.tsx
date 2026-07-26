@@ -3126,7 +3126,7 @@ export default function App() {
                               <span className="text-[10px] font-bold text-emerald-400/90 flex items-center gap-1">
                                 <span>🌌</span><span>本月行運星體與宮位對照：</span>
                               </span>
-                              <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-white/10">
+                              <div className="space-y-1.5">
                                 {m.houseTransits.map((ht, htIdx) => {
                                   const hasInner = ht.innerPlanets && ht.innerPlanets.length > 0;
                                   const hasEclipse = !!ht.hasEclipse;
@@ -3277,10 +3277,51 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Step 6 */}
+                  {/* Step 6: Outer Planet Transits & Long-Term Trends */}
                   <div className="p-4 bg-black/45 border border-white/10 rounded-2xl space-y-3">
                     <h3 className="font-extrabold text-[#e5c583] flex items-center gap-2 text-sm">
-                      <span>6️⃣</span><span>交叉驗證與輸出 (Scoring Conclusion)</span>
+                      <span>🌌</span><span>6️⃣ 外行星流年相位與長期趨勢 (Outer Planet Transits & Long-Term Trends)</span>
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      外行星（木星、土星、天王星、海王星、冥王星）移動緩慢，其與本命星體形成的相位構成【全年度或跨年度的重大背景課題】與人生領域的深刻轉化：
+                    </p>
+                    <div className="space-y-3">
+                      {pred.outerPlanetAspects && pred.outerPlanetAspects.length > 0 ? (
+                        pred.outerPlanetAspects.map((opa, idx) => (
+                          <div key={`annual-opa-${idx}`} className="p-3.5 bg-white/5 rounded-xl border border-white/5 text-xs space-y-2">
+                            <div className="flex flex-wrap justify-between items-center gap-2 font-bold">
+                              <span className="text-[#e5c583] text-sm">{opa.title}</span>
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${opa.aspectType === 'soft' ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/30' : 'bg-rose-950/80 text-rose-300 border border-rose-500/30'}`}>
+                                {opa.aspectType === 'soft' ? '✨ 和諧滋養 (Soft)' : '⚡ 考驗重組 (Hard)'}
+                              </span>
+                            </div>
+                            <div className="p-2 bg-black/40 rounded-lg border border-amber-500/20 font-mono text-xs text-amber-300 space-y-1">
+                              <div className="flex items-center gap-1.5">
+                                <span>🗓️</span>
+                                <span>精確影響日期與高峰：{opa.period}</span>
+                              </div>
+                              {opa.impactHouses && (
+                                <div className="flex items-center gap-1.5 text-amber-200/90 font-sans font-semibold text-[11px] pt-0.5 border-t border-white/5">
+                                  <span>🏛️ 影響宮位：</span>
+                                  <span className="text-amber-100">{opa.impactHouses}</span>
+                                </div>
+                              )}
+                            </div>
+                            <p className="text-slate-200 leading-relaxed text-xs pt-0.5">
+                              {opa.aspectMeaning}
+                            </p>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-3 text-xs text-slate-400 italic">本年度外行星與本命主要星體無緊密過境相位（處於平穩背景期）。</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Step 7 */}
+                  <div className="p-4 bg-black/45 border border-white/10 rounded-2xl space-y-3">
+                    <h3 className="font-extrabold text-[#e5c583] flex items-center gap-2 text-sm">
+                      <span>7️⃣</span><span>交叉驗證與輸出 (Scoring Conclusion)</span>
                     </h3>
                     <div className="space-y-3 text-xs">
                       <div>
@@ -4143,6 +4184,26 @@ export default function App() {
                               <div className="font-mono text-[9px] text-[#8c7447] whitespace-pre-line">{r.exactDates}</div>
                             </div>
                           ))}
+                        </div>
+
+                        <div className="bg-[#faf8f4] p-3 rounded-xl border border-[#e8dfcb] shadow-sm space-y-1.5">
+                          <strong className="block text-xs text-[#785b24] font-extrabold border-b border-[#e8dfcb] pb-1">
+                            6️⃣ 外行星流年相位與長期趨勢
+                          </strong>
+                          {printPred.outerPlanetAspects && printPred.outerPlanetAspects.length > 0 ? (
+                            printPred.outerPlanetAspects.slice(0, 4).map((opa, idx) => (
+                              <div key={`print-opa-${idx}`} className="text-[10px] text-[#2c2416] space-y-0.5 border-b border-[#e8dfcb] pb-1 last:border-0">
+                                <div className="flex justify-between items-center flex-wrap gap-1">
+                                  <span className="font-bold text-[#785b24]">{opa.title}</span>
+                                  {opa.impactHouses && <span className="text-[9px] text-[#8c7447] font-semibold">🏛️ {opa.impactHouses}</span>}
+                                </div>
+                                <div className="font-mono text-[9px] text-[#8c7447]">{opa.period}</div>
+                                <p className="text-[9.5px] leading-snug text-[#3c3426]">{opa.aspectMeaning}</p>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-[10px] text-slate-500 italic">平穩背景期（無緊密外行星過境相位）</div>
+                          )}
                         </div>
                       </div>
                     </div>

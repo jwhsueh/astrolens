@@ -556,6 +556,7 @@ export interface AspectQuoteItem {
   aspectType: 'soft' | 'hard';
   aspectMeaning: string;
   orbVal?: number;
+  impactHouses?: string;
 }
 
 export interface MonthlyForecastItem {
@@ -631,6 +632,7 @@ export interface AstrologicalPredictionReport {
     guideQuote?: string;
   }[];
   monthlyTimeline: MonthlyForecastItem[];
+  outerPlanetAspects?: AspectQuoteItem[];
   lunarNodes: {
     northSign: string;
     northHouse: number;
@@ -867,6 +869,7 @@ export function getOuterPlanetAspectQuotes(
   );
 
   const orbMax = 4.5;
+  const maxDays = new Date(2026, monthNum, 0).getDate() || 30;
 
   for (const np of natalCheckList) {
     const diff = normalizeDegrees(tp.longitude - np.longitude);
@@ -895,16 +898,42 @@ export function getOuterPlanetAspectQuotes(
 
     if (!aspectName) continue;
 
+    // Calculate exact day peak within the month
+    let targetAngle = 0;
+    if (aspectName.includes('60°')) targetAngle = 60;
+    else if (aspectName.includes('90°')) targetAngle = 90;
+    else if (aspectName.includes('120°')) targetAngle = 120;
+    else if (aspectName.includes('180°')) targetAngle = 180;
+
+    let speed = 0.05;
+    if (tp.id === 'jupiter') speed = 0.083;
+    else if (tp.id === 'saturn') speed = 0.033;
+    else if (tp.id === 'uranus') speed = 0.012;
+    else if (tp.id === 'neptune') speed = 0.006;
+    else if (tp.id === 'pluto') speed = 0.004;
+
+    const tLong1 = normalizeDegrees(np.longitude + targetAngle);
+    const tLong2 = normalizeDegrees(np.longitude - targetAngle);
+    const d1 = Math.abs(normalizeDegrees(tp.longitude - tLong1));
+    const d2 = Math.abs(normalizeDegrees(tp.longitude - tLong2));
+    const exactTargetLong = (d1 <= d2) ? tLong1 : tLong2;
+
+    let degDiff = normalizeDegrees(tp.longitude - exactTargetLong);
+    if (degDiff > 180) degDiff -= 360;
+
+    const dayOffset = - (degDiff / speed);
+    const exactPeakDay = Math.min(maxDays, Math.max(1, Math.round(15 + dayOffset)));
+
+    const exactPeriodStr = `${monthNum}月01日～${monthNum}月${String(maxDays).padStart(2, '0')}日（當月精確高峰：${monthNum}月${String(exactPeakDay).padStart(2, '0')}日）`;
+
     const transitingLabel = `${tp.symbol} 流年${tp.name}`;
     const targetLabel = `本命${np.name}`;
     const title = `${tp.symbol} 流年${tp.name} ✖ 本命${np.name} (${aspectName})`;
 
     let aspectMeaning = '';
-    let defaultPeriod = '';
 
     const group = PLANET_ASPECT_TRANSITS.find(g => g.planet.includes(tp.name));
     if (group) {
-      defaultPeriod = group.period;
       const item = group.items.find(i => {
         const cleanTarget = i.target.replace('✖', '').trim();
         return cleanTarget.includes(np.name) || np.name.includes(cleanTarget);
@@ -927,7 +956,7 @@ export function getOuterPlanetAspectQuotes(
       targetPlanet: targetLabel,
       title,
       aspectName,
-      period: `${monthNum}月全月（${defaultPeriod || '效期數月至一年'}）`,
+      period: exactPeriodStr,
       aspectType,
       aspectMeaning,
       orbVal: Math.abs(angle - 0)
@@ -1104,6 +1133,210 @@ export function getMonthlyAspectQuotes(
   uniqueQuotes.sort((a, b) => (a.orbVal ?? 99) - (b.orbVal ?? 99));
 
   return uniqueQuotes.slice(0, 5);
+}
+
+/**
+ * Calculates active aspects for outer planets (Jupiter, Saturn, Uranus, Neptune, Pluto)
+ * throughout the transit year, identifying exact date ranges/periods and long-term trend meanings.
+ */
+export function getAnnualOuterPlanetAspects(
+  natalChart: AstrologyChart,
+  monthlyCharts: AstrologyChart[],
+  transitYear: number,
+  transitLongitude: number = 121.5,
+  transitLatitude: number = 25.04,
+  transitTimezone: number = 8
+): AspectQuoteItem[] {
+  const outerCheck = [
+    { id: 'jupiter', name: '木星', symbol: '♃' },
+    { id: 'saturn', name: '土星', symbol: '♄' },
+    { id: 'uranus', name: '天王星', symbol: '♅' },
+    { id: 'neptune', name: '海王星', symbol: '♆' },
+    { id: 'pluto', name: '冥王星', symbol: '♇' }
+  ];
+
+  const natalCheckList = natalChart.planets.filter(p =>
+    ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'].includes(p.id)
+  );
+
+  // Generate prior year (transitYear - 1) and next year (transitYear + 1) monthly charts for multi-year tracking
+  const prevYearCharts: AstrologyChart[] = [];
+  const nextYearCharts: AstrologyChart[] = [];
+
+  for (let m = 1; m <= 12; m++) {
+    const prevStr = `${transitYear - 1}-${String(m).padStart(2, '0')}-15T12:00`;
+    prevYearCharts.push(calculateAstrology(prevStr, transitLongitude, transitLatitude, transitTimezone));
+
+    const nextStr = `${transitYear + 1}-${String(m).padStart(2, '0')}-15T12:00`;
+    nextYearCharts.push(calculateAstrology(nextStr, transitLongitude, transitLatitude, transitTimezone));
+  }
+
+  // Combined 36-month timeline:
+  // indices 0..11: transitYear - 1
+  // indices 12..23: transitYear
+  // indices 24..35: transitYear + 1
+  const multiYearCharts: { globalIdx: number; year: number; month: number; chart: AstrologyChart }[] = [];
+  prevYearCharts.forEach((chart, i) => multiYearCharts.push({ globalIdx: i, year: transitYear - 1, month: i + 1, chart }));
+  monthlyCharts.forEach((chart, i) => multiYearCharts.push({ globalIdx: 12 + i, year: transitYear, month: i + 1, chart }));
+  nextYearCharts.forEach((chart, i) => multiYearCharts.push({ globalIdx: 24 + i, year: transitYear + 1, month: i + 1, chart }));
+
+  const orbMax = 4.5;
+  const quotesMap = new Map<string, AspectQuoteItem>();
+
+  for (const op of outerCheck) {
+    for (const np of natalCheckList) {
+      const activeTimeline: {
+        globalIdx: number;
+        year: number;
+        month: number;
+        aspectName: string;
+        aspectType: 'soft' | 'hard';
+        orb: number;
+        opHouse: number;
+      }[] = [];
+
+      multiYearCharts.forEach((item) => {
+        const tp = item.chart.planets.find(p => p.id === op.id || p.name.includes(op.name));
+        if (!tp) return;
+
+        const diff = normalizeDegrees(tp.longitude - np.longitude);
+        const angle = diff > 180 ? 360 - diff : diff;
+
+        let aspectName = '';
+        let aspectType: 'soft' | 'hard' = 'soft';
+
+        if (Math.abs(angle - 0) <= orbMax) {
+          aspectName = '合相 (0°)';
+          const isBenefic = ['sun', 'moon', 'venus', 'jupiter', 'mercury'].includes(tp.id) && ['sun', 'moon', 'venus', 'jupiter'].includes(np.id);
+          aspectType = isBenefic ? 'soft' : 'hard';
+        } else if (Math.abs(angle - 60) <= orbMax - 0.5) {
+          aspectName = '六分相 (60°)';
+          aspectType = 'soft';
+        } else if (Math.abs(angle - 90) <= orbMax - 0.5) {
+          aspectName = '四分相 (90°)';
+          aspectType = 'hard';
+        } else if (Math.abs(angle - 120) <= orbMax - 0.5) {
+          aspectName = '三分相 (120°)';
+          aspectType = 'soft';
+        } else if (Math.abs(angle - 180) <= orbMax) {
+          aspectName = '對分相 (180°)';
+          aspectType = 'hard';
+        }
+
+        if (aspectName) {
+          let orbVal = 99;
+          if (aspectName.includes('0°')) orbVal = Math.abs(angle - 0);
+          else if (aspectName.includes('60°')) orbVal = Math.abs(angle - 60);
+          else if (aspectName.includes('90°')) orbVal = Math.abs(angle - 90);
+          else if (aspectName.includes('120°')) orbVal = Math.abs(angle - 120);
+          else if (aspectName.includes('180°')) orbVal = Math.abs(angle - 180);
+
+          activeTimeline.push({
+            globalIdx: item.globalIdx,
+            year: item.year,
+            month: item.month,
+            aspectName,
+            aspectType,
+            orb: orbVal,
+            opHouse: tp.house || 1
+          });
+        }
+      });
+
+      // Filter: Must be active during the requested transitYear (globalIdx 12..23)
+      const activeInTransitYear = activeTimeline.filter(a => a.year === transitYear);
+      if (activeInTransitYear.length === 0) continue;
+
+      // REQUIREMENT 1: Only display aspects lasting MORE THAN 1 MONTH in total!
+      if (activeTimeline.length <= 1) continue;
+
+      const primaryAspect = activeInTransitYear[0];
+      const aspectName = primaryAspect.aspectName;
+      const aspectType = primaryAspect.aspectType;
+
+      let minOrbInTransitYear = 99;
+      activeInTransitYear.forEach(a => { if (a.orb < minOrbInTransitYear) minOrbInTransitYear = a.orb; });
+      const peakMonthsInTransitYear = activeInTransitYear
+        .filter(a => Math.abs(a.orb - minOrbInTransitYear) <= 0.4)
+        .map(a => a.month);
+
+      const peakStr = peakMonthsInTransitYear.length > 0
+        ? peakMonthsInTransitYear.map(m => `${m}月`).join('、')
+        : `${activeInTransitYear[0].month}月`;
+
+      // REQUIREMENT 3: Multi-year start/end dates
+      const startItem = activeTimeline[0];
+      const endItem = activeTimeline[activeTimeline.length - 1];
+
+      let periodStr = '';
+      const isCrossYear = startItem.year < transitYear || endItem.year > transitYear;
+
+      const startMonthStr = String(startItem.month).padStart(2, '0');
+      const endMonthStr = String(endItem.month).padStart(2, '0');
+
+      if (isCrossYear) {
+        periodStr = `${startItem.year}年${startMonthStr}月～${endItem.year}年${endMonthStr}月（跨年度重大趨勢，問事年${transitYear}內精確高峰：${peakStr}）`;
+      } else {
+        periodStr = `${transitYear}年${startMonthStr}月～${transitYear}年${endMonthStr}月（重點強烈效期，精確高峰：${peakStr}）`;
+      }
+
+      // REQUIREMENT 4: Transiting Outer Planet House ✖ Natal Target Planet House
+      const opHouseNum = primaryAspect.opHouse || 1;
+      const npHouseNum = np.house || 1;
+      const opHouseName = HOUSE_DETAILS[opHouseNum - 1]?.name || `第 ${opHouseNum} 宮`;
+      const npHouseName = HOUSE_DETAILS[npHouseNum - 1]?.name || `第 ${npHouseNum} 宮`;
+      const impactHousesStr = `流年${opHouseName} ✖ 本命${npHouseName}`;
+
+      const transitingLabel = `${op.symbol} 流年${op.name}`;
+      const targetLabel = `本命${np.name}`;
+      const title = `${op.symbol} 流年${op.name} ✖ 本命${np.name} (${aspectName})`;
+
+      let aspectMeaning = '';
+      const group = PLANET_ASPECT_TRANSITS.find(g => g.planet.includes(op.name));
+      if (group) {
+        const item = group.items.find(i => {
+          const cleanTarget = i.target.replace('✖', '').trim();
+          return cleanTarget.includes(np.name) || np.name.includes(cleanTarget);
+        });
+        if (item) {
+          aspectMeaning = aspectType === 'soft' ? item.soft : item.hard;
+        }
+      }
+
+      if (!aspectMeaning) {
+        if (aspectType === 'soft') {
+          aspectMeaning = `流年${op.name}與本命${np.name}形成和諧相位，帶來長效建設性資源與機遇扶持。`;
+        } else {
+          aspectMeaning = `流年${op.name}與本命${np.name}形成考驗相位，提醒注意深層結構考驗與重組。`;
+        }
+      }
+
+      const key = `${op.id}-${np.id}-${aspectName}`;
+      quotesMap.set(key, {
+        transitingPlanet: transitingLabel,
+        targetPlanet: targetLabel,
+        title,
+        aspectName,
+        period: periodStr,
+        aspectType,
+        aspectMeaning: `${aspectMeaning}（作為長效趨勢，主導相應人生領域之深層轉化與階段進化）`,
+        orbVal: minOrbInTransitYear,
+        impactHouses: impactHousesStr
+      });
+    }
+  }
+
+  const result = Array.from(quotesMap.values());
+  const pPriority: Record<string, number> = { '冥王星': 1, '海王星': 2, '天王星': 3, '土星': 4, '木星': 5 };
+  result.sort((a, b) => {
+    const pA = Object.keys(pPriority).find(k => a.transitingPlanet.includes(k)) || '木星';
+    const pB = Object.keys(pPriority).find(k => b.transitingPlanet.includes(k)) || '木星';
+    const diffP = (pPriority[pA] || 5) - (pPriority[pB] || 5);
+    if (diffP !== 0) return diffP;
+    return (a.orbVal ?? 99) - (b.orbVal ?? 99);
+  });
+
+  return result;
 }
 
 export function generatePredictiveReport(
@@ -1494,12 +1727,14 @@ export function generatePredictiveReport(
 
   // Step 5 & 6: Monthly Timeline & Scoring (Calculated at query/transit location)
   const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+  const allMonthlyCharts: AstrologyChart[] = [];
   const monthlyTimeline: MonthlyForecastItem[] = months.map((mName, idx) => {
     const monthNum = idx + 1;
 
     // Dynamically calculate monthly transit chart for this month at query location
     const mIsoStr = `${activeSRYear}-${String(monthNum).padStart(2, '0')}-15T12:00`;
     const monthlyChart = calculateAstrology(mIsoStr, transitLongitude, transitLatitude, transitTimezone);
+    allMonthlyCharts.push(monthlyChart);
 
     const mSun = monthlyChart.planets.find(p => p.id === 'sun') || monthlyChart.planets[0];
     // Calculate Sun's transit house relative to Solar Return chart's ascendant
@@ -1705,6 +1940,8 @@ export function generatePredictiveReport(
     houseLesson: houseNodeMap[northHouse] || '尋求靈魂演化與平衡發展。'
   };
 
+  const outerPlanetAspects = getAnnualOuterPlanetAspects(natalChart, allMonthlyCharts, activeSRYear, transitLongitude, transitLatitude, transitTimezone);
+
   return {
     sensitivePoints,
     solarReturn,
@@ -1713,6 +1950,7 @@ export function generatePredictiveReport(
     eclipses,
     retrogrades,
     monthlyTimeline,
+    outerPlanetAspects,
     lunarNodes,
     scoringConclusion
   };
