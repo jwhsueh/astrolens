@@ -3139,12 +3139,41 @@ export default function App() {
                                         <span className="flex items-center gap-1 text-[#e5c583]">
                                           <span className="font-serif text-[11px]">{ht.outerPlanet?.symbol || '☉'}</span>
                                           <span>{ht.outerPlanet?.name || '太陽 (行運焦點)'}</span>
+                                          {ht.outerPlanet?.isRetrograde && (
+                                            <span className="text-[8px] text-red-400 font-bold bg-red-500/20 border border-red-500/30 px-1 py-0.2 rounded ml-0.5">逆行</span>
+                                          )}
                                           <span className="text-slate-400 font-normal">→ 第 {ht.houseNumber} 宮</span>
                                         </span>
                                         <span className="text-[8.5px] bg-[#c5a059]/10 text-amber-300 border border-[#c5a059]/30 px-1 py-0.5 rounded font-medium">
                                           {ht.houseName}
                                         </span>
                                       </div>
+
+                                      {/* Angle Crossing Events (行星過四軸) */}
+                                      {ht.angleEvents && ht.angleEvents.length > 0 && (
+                                        <div className="space-y-1.5 p-2 bg-amber-950/40 border border-amber-500/30 rounded-lg my-1 text-[9px]">
+                                          <div className="font-bold text-amber-300 flex items-center justify-between text-[9.5px]">
+                                            <span className="flex items-center gap-1">
+                                              <span>⚡</span><span>重磅流年過四軸事件 (Cross-Angle Event)：</span>
+                                            </span>
+                                            <span className="text-[8px] text-amber-200/70 font-mono">本命敏感點對齊</span>
+                                          </div>
+                                          {ht.angleEvents.map((ae, aeIdx) => (
+                                            <div key={`ae-${aeIdx}`} className="text-slate-200 leading-snug space-y-0.5 pt-1 border-t border-amber-500/20 first:border-0 first:pt-0">
+                                              <div className="flex items-center justify-between flex-wrap font-bold text-[#e5c583]">
+                                                <span className="flex items-center gap-1">
+                                                  <span>{ae.symbol}</span>
+                                                  <span>流年{ae.planet}</span>
+                                                  {ae.isRetrograde && <span className="text-[7.5px] text-red-400 font-bold bg-red-500/20 px-1 py-0.2 rounded border border-red-500/30">逆行</span>}
+                                                  <span>合相 本命{ae.angleName}</span>
+                                                </span>
+                                                <span className="text-[8px] text-emerald-400 font-mono">[{ae.exactDateStr}]</span>
+                                              </div>
+                                              <p className="text-amber-100/90 text-[8.5px] leading-relaxed">{ae.description}</p>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
 
                                       {/* Outer Planet Aspect Reminders in this house */}
                                       {ht.outerPlanetAspects && ht.outerPlanetAspects.length > 0 && (
@@ -3182,7 +3211,7 @@ export default function App() {
                                               <span className="flex items-center gap-0.5">
                                                 <span className="font-serif text-[#e5c583] text-[10px]">{ip.symbol}</span>
                                                 <span>{ip.planet}</span>
-                                                {ip.isRetrograde && <span className="text-[8px] text-red-400 font-bold bg-red-500/10 px-0.5 rounded">逆</span>}
+                                                {ip.isRetrograde && <span className="text-[8px] text-red-400 font-bold bg-red-500/20 border border-red-500/30 px-1 py-0.2 rounded ml-0.5">逆行</span>}
                                               </span>
                                               <span className="text-[8.5px] font-mono text-emerald-400/90">{ip.period}</span>
                                             </div>
@@ -3266,14 +3295,24 @@ export default function App() {
                     </h3>
                     <div className="space-y-3">
                       {pred.retrogrades.map((r, idx) => (
-                        <div key={`ret-main-${idx}`} className="p-3.5 bg-white/5 rounded-xl border border-white/5 text-xs space-y-1.5">
+                        <div key={`ret-main-${idx}`} className="p-3.5 bg-white/5 rounded-xl border border-white/5 text-xs space-y-2">
                           <div className="flex justify-between font-bold text-slate-200">
                             <span>{r.symbol} {r.type}</span>
                             <span className="text-[#e5c583] font-mono">{r.period}</span>
                           </div>
                           <div className="text-[11px] text-amber-200 font-semibold bg-amber-950/30 px-2 py-1 rounded border border-amber-500/20 inline-block">
-                            📍 逆行通行星座與宮位：{r.sign}（第 {r.house} 宮）
+                            📍 逆行通行星座與宮位：{r.sign}（第 {r.house} 宮：{r.houseName || `第${r.house}宮`}）
                           </div>
+                          {r.isInnerPlanet && r.natalAspectsSummary && (
+                            <div className={`p-2.5 rounded-lg text-xs font-mono space-y-1 border ${r.hasNatalAspects ? 'bg-amber-950/40 border-amber-500/30 text-amber-200' : 'bg-slate-900/40 border-slate-700/40 text-slate-300'}`}>
+                              <div className="font-sans font-bold flex items-center gap-1">
+                                <span>{r.hasNatalAspects ? '🎯 逆行期間本命敏感點相位引動：' : 'ℹ️ 本命敏感點相位比對：'}</span>
+                              </div>
+                              <div className="whitespace-pre-line leading-relaxed text-[11px]">
+                                {r.natalAspectsSummary}
+                              </div>
+                            </div>
+                          )}
                           {r.guideQuote && (
                             <div className="p-2.5 bg-amber-950/20 rounded-lg border border-amber-500/20 text-slate-300 text-xs whitespace-pre-line leading-relaxed">
                               📖 逆行與宮位指引對照：{r.guideQuote}
@@ -3285,7 +3324,7 @@ export default function App() {
                           <div className="text-xs text-emerald-400 font-medium">
                             ⚡ {r.stationPoint}
                           </div>
-                          <p className="text-slate-400 leading-relaxed">{r.description}</p>
+                          <p className="text-slate-300 leading-relaxed">{r.description}</p>
                         </div>
                       ))}
                     </div>
@@ -4193,9 +4232,20 @@ export default function App() {
                             5️⃣ 逆行與停滯點精確時段
                           </strong>
                           {printPred.retrogrades.map((r, idx) => (
-                            <div key={`print-ret-${idx}`} className="text-[10px] text-[#2c2416] space-y-0.5 border-b border-[#e8dfcb] pb-1">
-                              <span className="font-bold">{r.symbol} {r.type}</span>
-                              <div className="font-mono text-[9px] text-[#8c7447] whitespace-pre-line">{r.exactDates}</div>
+                            <div key={`print-ret-${idx}`} className="text-[10px] text-[#2c2416] space-y-1 border-b border-[#e8dfcb] pb-1.5 last:border-0">
+                              <div className="flex justify-between font-bold">
+                                <span>{r.symbol} {r.type}</span>
+                                <span className="text-[#8c7447] font-mono">{r.period}</span>
+                              </div>
+                              <div className="text-[9.5px] text-[#8c7447] font-semibold">📍 星座與宮位：{r.sign}（第 {r.house} 宮：{r.houseName || `第${r.house}宮`}）</div>
+                              {r.isInnerPlanet && r.natalAspectsSummary && (
+                                <div className="text-[9px] bg-[#f2ebd9] p-1.5 rounded border border-[#dfd4ba] space-y-0.5">
+                                  <span className="font-bold text-[#785b24]">🎯 逆行期間本命敏感點相位：</span>
+                                  <div className="whitespace-pre-line text-[#4a3b1e] font-mono">{r.natalAspectsSummary}</div>
+                                </div>
+                              )}
+                              <div className="font-mono text-[9px] text-[#8c7447] whitespace-pre-line">📅 影響時段：{r.exactDates}</div>
+                              <p className="text-[9.5px] leading-snug text-[#3c3426]">{r.description}</p>
                             </div>
                           ))}
                         </div>
