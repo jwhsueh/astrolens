@@ -1237,7 +1237,8 @@ export function generatePredictiveReport(
     const monthlyChart = calculateAstrology(mIsoStr, transitLongitude, transitLatitude, transitTimezone);
 
     const mSun = monthlyChart.planets.find(p => p.id === 'sun') || monthlyChart.planets[0];
-    const currentSunHouse = mSun.house;
+    // Calculate Sun's transit house relative to Solar Return chart's ascendant
+    const currentSunHouse = Math.floor(normalizeDegrees(mSun.longitude - srChart.ascendant) / 30) + 1;
     const currentSunSign = ZODIAC_SIGNS[mSun.signIndex]?.name || '';
 
     // Hotspot conditions: current Sun house month at query location, eclipse months for this transitYear, or square/opposite house months
@@ -1289,7 +1290,7 @@ export function generatePredictiveReport(
       };
     }
 
-    // Calculate Monthly House Transits for Outer Planets at query location
+    // Calculate Monthly House Transits for Outer Planets at query location relative to SR chart houses
     const houseTransits: MonthlyHouseTransitDetail[] = [];
     const outerNames = ['木星', '土星', '天王星', '海王星', '冥王星'];
     const outerPlanetsList = monthlyChart.planets.filter(p => outerNames.includes(p.name));
@@ -1300,19 +1301,24 @@ export function generatePredictiveReport(
     const fh = ((sh + 5) % 12) + 1;
 
     outerPlanetsList.forEach(op => {
-      const hNum = op.house;
+      // Calculate house position of transiting outer planet relative to Solar Return chart's ascendant
+      const hNum = Math.floor(normalizeDegrees(op.longitude - srChart.ascendant) / 30) + 1;
       const hName = HOUSE_DETAILS[hNum - 1]?.name || `第${hNum}宮`;
       const innerPlanets: MonthlyInnerPlanetTransit[] = [];
 
-      // Find inner planets passing through house hNum in monthlyChart at query location
+      // Find inner planets passing through house hNum in monthlyChart relative to SR chart's ascendant
       const innerIds = ['sun', 'mercury', 'venus', 'mars'];
       monthlyChart.planets
-        .filter(p => innerIds.includes(p.id) && p.house === hNum)
+        .filter(p => {
+          if (!innerIds.includes(p.id)) return false;
+          const ipHouse = Math.floor(normalizeDegrees(p.longitude - srChart.ascendant) / 30) + 1;
+          return ipHouse === hNum;
+        })
         .forEach(ip => {
           innerPlanets.push({
             planet: ip.name,
             symbol: ip.symbol,
-            period: `${monthNum}月 (問事地點行運位: ${ZODIAC_SIGNS[ip.signIndex]?.name || ''})`,
+            period: `${monthNum}月 (過境星座: ${ZODIAC_SIGNS[ip.signIndex]?.name || ''})`,
             isRetrograde: ip.isRetrograde
           });
         });
