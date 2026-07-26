@@ -1227,15 +1227,23 @@ export function generatePredictiveReport(
 
   const retrogrades = getRetrogradesForYear(transitYear, srSunHouse);
 
-  // Step 5 & 6: Monthly Timeline & Scoring
+  // Step 5 & 6: Monthly Timeline & Scoring (Calculated at query/transit location)
   const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
   const monthlyTimeline: MonthlyForecastItem[] = months.map((mName, idx) => {
     const monthNum = idx + 1;
 
-    // Hotspot conditions: Solar return sun house month, eclipse months for this transitYear, or square/opposite house months
-    const isHotspot = monthNum === srSunHouse ||
-                      monthNum === ((srSunHouse + 3) % 12) + 1 ||
-                      monthNum === ((srSunHouse + 9) % 12) + 1 ||
+    // Dynamically calculate monthly transit chart for this month at query location
+    const mIsoStr = `${activeSRYear}-${String(monthNum).padStart(2, '0')}-15T12:00`;
+    const monthlyChart = calculateAstrology(mIsoStr, transitLongitude, transitLatitude, transitTimezone);
+
+    const mSun = monthlyChart.planets.find(p => p.id === 'sun') || monthlyChart.planets[0];
+    const currentSunHouse = mSun.house;
+    const currentSunSign = ZODIAC_SIGNS[mSun.signIndex]?.name || '';
+
+    // Hotspot conditions: current Sun house month at query location, eclipse months for this transitYear, or square/opposite house months
+    const isHotspot = monthNum === currentSunHouse ||
+                      monthNum === ((currentSunHouse + 3) % 12) + 1 ||
+                      monthNum === ((currentSunHouse + 9) % 12) + 1 ||
                       monthNum === eclipseData.m1 ||
                       monthNum === eclipseData.m2;
 
@@ -1243,12 +1251,12 @@ export function generatePredictiveReport(
     let triggerEvents: string[] = [];
 
     if (isHotspot) {
-      if (monthNum === srSunHouse) {
-        triggerEvents = [`回歸盤太陽精確合相本命敏感點`, `主命星【${ruler.planet}】強勢進駐引動第 ${srSunHouse} 宮`, `年度核心舞台啟動與關鍵決策點`];
+      if (monthNum === currentSunHouse) {
+        triggerEvents = [`問事地點行運太陽精確進駐第 ${currentSunHouse} 宮 (${currentSunSign})`, `主命星【${ruler.planet}】強勢引動第 ${currentSunHouse} 宮`, `問事地點核心舞台與決策焦點啟動`];
       } else if (monthNum === eclipseData.m1 || monthNum === eclipseData.m2) {
-        triggerEvents = [`${transitYear}年日月蝕軸線強烈交會（${monthNum === eclipseData.m1 ? eclipseData.list[0].sign : eclipseData.list[1].sign}）`, `突發環境變動與心態轉折點`, `重要合約、合作或人際關係重整`];
+        triggerEvents = [`${activeSRYear}年日月蝕軸線強烈交會問事地點第 ${currentSunHouse} 宮`, `突發環境變動與心態轉折點`, `重要合約、合作或人際關係重整`];
       } else {
-        triggerEvents = [`行運外行星（土/冥/木）與本命敏感點形成緊密四分/對分相`, `壓力測試與結構性突破期`];
+        triggerEvents = [`問事地點行運外行星（土/冥/木）與本命敏感點形成緊密四分/對分相`, `壓力測試與結構性突破期`];
       }
     } else {
       if (monthNum % 3 === 0) {
@@ -1281,13 +1289,13 @@ export function generatePredictiveReport(
       };
     }
 
-    // Calculate Monthly House Transits for Outer Planets
+    // Calculate Monthly House Transits for Outer Planets at query location
     const houseTransits: MonthlyHouseTransitDetail[] = [];
     const outerNames = ['木星', '土星', '天王星', '海王星', '冥王星'];
-    const outerPlanetsList = srChart.planets.filter(p => outerNames.includes(p.name));
+    const outerPlanetsList = monthlyChart.planets.filter(p => outerNames.includes(p.name));
 
-    // Sun house for this month
-    const sh = ((srSunHouse - 1 + (monthNum - 1)) % 12) + 1;
+    // Sun house at query location for this month
+    const sh = currentSunHouse;
     // Opposite house for Full Moon
     const fh = ((sh + 5) % 12) + 1;
 
@@ -1296,75 +1304,24 @@ export function generatePredictiveReport(
       const hName = HOUSE_DETAILS[hNum - 1]?.name || `第${hNum}宮`;
       const innerPlanets: MonthlyInnerPlanetTransit[] = [];
 
-      // Check Sun entering this house
-      if (hNum === sh) {
-        innerPlanets.push({
-          planet: '太陽',
-          symbol: '☉',
-          period: `${monthNum}月20日 ~ ${monthNum === 12 ? 1 : monthNum + 1}月20日`,
-          isRetrograde: false
+      // Find inner planets passing through house hNum in monthlyChart at query location
+      const innerIds = ['sun', 'mercury', 'venus', 'mars'];
+      monthlyChart.planets
+        .filter(p => innerIds.includes(p.id) && p.house === hNum)
+        .forEach(ip => {
+          innerPlanets.push({
+            planet: ip.name,
+            symbol: ip.symbol,
+            period: `${monthNum}月 (問事地點行運位: ${ZODIAC_SIGNS[ip.signIndex]?.name || ''})`,
+            isRetrograde: ip.isRetrograde
+          });
         });
-      }
-
-      // Check Mercury entering this house
-      const mercH1 = sh;
-      const mercH2 = ((sh) % 12) + 1;
-      const isMercRetro = (monthNum === 3 || monthNum === 7 || monthNum === 11);
-      if (hNum === mercH1) {
-        innerPlanets.push({
-          planet: '水星',
-          symbol: '☿',
-          period: `${monthNum}月01日 ~ ${monthNum}月15日`,
-          isRetrograde: isMercRetro
-        });
-      }
-      if (hNum === mercH2 && mercH1 !== mercH2) {
-        innerPlanets.push({
-          planet: '水星',
-          symbol: '☿',
-          period: `${monthNum}月16日 ~ ${monthNum}月30日`,
-          isRetrograde: isMercRetro
-        });
-      }
-
-      // Check Venus entering this house
-      const venH1 = ((sh - 2 + 12) % 12) + 1;
-      const venH2 = sh;
-      const isVenRetro = (transitYear % 8 === 0 && monthNum === 5);
-      if (hNum === venH1) {
-        innerPlanets.push({
-          planet: '金星',
-          symbol: '♀',
-          period: `${monthNum}月01日 ~ ${monthNum}月12日`,
-          isRetrograde: isVenRetro
-        });
-      }
-      if (hNum === venH2 && venH1 !== venH2) {
-        innerPlanets.push({
-          planet: '金星',
-          symbol: '♀',
-          period: `${monthNum}月13日 ~ ${monthNum}月30日`,
-          isRetrograde: isVenRetro
-        });
-      }
-
-      // Check Mars entering this house
-      const marsH = ((srSunHouse - 1 + 2 + Math.floor(monthNum / 2)) % 12) + 1;
-      const isMarsRetro = (transitYear % 2 === 0 && (monthNum === 12 || monthNum === 1));
-      if (hNum === marsH) {
-        innerPlanets.push({
-          planet: '火星',
-          symbol: '♂',
-          period: `${monthNum}月01日 ~ ${monthNum}月30日`,
-          isRetrograde: isMarsRetro
-        });
-      }
 
       // Check Eclipse
       let hasEclipse: { type: string; date: string } | undefined = undefined;
-      if (monthNum === eclipseData.m1 && hNum === ((srSunHouse + 1) % 12) + 1) {
+      if (monthNum === eclipseData.m1 && hNum === ((currentSunHouse + 1) % 12) + 1) {
         hasEclipse = { type: '日食 (新能量突破)', date: `${monthNum}月15日` };
-      } else if (monthNum === eclipseData.m2 && hNum === ((srSunHouse + 6) % 12) + 1) {
+      } else if (monthNum === eclipseData.m2 && hNum === ((currentSunHouse + 6) % 12) + 1) {
         hasEclipse = { type: '月食 (關係收尾驗收)', date: `${monthNum}月18日` };
       }
 
@@ -1378,7 +1335,7 @@ export function generatePredictiveReport(
 
       houseTransits.push({
         houseNumber: hNum,
-        houseName: hName,
+        houseName: `${hName} (${ZODIAC_SIGNS[op.signIndex]?.name || ''})`,
         outerPlanet: {
           name: op.name,
           symbol: op.symbol
@@ -1393,9 +1350,9 @@ export function generatePredictiveReport(
       month: monthNum,
       monthName: mName,
       intensity: (isHotspot ? 'high' : (score === 2 ? 'medium' : 'low')) as 'high' | 'medium' | 'low',
-      theme: isHotspot ? `強效引動【${HOUSE_DETAILS[srSunHouse - 1]?.name}】之核心主題` : `平穩期`,
+      theme: isHotspot ? `強效引動問事地點第 ${currentSunHouse} 宮【${HOUSE_DETAILS[currentSunHouse - 1]?.name}】` : `平穩期`,
       timing: `上旬快星觸發，中下旬相位漸趨精確`,
-      aspects: isHotspot ? [`外行星行運觸發本命敏感點 (容許度 <1.5°)`, `日月蝕能量交會期`] : [`快星日常過境`, `平穩維護期`],
+      aspects: isHotspot ? [`外行星行運過境問事地點星盤`, `日月蝕能量交會期`] : [`快星日常過境`, `平穩維護期`],
       triggerEvents,
       score,
       aspectQuote,
