@@ -531,7 +531,7 @@ export interface MonthlyInnerPlanetTransit {
 export interface MonthlyHouseTransitDetail {
   houseNumber: number;
   houseName: string;
-  outerPlanet: {
+  outerPlanet?: {
     name: string;
     symbol: string;
   };
@@ -1290,8 +1290,7 @@ export function generatePredictiveReport(
       };
     }
 
-    // Calculate Monthly House Transits for Outer Planets at query location relative to SR chart houses
-    const houseTransits: MonthlyHouseTransitDetail[] = [];
+    // Calculate Monthly House Transits for planets at query location relative to SR chart houses
     const outerNames = ['木星', '土星', '天王星', '海王星', '冥王星'];
     const outerPlanetsList = monthlyChart.planets.filter(p => outerNames.includes(p.name));
 
@@ -1300,13 +1299,20 @@ export function generatePredictiveReport(
     // Opposite house for Full Moon
     const fh = ((sh + 5) % 12) + 1;
 
-    outerPlanetsList.forEach(op => {
-      // Calculate house position of transiting outer planet relative to Solar Return chart's ascendant
-      const hNum = Math.floor(normalizeDegrees(op.longitude - srChart.ascendant) / 30) + 1;
-      const hName = HOUSE_DETAILS[hNum - 1]?.name || `第${hNum}宮`;
-      const innerPlanets: MonthlyInnerPlanetTransit[] = [];
+    const houseTransitsMap = new Map<number, MonthlyHouseTransitDetail>();
 
-      // Find inner planets passing through house hNum in monthlyChart relative to SR chart's ascendant
+    const getOrCreateHouseDetail = (hNum: number) => {
+      if (houseTransitsMap.has(hNum)) return houseTransitsMap.get(hNum)!;
+
+      const hName = HOUSE_DETAILS[hNum - 1]?.name || `第${hNum}宮`;
+
+      // Find outer planet in this house if any
+      const opInHouse = outerPlanetsList.find(op => {
+        const opHouse = Math.floor(normalizeDegrees(op.longitude - srChart.ascendant) / 30) + 1;
+        return opHouse === hNum;
+      });
+
+      const innerPlanets: MonthlyInnerPlanetTransit[] = [];
       const innerIds = ['sun', 'mercury', 'venus', 'mars'];
       monthlyChart.planets
         .filter(p => {
@@ -1339,18 +1345,34 @@ export function generatePredictiveReport(
         hasLuminaries = { type: '滿月', date: `${monthNum}月23日` };
       }
 
-      houseTransits.push({
+      const houseSignName = opInHouse ? ZODIAC_SIGNS[opInHouse.signIndex]?.name : ZODIAC_SIGNS[srChart.houses[hNum - 1]?.signIndex]?.name;
+
+      const detail: MonthlyHouseTransitDetail = {
         houseNumber: hNum,
-        houseName: `${hName} (${ZODIAC_SIGNS[op.signIndex]?.name || ''})`,
-        outerPlanet: {
-          name: op.name,
-          symbol: op.symbol
-        },
+        houseName: `${hName}${houseSignName ? ` (${houseSignName})` : ''}`,
+        outerPlanet: opInHouse ? { name: opInHouse.name, symbol: opInHouse.symbol } : { name: '太陽 (行運焦點)', symbol: '☉' },
         innerPlanets,
         hasEclipse,
         hasLuminaries
-      });
+      };
+
+      houseTransitsMap.set(hNum, detail);
+      return detail;
+    };
+
+    // 1. Add houses with outer planets
+    outerPlanetsList.forEach(op => {
+      const hNum = Math.floor(normalizeDegrees(op.longitude - srChart.ascendant) / 30) + 1;
+      getOrCreateHouseDetail(hNum);
     });
+
+    // 2. Guarantee currentSunHouse (focal house for the month) is included
+    getOrCreateHouseDetail(currentSunHouse);
+
+    // 3. Add full moon house
+    getOrCreateHouseDetail(fh);
+
+    const houseTransits = Array.from(houseTransitsMap.values()).sort((a, b) => a.houseNumber - b.houseNumber);
 
     return {
       month: monthNum,

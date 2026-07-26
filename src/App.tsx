@@ -3137,8 +3137,8 @@ export default function App() {
                                       {/* Outer Planet sitting in House */}
                                       <div className="flex justify-between items-center text-slate-300 font-bold">
                                         <span className="flex items-center gap-1 text-[#e5c583]">
-                                          <span className="font-serif text-[11px]">{ht.outerPlanet.symbol}</span>
-                                          <span>{ht.outerPlanet.name}</span>
+                                          <span className="font-serif text-[11px]">{ht.outerPlanet?.symbol || '☉'}</span>
+                                          <span>{ht.outerPlanet?.name || '太陽 (行運焦點)'}</span>
                                           <span className="text-slate-400 font-normal">→ 第 {ht.houseNumber} 宮</span>
                                         </span>
                                         <span className="text-[8.5px] bg-[#c5a059]/10 text-amber-300 border border-[#c5a059]/30 px-1 py-0.5 rounded font-medium">
