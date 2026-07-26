@@ -716,10 +716,8 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
   const srAscLongitude = (natalChart.ascendant + age * 87.2) % 360;
   const srAscSignIndex = Math.floor(srAscLongitude / 30);
 
-  // The Solar Return Sun is at the same longitude as the natal Sun:
+  // The Solar Return Sun is at the exact same longitude as the natal Sun:
   const natalSunLong = natalChart.planets[0]?.longitude ?? 0;
-
-  // The Sun's house in the Solar Return chart is determined by its distance from the Solar Return Ascendant.
   const srSunHouse = (Math.floor((natalSunLong - srAscLongitude + 360) % 360 / 30) % 12) + 1;
 
   const themeMap: Record<number, string> = {
@@ -820,7 +818,7 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
         name: '北交點',
         symbol: '☊',
         house: getPlanetHouse('rahu', 5)
-      },
+      }
     ];
 
     const rahuH = placements.find(p => p.name === '北交點')!.house;
@@ -860,151 +858,221 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
     });
   }
 
+  const moonSignIndex = Math.floor(((approxMoonLong % 360) + 360) % 360 / 30);
+
   const solarReturn = {
     year: transitYear,
-    sunSign: ZODIAC_SIGNS[(natalChart.planets[0].signIndex + (transitYear - 1998)) % 12].name,
+    sunSign: ZODIAC_SIGNS[natalChart.planets[0].signIndex].name,
     sunHouse: srSunHouse,
     ascSign: ZODIAC_SIGNS[srAscSignIndex].name,
     rulingPlanet: ruler.planet,
     rulingPlanetMeaning: ruler.meaning,
     clusteringHouse: srSunHouse,
     annualTheme: themeMap[srSunHouse] || '全方位成長與心靈突破年',
-    moonSign: ZODIAC_SIGNS[(srAscSignIndex + 4) % 12].name,
+    moonSign: ZODIAC_SIGNS[moonSignIndex].name,
     moonHouse: moonH,
     description: `回歸盤上升星座落在【${ZODIAC_SIGNS[srAscSignIndex].name}】（主命星：${ruler.planet} - ${ruler.meaning}），年度太陽落在第 ${srSunHouse} 宮（${HOUSE_DETAILS[srSunHouse - 1]?.name}：${HOUSE_DETAILS[srSunHouse - 1]?.keyMeaning}），指向年度主戰場為【${HOUSE_DETAILS[srSunHouse - 1]?.name}】。本年度情緒需求著重於內在心靈與外界期待的平衡。`,
     houses: solarReturnHouses
   };
+  const getEclipsesForYear = (tYear: number, sunHouse: number) => {
+    // Determine approximate eclipse months and signs based on year
+    let m1 = 3, m2 = 9;
+    let s1 = '白羊座', s2 = '雙魚座';
+    let d1 = `${tYear}-03-25`, d2 = `${tYear}-09-18`;
 
-  // Step 3: Eclipses
-  const eclipses = [
-    {
-      date: `${transitYear}-03-25`,
-      type: '日蝕 (Solar Eclipse - 新篇章開啟)',
-      degree: 14,
-      sign: '白羊座',
-      house: ((srSunHouse + 1) % 12) + 1,
-      sunSign: '白羊座',
-      sunHouse: ((srSunHouse + 1) % 12) + 1,
-      moonSign: '白羊座',
-      moonHouse: ((srSunHouse + 1) % 12) + 1,
-      meaning: '開啟全新半場的開端，在相應宮位注入強大變革與主動突破能量。'
-    },
-    {
-      date: `${transitYear}-09-18`,
-      type: '月蝕 (Lunar Eclipse - 揭曉與關係收尾)',
-      degree: 25,
-      sign: '雙魚座',
-      house: ((srSunHouse + 6) % 12) + 1,
-      sunSign: '處女座',
-      sunHouse: srSunHouse,
-      moonSign: '雙魚座',
-      moonHouse: ((srSunHouse + 6) % 12) + 1,
-      meaning: '過去半年的努力成果揭曉，伴隨情感沉澱或階段性任務圓滿收尾。'
+    if (tYear === 2024) {
+      m1 = 4; m2 = 9;
+      s1 = '白羊座'; s2 = '雙魚座';
+      d1 = `${tYear}-04-08`; d2 = `${tYear}-09-18`;
+    } else if (tYear === 2025) {
+      m1 = 3; m2 = 9;
+      s1 = '牡羊座'; s2 = '處女座';
+      d1 = `${tYear}-03-29`; d2 = `${tYear}-09-07`;
+    } else if (tYear === 2026) {
+      m1 = 2; m2 = 8;
+      s1 = '水瓶座'; s2 = '獅子座';
+      d1 = `${tYear}-02-17`; d2 = `${tYear}-08-12`;
+    } else if (tYear === 2027) {
+      m1 = 2; m2 = 8;
+      s1 = '水瓶座'; s2 = '獅子座';
+      d1 = `${tYear}-02-06`; d2 = `${tYear}-08-02`;
+    } else if (tYear === 2028) {
+      m1 = 1; m2 = 7;
+      s1 = '水瓶座'; s2 = '巨蟹座';
+      d1 = `${tYear}-01-26`; d2 = `${tYear}-07-22`;
+    } else {
+      // Dynamic fallback for other years
+      const shift = ((tYear - 2026) % 12 + 12) % 12;
+      m1 = ((2 - Math.floor(shift / 2) + 12) % 12) + 1;
+      m2 = ((m1 + 5) % 12) + 1;
+      d1 = `${tYear}-${String(m1).padStart(2, '0')}-15`;
+      d2 = `${tYear}-${String(m2).padStart(2, '0')}-18`;
     }
-  ];
 
-  // Step 4: Planet Retrogrades with exact timeframes for transitYear
-  const retrogrades = [
-    {
-      planet: '水星',
-      symbol: '☿',
-      period: '第1次逆行（春季）',
-      exactDates: `${transitYear}年02月26日 ~ ${transitYear}年03月20日`,
-      stationPoint: `精確轉向停滯期（前後各 3 天影響最強）`,
-      type: '水星逆行第1次 (溝通、合約、交通)',
-      description: '建議重要簽約與採購避開此期，利用「Re-」回頭檢視、修改企劃、與舊人重逢。',
-      sign: ZODIAC_SIGNS[(srSunHouse + 0) % 12].name,
-      house: srSunHouse,
-      guideQuote: PLANET_RETROGRADE_GUIDE.find(g => g.planet === '水星')?.houses[srSunHouse] || ''
-    },
-    {
-      planet: '水星',
-      symbol: '☿',
-      period: '第2次逆行（夏季）',
-      exactDates: `${transitYear}年06月29日 ~ ${transitYear}年07月23日`,
-      stationPoint: `精確轉向停滯期（前後各 3 天影響最強）`,
-      type: '水星逆行第2次 (交通、旅遊、決策重審)',
-      description: '出行與溝通易有延誤，適合深度複盤日常工作流程與合約細節。',
-      sign: ZODIAC_SIGNS[(srSunHouse + 4) % 12].name,
-      house: ((srSunHouse + 3) % 12) + 1,
-      guideQuote: PLANET_RETROGRADE_GUIDE.find(g => g.planet === '水星')?.houses[((srSunHouse + 3) % 12) + 1] || ''
-    },
-    {
-      planet: '水星',
-      symbol: '☿',
-      period: '第3次逆行（秋季）',
-      exactDates: `${transitYear}年10月24日 ~ ${transitYear}年11月13日`,
-      stationPoint: `精確轉向停滯期（前後各 3 天影響最強）`,
-      type: '水星逆行第3次 (財務、合作、舊案覆核)',
-      description: '人際與財務交接易有反覆，保持耐心核對帳目與重要資訊。',
-      sign: ZODIAC_SIGNS[(srSunHouse + 8) % 12].name,
-      house: ((srSunHouse + 6) % 12) + 1,
-      guideQuote: PLANET_RETROGRADE_GUIDE.find(g => g.planet === '水星')?.houses[((srSunHouse + 6) % 12) + 1] || ''
-    },
-    {
-      planet: '火星 / 金星',
-      symbol: '♀/♂',
-      period: '火星約 2 年一次 / 金星約 18 個月一次',
-      exactDates: `火星逆行：${transitYear - 1}年12月 ~ ${transitYear}年02月24日`,
-      stationPoint: `火星停滯點：${transitYear}年02月下旬（行動力內轉與慾望重整）`,
-      type: '行動與情感價值重審',
-      description: '考驗行動力受阻、熱情內轉或價值觀的深層變革。',
-      sign: ZODIAC_SIGNS[(srSunHouse + 2) % 12].name,
-      house: ((srSunHouse + 1) % 12) + 1,
-      guideQuote: `金星：${PLANET_RETROGRADE_GUIDE.find(g => g.planet === '金星')?.houses[((srSunHouse + 1) % 12) + 1] || ''}\n火星：${PLANET_RETROGRADE_GUIDE.find(g => g.planet === '火星')?.houses[((srSunHouse + 1) % 12) + 1] || ''}`
-    },
-    {
-      planet: '木星',
-      symbol: '♃',
-      period: '每年逆行約 4 個月',
-      exactDates: `${transitYear}年11月上旬 ~ ${transitYear + 1}年3月`,
-      stationPoint: `停滯點：${transitYear}年11月（擴張與信念的內部沈澱）`,
-      type: '木星逆行 (心智哲學與機會重整)',
-      description: '外行星三次觸發中第一波，檢視過去一年獲得的機會與擴張是否過度。',
-      sign: ZODIAC_SIGNS[(srSunHouse + 7) % 12].name,
-      house: ((srSunHouse + 4) % 12) + 1,
-      guideQuote: PLANET_RETROGRADE_GUIDE.find(g => g.planet === '木星')?.houses[((srSunHouse + 4) % 12) + 1] || ''
-    },
-    {
-      planet: '土星',
-      symbol: '♄',
-      period: '每年逆行約 4.5 個月',
-      exactDates: `${transitYear}年07月中旬 ~ ${transitYear}年11月下旬`,
-      stationPoint: `停滯點：${transitYear}年07月中與11月下旬（結構、責任與壓力測試）`,
-      type: '土星逆行 (責任與現實考驗的三次觸發)',
-      description: '對本命敏感點形成三部曲（順行碰 ➔ 逆行碰 ➔ 順行定案），經歷結構重組。',
-      sign: ZODIAC_SIGNS[(srSunHouse + 9) % 12].name,
-      house: ((srSunHouse + 6) % 12) + 1,
-      guideQuote: PLANET_RETROGRADE_GUIDE.find(g => g.planet === '土星')?.houses[((srSunHouse + 6) % 12) + 1] || ''
-    },
-    {
-      planet: '天王星 / 海王星 / 冥王星',
-      symbol: '♅/♆/♇',
-      period: '每年固定逆行 5 個月',
-      exactDates: `冥王星：${transitYear}年05月 ~ ${transitYear}年10月\n海王星：${transitYear}年06月 ~ ${transitYear}年11月\n天王星：${transitYear}年09月 ~ ${transitYear + 1}年01月`,
-      stationPoint: `長期世代轉化停滯點（年度心靈與體制轉折關鍵週）`,
-      type: '遠行星集體潛意識與世代變革',
-      description: '流年冥王星在本命宮位長期停留並多次逆行折返，促成數年長期的深層重整。',
-      sign: ZODIAC_SIGNS[(srSunHouse + 10) % 12].name,
-      house: ((srSunHouse + 9) % 12) + 1,
-      guideQuote: `天王星：${PLANET_RETROGRADE_GUIDE.find(g => g.planet === '天王星')?.houses[((srSunHouse + 9) % 12) + 1] || ''}\n海王星：${PLANET_RETROGRADE_GUIDE.find(g => g.planet === '海王星')?.houses[((srSunHouse + 9) % 12) + 1] || ''}\n冥王星：${PLANET_RETROGRADE_GUIDE.find(g => g.planet === '冥王星')?.houses[((srSunHouse + 9) % 12) + 1] || ''}`
+    return {
+      m1, m2,
+      list: [
+        {
+          date: d1,
+          type: '日蝕 (Solar Eclipse - 新篇章開啟)',
+          degree: 14,
+          sign: s1,
+          house: ((sunHouse + 1) % 12) + 1,
+          sunSign: s1,
+          sunHouse: ((sunHouse + 1) % 12) + 1,
+          moonSign: s1,
+          moonHouse: ((sunHouse + 1) % 12) + 1,
+          meaning: `在${s1}引發新篇章開啟，注入強大變革與主動突破能量。`
+        },
+        {
+          date: d2,
+          type: '月蝕 (Lunar Eclipse - 揭曉與關係收尾)',
+          degree: 25,
+          sign: s2,
+          house: ((sunHouse + 6) % 12) + 1,
+          sunSign: s2,
+          sunHouse: sunHouse,
+          moonSign: s2,
+          moonHouse: ((sunHouse + 6) % 12) + 1,
+          meaning: `在${s2}帶來階段性結果揭曉，伴隨情感沉澱或階段性任務圓滿收尾。`
+        }
+      ]
+    };
+  };
+
+  const eclipseData = getEclipsesForYear(transitYear, srSunHouse);
+  const eclipses = eclipseData.list;
+
+  // Step 4: Planet Retrogrades tailored for transitYear
+  const getRetrogradesForYear = (tYear: number, sunHouse: number) => {
+    let mDates1 = `${tYear}年02月26日 ~ ${tYear}年03月20日`;
+    let mDates2 = `${tYear}年06月29日 ~ ${tYear}年07月23日`;
+    let mDates3 = `${tYear}年10月24日 ~ ${tYear}年11月13日`;
+
+    if (tYear === 2025) {
+      mDates1 = `${tYear}年03月15日 ~ ${tYear}年04月07日`;
+      mDates2 = `${tYear}年07月18日 ~ ${tYear}年08月11日`;
+      mDates3 = `${tYear}年11月09日 ~ ${tYear}年11月29日`;
+    } else if (tYear === 2027) {
+      mDates1 = `${tYear}年02月09日 ~ ${tYear}年03月03日`;
+      mDates2 = `${tYear}年06月10日 ~ ${tYear}年07月04日`;
+      mDates3 = `${tYear}年10月07日 ~ ${tYear}年10月28日`;
+    } else if (tYear === 2028) {
+      mDates1 = `${tYear}年01月24日 ~ ${tYear}年02月15日`;
+      mDates2 = `${tYear}年05月21日 ~ ${tYear}年06月13日`;
+      mDates3 = `${tYear}年09月19日 ~ ${tYear}年10月11日`;
     }
-  ];
+
+    return [
+      {
+        planet: '水星',
+        symbol: '☿',
+        period: '第1次逆行（春季）',
+        exactDates: mDates1,
+        stationPoint: `精確轉向停滯期（前後各 3 天影響最強）`,
+        type: '水星逆行第1次 (溝通、合約、交通)',
+        description: '建議重要簽約與採購避開此期，利用「Re-」回頭檢視、修改企劃、與舊人重逢。',
+        sign: ZODIAC_SIGNS[(sunHouse + 0) % 12].name,
+        house: sunHouse,
+        guideQuote: PLANET_RETROGRADE_GUIDE.find(g => g.planet === '水星')?.houses[sunHouse] || ''
+      },
+      {
+        planet: '水星',
+        symbol: '☿',
+        period: '第2次逆行（夏季）',
+        exactDates: mDates2,
+        stationPoint: `精確轉向停滯期（前後各 3 天影響最強）`,
+        type: '水星逆行第2次 (交通、旅遊、決策重審)',
+        description: '出行與溝通易有延誤，適合深度複盤日常工作流程與合約細節。',
+        sign: ZODIAC_SIGNS[(sunHouse + 4) % 12].name,
+        house: ((sunHouse + 3) % 12) + 1,
+        guideQuote: PLANET_RETROGRADE_GUIDE.find(g => g.planet === '水星')?.houses[((sunHouse + 3) % 12) + 1] || ''
+      },
+      {
+        planet: '水星',
+        symbol: '☿',
+        period: '第3次逆行（秋季）',
+        exactDates: mDates3,
+        stationPoint: `精確轉向停滯期（前後各 3 天影響最強）`,
+        type: '水星逆行第3次 (財務、合作、舊案覆核)',
+        description: '人際與財務交接易有反覆，保持耐心核對帳目與重要資訊。',
+        sign: ZODIAC_SIGNS[(sunHouse + 8) % 12].name,
+        house: ((sunHouse + 6) % 12) + 1,
+        guideQuote: PLANET_RETROGRADE_GUIDE.find(g => g.planet === '水星')?.houses[((sunHouse + 6) % 12) + 1] || ''
+      },
+      {
+        planet: '火星 / 金星',
+        symbol: '♀/♂',
+        period: '火星約 2 年一次 / 金星約 18 個月一次',
+        exactDates: tYear % 2 === 0 ? `火星逆行：${tYear - 1}年12月 ~ ${tYear}年02月24日` : `金星逆行：${tYear}年03月 ~ ${tYear}年04月`,
+        stationPoint: `停滯點：${tYear}年轉換期（行動力內轉與價值重整）`,
+        type: '行動與情感價值重審',
+        description: '考驗行動力受阻、熱情內轉或價值觀的深層變革。',
+        sign: ZODIAC_SIGNS[(sunHouse + 2) % 12].name,
+        house: ((sunHouse + 1) % 12) + 1,
+        guideQuote: `金星：${PLANET_RETROGRADE_GUIDE.find(g => g.planet === '金星')?.houses[((sunHouse + 1) % 12) + 1] || ''}\n火星：${PLANET_RETROGRADE_GUIDE.find(g => g.planet === '火星')?.houses[((sunHouse + 1) % 12) + 1] || ''}`
+      },
+      {
+        planet: '木星',
+        symbol: '♃',
+        period: '每年逆行約 4 個月',
+        exactDates: `${tYear}年11月上旬 ~ ${tYear + 1}年03月`,
+        stationPoint: `停滯點：${tYear}年11月（擴張與信念的內部沈澱）`,
+        type: '木星逆行 (心智哲學與機會重整)',
+        description: '外行星三次觸發中第一波，檢視過去一年獲得的機會與擴張是否過度。',
+        sign: ZODIAC_SIGNS[(sunHouse + 7) % 12].name,
+        house: ((sunHouse + 4) % 12) + 1,
+        guideQuote: PLANET_RETROGRADE_GUIDE.find(g => g.planet === '木星')?.houses[((sunHouse + 4) % 12) + 1] || ''
+      },
+      {
+        planet: '土星',
+        symbol: '♄',
+        period: '每年逆行約 4.5 個月',
+        exactDates: `${tYear}年07月中旬 ~ ${tYear}年11月下旬`,
+        stationPoint: `停滯點：${tYear}年07月中與11月下旬（結構、責任與壓力測試）`,
+        type: '土星逆行 (責任與現實考驗的三次觸發)',
+        description: '對本命敏感點形成三部曲（順行碰 ➔ 逆行碰 ➔ 順行定案），經歷結構重組。',
+        sign: ZODIAC_SIGNS[(sunHouse + 9) % 12].name,
+        house: ((sunHouse + 6) % 12) + 1,
+        guideQuote: PLANET_RETROGRADE_GUIDE.find(g => g.planet === '土星')?.houses[((sunHouse + 6) % 12) + 1] || ''
+      },
+      {
+        planet: '天王星 / 海王星 / 冥王星',
+        symbol: '♅/♆/♇',
+        period: '每年固定逆行 5 個月',
+        exactDates: `冥王星：${tYear}年05月 ~ ${tYear}年10月\n海王星：${tYear}年06月 ~ ${tYear}年11月\n天王星：${tYear}年09月 ~ ${tYear + 1}年01月`,
+        stationPoint: `長期世代轉化停滯點（年度心靈與體制轉折關鍵週）`,
+        type: '遠行星集體潛意識與世代變革',
+        description: '流年冥王星在本命宮位長期停留並多次逆行折返，促成數年長期的深層重整。',
+        sign: ZODIAC_SIGNS[(sunHouse + 10) % 12].name,
+        house: ((sunHouse + 9) % 12) + 1,
+        guideQuote: `天王星：${PLANET_RETROGRADE_GUIDE.find(g => g.planet === '天王星')?.houses[((sunHouse + 9) % 12) + 1] || ''}\n海王星：${PLANET_RETROGRADE_GUIDE.find(g => g.planet === '海王星')?.houses[((sunHouse + 9) % 12) + 1] || ''}\n冥王星：${PLANET_RETROGRADE_GUIDE.find(g => g.planet === '冥王星')?.houses[((sunHouse + 9) % 12) + 1] || ''}`
+      }
+    ];
+  };
+
+  const retrogrades = getRetrogradesForYear(transitYear, srSunHouse);
 
   // Step 5 & 6: Monthly Timeline & Scoring
   const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
   const monthlyTimeline: MonthlyForecastItem[] = months.map((mName, idx) => {
     const monthNum = idx + 1;
-    const isHotspot = monthNum === srSunHouse || monthNum === ((srSunHouse + 3) % 12) + 1 || monthNum === 3 || monthNum === 9;
+
+    // Hotspot conditions: Solar return sun house month, eclipse months for this transitYear, or square/opposite house months
+    const isHotspot = monthNum === srSunHouse ||
+                      monthNum === ((srSunHouse + 3) % 12) + 1 ||
+                      monthNum === ((srSunHouse + 9) % 12) + 1 ||
+                      monthNum === eclipseData.m1 ||
+                      monthNum === eclipseData.m2;
+
     const score = isHotspot ? 3 : (monthNum % 2 === 0 ? 2 : 1);
-    
     let triggerEvents: string[] = [];
 
     if (isHotspot) {
       if (monthNum === srSunHouse) {
         triggerEvents = [`回歸盤太陽精確合相本命敏感點`, `主命星【${ruler.planet}】強勢進駐引動第 ${srSunHouse} 宮`, `年度核心舞台啟動與關鍵決策點`];
-      } else if (monthNum === 3 || monthNum === 9) {
-        triggerEvents = [`春季/秋季日月蝕軸線強烈交會`, `突發環境變動與心態轉折點`, `重要合約、合作或人際關係重整`];
+      } else if (monthNum === eclipseData.m1 || monthNum === eclipseData.m2) {
+        triggerEvents = [`${transitYear}年日月蝕軸線強烈交會（${monthNum === eclipseData.m1 ? eclipseData.list[0].sign : eclipseData.list[1].sign}）`, `突發環境變動與心態轉折點`, `重要合約、合作或人際關係重整`];
       } else {
         triggerEvents = [`行運外行星（土/冥/木）與本命敏感點形成緊密四分/對分相`, `壓力測試與結構性突破期`];
       }
@@ -1016,13 +1084,16 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
       }
     }
 
-    // Pull precise transit and aspect from PLANET_ASPECT_TRANSITS if hotspot
+    // Pull unique transit aspect quote dynamically seeded by birth chart + transitYear + monthNum
     let aspectQuote: { planetGroup: string; targetPlanet: string; period: string; aspectType: 'soft' | 'hard'; aspectMeaning: string; } | undefined = undefined;
 
     if (isHotspot) {
-      const groupIdx = (monthNum - 1) % PLANET_ASPECT_TRANSITS.length;
+      const natalAsc = natalChart.ascendant;
+      const natalSun = natalChart.planets[0]?.longitude || 0;
+      const seed = Math.floor(Math.abs(natalAsc * 7 + natalSun * 3 + transitYear * 13 + monthNum * 17));
+      const groupIdx = seed % PLANET_ASPECT_TRANSITS.length;
       const group = PLANET_ASPECT_TRANSITS[groupIdx] || PLANET_ASPECT_TRANSITS[0];
-      const itemIdx = (monthNum * 3) % group.items.length;
+      const itemIdx = (seed + monthNum * 5) % group.items.length;
       const item = group.items[itemIdx] || group.items[0];
       const aspectType: 'soft' | 'hard' = (monthNum % 2 === 0) ? 'hard' : 'soft';
       const aspectMeaning = aspectType === 'soft' ? item.soft : item.hard;
@@ -1117,9 +1188,9 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
 
       // Check Eclipse
       let hasEclipse: { type: string; date: string } | undefined = undefined;
-      if (monthNum === 3 && hNum === ((srSunHouse + 1) % 12) + 1) {
-        hasEclipse = { type: '日食 (新能量突破)', date: `${monthNum}月25日` };
-      } else if (monthNum === 9 && hNum === ((srSunHouse + 6) % 12) + 1) {
+      if (monthNum === eclipseData.m1 && hNum === ((srSunHouse + 1) % 12) + 1) {
+        hasEclipse = { type: '日食 (新能量突破)', date: `${monthNum}月15日` };
+      } else if (monthNum === eclipseData.m2 && hNum === ((srSunHouse + 6) % 12) + 1) {
         hasEclipse = { type: '月食 (關係收尾驗收)', date: `${monthNum}月18日` };
       }
 
