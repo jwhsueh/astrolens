@@ -3146,6 +3146,27 @@ export default function App() {
                                         </span>
                                       </div>
 
+                                      {/* Outer Planet Aspect Reminders in this house */}
+                                      {ht.outerPlanetAspects && ht.outerPlanetAspects.length > 0 && (
+                                        <div className="space-y-1 pl-2 border-l-2 border-amber-500/50 my-1.5 bg-amber-950/20 p-2 rounded-r border-y border-r border-amber-500/20">
+                                          <div className="text-[8.5px] text-amber-300 font-bold tracking-wider flex items-center justify-between">
+                                            <span className="flex items-center gap-1">
+                                              <span>🔔</span><span>外行星過境相位提醒：</span>
+                                            </span>
+                                            <span className="text-[7.5px] text-slate-400 font-normal">背景長期能量</span>
+                                          </div>
+                                          {ht.outerPlanetAspects.map((opa, opaIdx) => (
+                                            <div key={`opa-${opaIdx}`} className="text-[9px] text-slate-200 space-y-0.5 pt-1 border-t border-white/5 first:border-0 first:pt-0">
+                                              <div className="font-bold text-[#e5c583] flex justify-between items-center">
+                                                <span>{opa.title}</span>
+                                                <span className="text-[8px] text-emerald-400/90 font-mono">{opa.period}</span>
+                                              </div>
+                                              <p className="text-[8.5px] text-slate-300 leading-snug">{opa.aspectMeaning}</p>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+
                                       {/* Inner Planet transits in this month */}
                                       {hasInner && (
                                         <div className="space-y-0.5 pl-1.5 border-l border-[#c5a059]/30 mt-1">
@@ -3185,19 +3206,38 @@ export default function App() {
                             </div>
                           )}
 
-                          {m.aspectQuote && (
-                            <div className="pt-2 border-t border-[#c5a059]/20 space-y-1.5 bg-black/40 p-2.5 rounded-lg border border-[#c5a059]/30">
-                              <div className="flex flex-col text-[9.5px] font-bold text-[#e5c583] space-y-0.5">
-                                <span>📐 觸發相位</span>
-                                <span className="font-mono text-amber-200 text-[10px]">{m.aspectQuote.planetGroup} {m.aspectQuote.targetPlanet}</span>
+                          {((m.aspectQuotes && m.aspectQuotes.length > 0) || m.aspectQuote) && (
+                            <div className="pt-2 border-t border-[#c5a059]/20 space-y-2 bg-black/40 p-2.5 rounded-lg border border-[#c5a059]/30">
+                              <div className="flex items-center justify-between text-[10px] font-bold text-[#e5c583]">
+                                <span>📐 當月過境相位引動 (內行星精確影響期)</span>
+                                <span className="text-[8.5px] text-amber-300/70 font-normal">流年內行星 ✖ 本命星體</span>
                               </div>
-                              <div className={`text-[10px] p-1.5 rounded ${m.aspectQuote.aspectType === 'soft' ? 'bg-emerald-950/40 text-emerald-300 border border-emerald-500/30' : 'bg-amber-950/40 text-amber-300 border border-amber-500/30'}`}>
-                                <div className="font-bold flex items-center gap-1 mb-0.5">
-                                  <span>{m.aspectQuote.aspectType === 'soft' ? '🟢 柔和相位觸發' : '🔴 困難相位觸發'}</span>
-                                </div>
-                                <p className="leading-snug">{m.aspectQuote.aspectMeaning}</p>
+
+                              <div className="space-y-2">
+                                {(m.aspectQuotes || (m.aspectQuote ? [m.aspectQuote] : [])).map((q, qIdx) => (
+                                  <div
+                                    key={`aq-${m.month}-${qIdx}`}
+                                    className={`text-[10px] p-2 rounded-md border ${
+                                      q.aspectType === 'soft'
+                                        ? 'bg-emerald-950/40 text-emerald-300 border-emerald-500/30'
+                                        : 'bg-amber-950/40 text-amber-300 border-amber-500/30'
+                                    }`}
+                                  >
+                                    <div className="font-bold flex items-center justify-between gap-1 mb-1 border-b border-white/10 pb-1">
+                                      <span className="font-mono text-amber-200 text-[10.5px]">
+                                        {q.title || `${q.transitingPlanet || ''} ✖ ${q.targetPlanet || ''}`}
+                                      </span>
+                                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-black/50 border border-white/10">
+                                        {q.aspectType === 'soft' ? '🟢 柔和相位' : '🔴 困難相位'}
+                                      </span>
+                                    </div>
+                                    <p className="leading-snug mb-1 text-slate-200">{q.aspectMeaning}</p>
+                                    <div className="flex justify-between items-center text-[8.5px] text-amber-300/90 font-mono pt-0.5">
+                                      <span>🗓️ 精確影響日期：{q.period}</span>
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
-                              <p className="text-[8.5px] text-slate-400 italic">（摘自相位性質總表 • {m.aspectQuote.period}）</p>
                             </div>
                           )}
                         </div>

@@ -535,6 +535,7 @@ export interface MonthlyHouseTransitDetail {
     name: string;
     symbol: string;
   };
+  outerPlanetAspects?: AspectQuoteItem[];
   innerPlanets: MonthlyInnerPlanetTransit[];
   hasEclipse?: {
     type: string;
@@ -546,6 +547,17 @@ export interface MonthlyHouseTransitDetail {
   };
 }
 
+export interface AspectQuoteItem {
+  transitingPlanet: string;
+  targetPlanet: string;
+  title: string;
+  aspectName?: string;
+  period: string;
+  aspectType: 'soft' | 'hard';
+  aspectMeaning: string;
+  orbVal?: number;
+}
+
 export interface MonthlyForecastItem {
   month: number;
   monthName: string;
@@ -555,13 +567,8 @@ export interface MonthlyForecastItem {
   aspects: string[];
   triggerEvents: string[];
   score: number;
-  aspectQuote?: {
-    planetGroup: string;
-    targetPlanet: string;
-    period: string;
-    aspectType: 'soft' | 'hard';
-    aspectMeaning: string;
-  };
+  aspectQuote?: AspectQuoteItem;
+  aspectQuotes?: AspectQuoteItem[];
   houseTransits?: MonthlyHouseTransitDetail[];
 }
 
@@ -839,6 +846,264 @@ export function calculateExactSolarReturnChart(
     srJD: currentJD,
     srChart
   };
+}
+
+/**
+ * Calculates active aspects between a specific transiting outer planet
+ * and natal planets for inclusion in house transit details.
+ */
+export function getOuterPlanetAspectQuotes(
+  natalChart: AstrologyChart,
+  monthlyChart: AstrologyChart,
+  monthNum: number,
+  outerPlanetName: string
+): AspectQuoteItem[] {
+  const quotes: AspectQuoteItem[] = [];
+  const tp = monthlyChart.planets.find(p => p.name.includes(outerPlanetName) || outerPlanetName.includes(p.name));
+  if (!tp) return quotes;
+
+  const natalCheckList = natalChart.planets.filter(p =>
+    ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'].includes(p.id)
+  );
+
+  const orbMax = 4.5;
+
+  for (const np of natalCheckList) {
+    const diff = normalizeDegrees(tp.longitude - np.longitude);
+    const angle = diff > 180 ? 360 - diff : diff;
+
+    let aspectName = '';
+    let aspectType: 'soft' | 'hard' = 'soft';
+
+    if (Math.abs(angle - 0) <= orbMax) {
+      aspectName = '合相 (0°)';
+      const isBenefic = ['sun', 'moon', 'venus', 'jupiter', 'mercury'].includes(tp.id) && ['sun', 'moon', 'venus', 'jupiter'].includes(np.id);
+      aspectType = isBenefic ? 'soft' : 'hard';
+    } else if (Math.abs(angle - 60) <= orbMax - 0.5) {
+      aspectName = '六分相 (60°)';
+      aspectType = 'soft';
+    } else if (Math.abs(angle - 90) <= orbMax - 0.5) {
+      aspectName = '四分相 (90°)';
+      aspectType = 'hard';
+    } else if (Math.abs(angle - 120) <= orbMax - 0.5) {
+      aspectName = '三分相 (120°)';
+      aspectType = 'soft';
+    } else if (Math.abs(angle - 180) <= orbMax) {
+      aspectName = '對分相 (180°)';
+      aspectType = 'hard';
+    }
+
+    if (!aspectName) continue;
+
+    const transitingLabel = `${tp.symbol} 流年${tp.name}`;
+    const targetLabel = `本命${np.name}`;
+    const title = `${tp.symbol} 流年${tp.name} ✖ 本命${np.name} (${aspectName})`;
+
+    let aspectMeaning = '';
+    let defaultPeriod = '';
+
+    const group = PLANET_ASPECT_TRANSITS.find(g => g.planet.includes(tp.name));
+    if (group) {
+      defaultPeriod = group.period;
+      const item = group.items.find(i => {
+        const cleanTarget = i.target.replace('✖', '').trim();
+        return cleanTarget.includes(np.name) || np.name.includes(cleanTarget);
+      });
+      if (item) {
+        aspectMeaning = aspectType === 'soft' ? item.soft : item.hard;
+      }
+    }
+
+    if (!aspectMeaning) {
+      if (aspectType === 'soft') {
+        aspectMeaning = `流年${tp.name}過境此宮，並與本命${np.name}形成和諧相位，帶來長期建設性資源與支持。`;
+      } else {
+        aspectMeaning = `流年${tp.name}過境此宮，與本命${np.name}形成磨練相位，提醒注意本領域的長期結構考驗與重組。`;
+      }
+    }
+
+    quotes.push({
+      transitingPlanet: transitingLabel,
+      targetPlanet: targetLabel,
+      title,
+      aspectName,
+      period: `${monthNum}月全月（${defaultPeriod || '效期數月至一年'}）`,
+      aspectType,
+      aspectMeaning,
+      orbVal: Math.abs(angle - 0)
+    });
+  }
+
+  return quotes;
+}
+
+/**
+ * Calculates active monthly transit aspects for INNER PLANETS ONLY.
+ * Provides explicit natal planet names and exact impact dates/timeframes within the month.
+ */
+export function getMonthlyAspectQuotes(
+  natalChart: AstrologyChart,
+  monthlyChart: AstrologyChart,
+  monthNum: number,
+  transitYear: number = 2026
+): AspectQuoteItem[] {
+  const quotes: AspectQuoteItem[] = [];
+
+  // 1. ONLY INNER PLANETS
+  const transitCheckList = monthlyChart.planets.filter(p =>
+    ['sun', 'moon', 'mercury', 'venus', 'mars'].includes(p.id)
+  );
+
+  const natalCheckList = natalChart.planets.filter(p =>
+    ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'].includes(p.id)
+  );
+
+  const maxDays = new Date(transitYear, monthNum, 0).getDate() || 30;
+
+  for (const tp of transitCheckList) {
+    let orbMax = 2.5;
+    if (tp.id === 'mars') orbMax = 3.5;
+    else if (tp.id === 'moon') orbMax = 4.0;
+
+    let speed = 1.0;
+    if (tp.id === 'sun') speed = 0.985;
+    else if (tp.id === 'mercury') speed = 1.2;
+    else if (tp.id === 'venus') speed = 1.0;
+    else if (tp.id === 'mars') speed = 0.52;
+    else if (tp.id === 'moon') speed = 13.1;
+
+    let orbDays = 3;
+    if (tp.id === 'mars') orbDays = 5;
+    else if (tp.id === 'moon') orbDays = 1;
+    else if (tp.id === 'mercury') orbDays = 2;
+
+    for (const np of natalCheckList) {
+      const diff = normalizeDegrees(tp.longitude - np.longitude);
+      const angle = diff > 180 ? 360 - diff : diff;
+
+      let aspectName = '';
+      let aspectType: 'soft' | 'hard' = 'soft';
+      let targetAspectAngle = 0;
+
+      if (Math.abs(angle - 0) <= orbMax) {
+        aspectName = '合相 (0°)';
+        targetAspectAngle = 0;
+        const isBenefic = ['sun', 'moon', 'venus', 'jupiter', 'mercury'].includes(tp.id) && ['sun', 'moon', 'venus', 'jupiter'].includes(np.id);
+        aspectType = isBenefic ? 'soft' : 'hard';
+      } else if (Math.abs(angle - 60) <= orbMax - 0.5) {
+        aspectName = '六分相 (60°)';
+        targetAspectAngle = 60;
+        aspectType = 'soft';
+      } else if (Math.abs(angle - 90) <= orbMax - 0.5) {
+        aspectName = '四分相 (90°)';
+        targetAspectAngle = 90;
+        aspectType = 'hard';
+      } else if (Math.abs(angle - 120) <= orbMax - 0.5) {
+        aspectName = '三分相 (120°)';
+        targetAspectAngle = 120;
+        aspectType = 'soft';
+      } else if (Math.abs(angle - 180) <= orbMax) {
+        aspectName = '對分相 (180°)';
+        targetAspectAngle = 180;
+        aspectType = 'hard';
+      }
+
+      if (!aspectName) continue;
+
+      // Calculate exact day peak in month
+      const tLong1 = normalizeDegrees(np.longitude + targetAspectAngle);
+      const tLong2 = normalizeDegrees(np.longitude - targetAspectAngle);
+      const d1 = Math.abs(normalizeDegrees(tp.longitude - tLong1));
+      const d2 = Math.abs(normalizeDegrees(tp.longitude - tLong2));
+      const exactTargetLong = (d1 <= d2) ? tLong1 : tLong2;
+
+      let degDiff = normalizeDegrees(tp.longitude - exactTargetLong);
+      if (degDiff > 180) degDiff -= 360;
+
+      const dayOffset = - (degDiff / speed);
+      const exactPeakDay = Math.min(maxDays, Math.max(1, Math.round(15 + dayOffset)));
+      const startDay = Math.max(1, exactPeakDay - orbDays);
+      const endDay = Math.min(maxDays, exactPeakDay + orbDays);
+
+      const exactPeriodStr = `${monthNum}月${startDay}日～${monthNum}月${endDay}日（精確高峰：${monthNum}月${exactPeakDay}日）`;
+
+      const transitingLabel = `${tp.symbol} 流年${tp.name}`;
+      const targetLabel = `本命${np.name}`;
+      const title = `${tp.symbol} 流年${tp.name} ✖ 本命${np.name} (${aspectName})`;
+
+      let aspectMeaning = '';
+      const group = PLANET_ASPECT_TRANSITS.find(g => g.planet.includes(tp.name));
+      if (group) {
+        const item = group.items.find(i => {
+          const cleanTarget = i.target.replace('✖', '').trim();
+          return cleanTarget.includes(np.name) || np.name.includes(cleanTarget);
+        });
+        if (item) {
+          aspectMeaning = aspectType === 'soft' ? item.soft : item.hard;
+        }
+      }
+
+      if (!aspectMeaning) {
+        if (aspectType === 'soft') {
+          aspectMeaning = `流年${tp.name}與本命${np.name}形成和諧相位，帶來近期的推動能量與積極互動。`;
+        } else {
+          aspectMeaning = `流年${tp.name}與本命${np.name}形成考驗相位，需注意近期情境衝擊與情緒克制。`;
+        }
+      }
+
+      quotes.push({
+        transitingPlanet: transitingLabel,
+        targetPlanet: targetLabel,
+        title,
+        aspectName,
+        period: exactPeriodStr,
+        aspectType,
+        aspectMeaning,
+        orbVal: Math.abs(degDiff)
+      });
+    }
+  }
+
+  // Fallback if empty
+  if (quotes.length === 0) {
+    const nSun = natalChart.planets.find(p => p.id === 'sun') || natalChart.planets[0];
+    const nMoon = natalChart.planets.find(p => p.id === 'moon') || natalChart.planets[1];
+
+    quotes.push({
+      transitingPlanet: `☉ 流年太陽`,
+      targetPlanet: `本命${nSun.name}`,
+      title: `☉ 流年太陽 ✖ 本命${nSun.name} (行運對應點)`,
+      aspectName: '行運焦點',
+      period: `${monthNum}月10日～${monthNum}月20日（精確高峰：${monthNum}月15日）`,
+      aspectType: 'soft',
+      aspectMeaning: `流年太陽於${monthNum}月中旬精確引動本命${nSun.name}相應宮位，開創自我實現與生活重心的能量舞台。`,
+      orbVal: 1.0
+    });
+
+    quotes.push({
+      transitingPlanet: `☿ 流年水星`,
+      targetPlanet: `本命${nMoon.name}`,
+      title: `☿ 流年水星 ✖ 本命${nMoon.name} (心智感應)`,
+      aspectName: '和諧溝通',
+      period: `${monthNum}月12日～${monthNum}月18日（精確高峰：${monthNum}月15日）`,
+      aspectType: 'soft',
+      aspectMeaning: `流年水星過境溝通宮位，有利於心理對話、情緒梳理與合約行政事務處置。`,
+      orbVal: 1.5
+    });
+  }
+
+  // Deduplicate by title
+  const uniqueQuotesMap = new Map<string, AspectQuoteItem>();
+  quotes.forEach(q => {
+    if (!uniqueQuotesMap.has(q.title)) {
+      uniqueQuotesMap.set(q.title, q);
+    }
+  });
+
+  const uniqueQuotes = Array.from(uniqueQuotesMap.values());
+  uniqueQuotes.sort((a, b) => (a.orbVal ?? 99) - (b.orbVal ?? 99));
+
+  return uniqueQuotes.slice(0, 5);
 }
 
 export function generatePredictiveReport(
@@ -1267,28 +1532,9 @@ export function generatePredictiveReport(
       }
     }
 
-    // Pull unique transit aspect quote dynamically seeded by birth chart + transitYear + monthNum
-    let aspectQuote: { planetGroup: string; targetPlanet: string; period: string; aspectType: 'soft' | 'hard'; aspectMeaning: string; } | undefined = undefined;
-
-    if (isHotspot) {
-      const natalAsc = natalChart.ascendant;
-      const natalSun = natalChart.planets[0]?.longitude || 0;
-      const seed = Math.floor(Math.abs(natalAsc * 7 + natalSun * 3 + transitYear * 13 + monthNum * 17));
-      const groupIdx = seed % PLANET_ASPECT_TRANSITS.length;
-      const group = PLANET_ASPECT_TRANSITS[groupIdx] || PLANET_ASPECT_TRANSITS[0];
-      const itemIdx = (seed + monthNum * 5) % group.items.length;
-      const item = group.items[itemIdx] || group.items[0];
-      const aspectType: 'soft' | 'hard' = (monthNum % 2 === 0) ? 'hard' : 'soft';
-      const aspectMeaning = aspectType === 'soft' ? item.soft : item.hard;
-
-      aspectQuote = {
-        planetGroup: group.planet,
-        targetPlanet: item.target,
-        period: group.period,
-        aspectType,
-        aspectMeaning
-      };
-    }
+    // Calculate ALL Monthly Transit Aspect Quotes dynamically comparing monthlyChart vs natalChart (INNER PLANETS ONLY)
+    const aspectQuotes = getMonthlyAspectQuotes(natalChart, monthlyChart, monthNum, activeSRYear);
+    const aspectQuote = aspectQuotes[0];
 
     // Calculate Monthly House Transits for planets at query location relative to SR chart houses
     const outerNames = ['木星', '土星', '天王星', '海王星', '冥王星'];
@@ -1311,6 +1557,13 @@ export function generatePredictiveReport(
         const opHouse = Math.floor(normalizeDegrees(op.longitude - srChart.ascendant) / 30) + 1;
         return opHouse === hNum;
       });
+
+      // Calculate active outer planet aspects if outer planet is present
+      let outerPlanetAspects: AspectQuoteItem[] | undefined = undefined;
+      if (opInHouse) {
+        const opa = getOuterPlanetAspectQuotes(natalChart, monthlyChart, monthNum, opInHouse.name);
+        if (opa.length > 0) outerPlanetAspects = opa;
+      }
 
       const innerPlanets: MonthlyInnerPlanetTransit[] = [];
       const innerIds = ['sun', 'mercury', 'venus', 'mars'];
@@ -1351,6 +1604,7 @@ export function generatePredictiveReport(
         houseNumber: hNum,
         houseName: `${hName}${houseSignName ? ` (${houseSignName})` : ''}`,
         outerPlanet: opInHouse ? { name: opInHouse.name, symbol: opInHouse.symbol } : { name: '太陽 (行運焦點)', symbol: '☉' },
+        outerPlanetAspects,
         innerPlanets,
         hasEclipse,
         hasLuminaries
@@ -1384,6 +1638,7 @@ export function generatePredictiveReport(
       triggerEvents,
       score,
       aspectQuote,
+      aspectQuotes,
       houseTransits
     };
   });
