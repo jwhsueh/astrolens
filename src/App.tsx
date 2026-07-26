@@ -2767,7 +2767,14 @@ export default function App() {
             </div>
 
             {(() => {
-              const pred = generatePredictiveReport(natalChart, transitDate);
+              const pred = generatePredictiveReport(
+                natalChart,
+                transitDate,
+                transitLongitude,
+                transitLatitude,
+                transitTimezone,
+                transitTime
+              );
               return (
                 <div className="space-y-6">
                   {/* Step 1 */}
@@ -4052,7 +4059,14 @@ export default function App() {
                   8. 專業流年推命與運勢預測 / Advanced Predictive Forecasting (6-Step Workflow)
                 </h2>
                 {(() => {
-                  const printPred = generatePredictiveReport(natalChart, transitDate);
+                  const printPred = generatePredictiveReport(
+                    natalChart,
+                    transitDate,
+                    transitLongitude,
+                    transitLatitude,
+                    transitTimezone,
+                    transitTime
+                  );
                   return (
                     <div className="space-y-3 text-xs">
                       <div className="bg-[#faf8f4] p-3.5 rounded-xl border border-[#e8dfcb] shadow-sm space-y-2">

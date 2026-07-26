@@ -642,6 +642,7 @@ export function calculateExactSolarReturnChart(
 ): {
   exactDateStr: string;
   exactTimeFormatted: string;
+  srJD: number;
   srChart: AstrologyChart;
 } {
   const natalSunLong = natalChart.planets[0]?.longitude ?? 0;
@@ -814,14 +815,70 @@ export function calculateExactSolarReturnChart(
   return {
     exactDateStr: finalIsoStr,
     exactTimeFormatted,
+    srJD: currentJD,
     srChart
   };
 }
 
-export function generatePredictiveReport(natalChart: AstrologyChart, transitDateStr: string): AstrologicalPredictionReport {
-  const parsedDate = new Date(transitDateStr);
-  const year = parsedDate.getFullYear();
-  const transitYear = (isNaN(year) || isNaN(parsedDate.getTime()) || year < 1900 || year > 2100) ? 2026 : year;
+export function generatePredictiveReport(
+  natalChart: AstrologyChart,
+  transitDateStr: string,
+  transitLongitude: number = 121.5,
+  transitLatitude: number = 25.03,
+  transitTimezone: number = 8,
+  transitTimeStr: string = '12:00'
+): AstrologicalPredictionReport {
+  let qYear = 2026, qMonth = 7, qDay = 25, qHour = 12, qMin = 0;
+  if (transitDateStr) {
+    const parts = transitDateStr.split('-');
+    if (parts.length === 3) {
+      qYear = parseInt(parts[0], 10) || 2026;
+      qMonth = parseInt(parts[1], 10) || 7;
+      qDay = parseInt(parts[2], 10) || 25;
+    }
+  }
+  if (transitTimeStr) {
+    const tParts = transitTimeStr.split(':');
+    if (tParts.length >= 2) {
+      const h = parseInt(tParts[0], 10);
+      const m = parseInt(tParts[1], 10);
+      if (!isNaN(h)) qHour = h;
+      if (!isNaN(m)) qMin = m;
+    }
+  }
+
+  const queryJD = calculateJulianDate(qYear, qMonth, qDay, qHour, qMin, transitTimezone);
+
+  // 1. Calculate Solar Return for query calendar year at transit location
+  const srResultThisYear = calculateExactSolarReturnChart(
+    natalChart,
+    qYear,
+    transitLongitude,
+    transitLatitude,
+    transitTimezone
+  );
+
+  // 2. Logic: 若問事時間在回歸時間時候，則採用當年，若在之前，則採用去年。
+  let activeSRYear = qYear;
+  let isPriorToSR = false;
+  if (queryJD < srResultThisYear.srJD) {
+    activeSRYear = qYear - 1;
+    isPriorToSR = true;
+  }
+
+  const srResult = (!isPriorToSR)
+    ? srResultThisYear
+    : calculateExactSolarReturnChart(
+        natalChart,
+        activeSRYear,
+        transitLongitude,
+        transitLatitude,
+        transitTimezone
+      );
+
+  const srChart = srResult.srChart;
+  const transitYear = activeSRYear;
+
   const ascIndex = Math.floor(natalChart.ascendant / 30);
   const ascSignName = ZODIAC_SIGNS[ascIndex]?.name || '射手座';
 
@@ -898,9 +955,6 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
   ];
 
   // Step 2: Exact Solar Return Moment and Chart Calculation
-  const srResult = calculateExactSolarReturnChart(natalChart, transitYear);
-  const srChart = srResult.srChart;
-
   const srAscIndex = Math.floor(srChart.ascendant / 30);
   const srAscSign = ZODIAC_SIGNS[srAscIndex]?.name || '牡羊座';
 
@@ -965,7 +1019,7 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
     annualTheme: themeMap[srSunHouse] || '全方位成長與心靈突破年',
     moonSign: srMoonSign,
     moonHouse: srMoonHouse,
-    description: `太陽回歸精確時刻為【${srResult.exactTimeFormatted}】。回歸盤上升星座落在【${srAscSign}】（年度主命星：${srRuler.planet}），年度太陽落在第 ${srSunHouse} 宮（${HOUSE_DETAILS[srSunHouse - 1]?.name}：${HOUSE_DETAILS[srSunHouse - 1]?.keyMeaning}），指出本年度核心舞台與現實戰場在於【${HOUSE_DETAILS[srSunHouse - 1]?.name}】。`,
+    description: `問事流年時間為【${qYear}年${String(qMonth).padStart(2, '0')}月${String(qDay).padStart(2, '0')}日 ${String(qHour).padStart(2, '0')}:${String(qMin).padStart(2, '0')}】（問事地點：經度 ${transitLongitude}° / 緯度 ${transitLatitude}° / 時區 UTC+${transitTimezone}）。${isPriorToSR ? `因問事時間尚未達到 ${qYear} 年太陽回歸時刻（${srResultThisYear.exactTimeFormatted}），故運勢主軸採用前一年（${activeSRYear} 年）之太陽回歸盤。` : `因問事時間已到達/超過 ${qYear} 年太陽回歸時刻（${srResultThisYear.exactTimeFormatted}），故採用當年（${activeSRYear} 年）之太陽回歸盤。`}\n\n本期精確太陽回歸時刻為【${srResult.exactTimeFormatted}】。回歸盤上升星座落在【${srAscSign}】（年度主命星：${srRuler.planet}），年度太陽落在第 ${srSunHouse} 宮（${HOUSE_DETAILS[srSunHouse - 1]?.name}：${HOUSE_DETAILS[srSunHouse - 1]?.keyMeaning}），指出此回歸年度之核心舞台與現實戰場在於【${HOUSE_DETAILS[srSunHouse - 1]?.name}】。`,
     houses: solarReturnHouses
   };
   const getEclipsesForYear = (tYear: number, sunHouse: number) => {
