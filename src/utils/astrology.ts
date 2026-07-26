@@ -45,6 +45,9 @@ export interface AstrologyChart {
   julianDate: number;
   localTime: string;
   location: string;
+  longitude?: number;
+  latitude?: number;
+  timezone?: number;
   planets: PlanetPosition[];
   houses: HouseData[];
   ascendant: number;
@@ -184,8 +187,15 @@ export function calculateAstrology(
   const x_Earth = Earth_r * Math.cos(Earth_th * Math.PI / 180);
   const y_Earth = Earth_r * Math.sin(Earth_th * Math.PI / 180);
 
-  // 1. Sun geocentric longitude is Earth heliocentric longitude + 180
-  const sunLong = normalizeDegrees(Earth_th + 180);
+  // 1. Sun geocentric longitude (Meeus Astronomical Algorithms high-accuracy formula)
+  const T_sun = d / 36525;
+  const L0_sun = normalizeDegrees(280.46646 + 36000.76983 * T_sun + 0.0003032 * T_sun * T_sun);
+  const M_sun = normalizeDegrees(357.52911 + 35999.05029 * T_sun - 0.0001537 * T_sun * T_sun);
+  const Mrad_sun = M_sun * Math.PI / 180;
+  const C_sun = (1.914602 - 0.004817 * T_sun) * Math.sin(Mrad_sun) + (0.019993 - 0.000101 * T_sun) * Math.sin(2 * Mrad_sun) + 0.000289 * Math.sin(3 * Mrad_sun);
+  const trueLong_sun = normalizeDegrees(L0_sun + C_sun);
+  const omega_sun = (125.04 - 1934.136 * T_sun) * Math.PI / 180;
+  const sunLong = normalizeDegrees(trueLong_sun - 0.00569 - 0.00478 * Math.sin(omega_sun));
 
   // 2. Moon geocentric position (orbital simplified)
   const moonMeanLong = normalizeDegrees(218.316 + 13.176396 * d);
@@ -398,6 +408,9 @@ export function calculateAstrology(
     julianDate: JD,
     localTime: localTimeFormatted,
     location: `經度 ${longitude.toFixed(2)}°E, 緯度 ${latitude.toFixed(2)}°N`,
+    longitude: longitude,
+    latitude: latitude,
+    timezone: timezoneOffsetHours,
     planets: finalPlanets,
     houses: houses,
     ascendant: ascendant,
@@ -636,15 +649,19 @@ export interface AstrologicalPredictionReport {
 export function calculateExactSolarReturnChart(
   natalChart: AstrologyChart,
   targetYear: number,
-  locationLongitude: number = 121.5,
-  locationLatitude: number = 25.03,
-  timezoneOffsetHours: number = 8
+  locationLongitude?: number,
+  locationLatitude?: number,
+  timezoneOffsetHours?: number
 ): {
   exactDateStr: string;
   exactTimeFormatted: string;
   srJD: number;
   srChart: AstrologyChart;
 } {
+  const lon = locationLongitude ?? natalChart.longitude ?? 121.5;
+  const lat = locationLatitude ?? natalChart.latitude ?? 25.03;
+  const tz = timezoneOffsetHours ?? natalChart.timezone ?? 8;
+
   const natalSunLong = natalChart.planets[0]?.longitude ?? 0;
 
   // Extract month, day, hour, minute from natalChart local time
@@ -677,7 +694,7 @@ export function calculateExactSolarReturnChart(
   let guessH = bHour;
   let guessMin = bMinute;
 
-  let currentJD = calculateJulianDate(guessY, guessM, guessD, guessH, guessMin, timezoneOffsetHours);
+  let currentJD = calculateJulianDate(guessY, guessM, guessD, guessH, guessMin, tz);
 
   // Iterative solver for Sun longitude matching
   for (let iter = 0; iter < 10; iter++) {
@@ -704,7 +721,7 @@ export function calculateExactSolarReturnChart(
     let utcH = Math.floor(totalUtcMin / 60);
     let utcMin = totalUtcMin % 60;
 
-    let localH = utcH + timezoneOffsetHours;
+    let localH = utcH + tz;
     let localDay = dayInt;
     let localMonth = monthNum;
     let localYear = yearNum;
@@ -737,7 +754,7 @@ export function calculateExactSolarReturnChart(
 
     const isoStr = `${localYear}-${String(localMonth).padStart(2, '0')}-${String(localDay).padStart(2, '0')}T${String(localH).padStart(2, '0')}:${String(utcMin).padStart(2, '0')}`;
 
-    const tempChart = calculateAstrology(isoStr, locationLongitude, locationLatitude, timezoneOffsetHours);
+    const tempChart = calculateAstrology(isoStr, lon, lat, tz);
     const currentSunLong = tempChart.planets[0]?.longitude ?? 0;
 
     let diff = natalSunLong - currentSunLong;
@@ -776,7 +793,7 @@ export function calculateExactSolarReturnChart(
   let utcH = Math.floor(totalUtcMin / 60);
   let utcMin = totalUtcMin % 60;
 
-  let localH = utcH + timezoneOffsetHours;
+  let localH = utcH + tz;
   let localDay = dayInt;
   let localMonth = monthNum;
   let localYear = yearNum;
@@ -807,10 +824,14 @@ export function calculateExactSolarReturnChart(
     }
   }
 
-  const finalIsoStr = `${localYear}-${String(localMonth).padStart(2, '0')}-${String(localDay).padStart(2, '0')}T${String(localH).padStart(2, '0')}:${String(utcMin).padStart(2, '0')}`;
-  const exactTimeFormatted = `${localYear}年${String(localMonth).padStart(2, '0')}月${String(localDay).padStart(2, '0')}日 ${String(localH).padStart(2, '0')}:${String(utcMin).padStart(2, '0')}`;
+  const ampm = localH >= 12 ? 'PM' : 'AM';
+  const displayH12 = localH % 12 === 0 ? 12 : localH % 12;
+  const tzFormatted = tz >= 0 ? `UTC+${tz}` : `UTC${tz}`;
 
-  const srChart = calculateAstrology(finalIsoStr, locationLongitude, locationLatitude, timezoneOffsetHours);
+  const finalIsoStr = `${localYear}-${String(localMonth).padStart(2, '0')}-${String(localDay).padStart(2, '0')}T${String(localH).padStart(2, '0')}:${String(utcMin).padStart(2, '0')}`;
+  const exactTimeFormatted = `${localYear}年${String(localMonth).padStart(2, '0')}月${String(localDay).padStart(2, '0')}日 ${String(displayH12).padStart(2, '0')}:${String(utcMin).padStart(2, '0')} ${ampm} (${tzFormatted})`;
+
+  const srChart = calculateAstrology(finalIsoStr, lon, lat, tz);
 
   return {
     exactDateStr: finalIsoStr,
@@ -849,13 +870,18 @@ export function generatePredictiveReport(
 
   const queryJD = calculateJulianDate(qYear, qMonth, qDay, qHour, qMin, transitTimezone);
 
-  // 1. Calculate Solar Return for query calendar year at transit location
+  // Solar Return is strictly calculated based on BIRTHPLACE (natalChart location & timezone)
+  const birthLon = natalChart.longitude ?? 121.5;
+  const birthLat = natalChart.latitude ?? 25.03;
+  const birthTz = natalChart.timezone ?? 8;
+
+  // 1. Calculate Solar Return for query calendar year at BIRTH LOCATION
   const srResultThisYear = calculateExactSolarReturnChart(
     natalChart,
     qYear,
-    transitLongitude,
-    transitLatitude,
-    transitTimezone
+    birthLon,
+    birthLat,
+    birthTz
   );
 
   // 2. Logic: 若問事時間在回歸時間時候，則採用當年，若在之前，則採用去年。
@@ -871,9 +897,9 @@ export function generatePredictiveReport(
     : calculateExactSolarReturnChart(
         natalChart,
         activeSRYear,
-        transitLongitude,
-        transitLatitude,
-        transitTimezone
+        birthLon,
+        birthLat,
+        birthTz
       );
 
   const srChart = srResult.srChart;
@@ -1019,7 +1045,7 @@ export function generatePredictiveReport(
     annualTheme: themeMap[srSunHouse] || '全方位成長與心靈突破年',
     moonSign: srMoonSign,
     moonHouse: srMoonHouse,
-    description: `問事流年時間為【${qYear}年${String(qMonth).padStart(2, '0')}月${String(qDay).padStart(2, '0')}日 ${String(qHour).padStart(2, '0')}:${String(qMin).padStart(2, '0')}】（問事地點：經度 ${transitLongitude}° / 緯度 ${transitLatitude}° / 時區 UTC+${transitTimezone}）。${isPriorToSR ? `因問事時間尚未達到 ${qYear} 年太陽回歸時刻（${srResultThisYear.exactTimeFormatted}），故運勢主軸採用前一年（${activeSRYear} 年）之太陽回歸盤。` : `因問事時間已到達/超過 ${qYear} 年太陽回歸時刻（${srResultThisYear.exactTimeFormatted}），故採用當年（${activeSRYear} 年）之太陽回歸盤。`}\n\n本期精確太陽回歸時刻為【${srResult.exactTimeFormatted}】。回歸盤上升星座落在【${srAscSign}】（年度主命星：${srRuler.planet}），年度太陽落在第 ${srSunHouse} 宮（${HOUSE_DETAILS[srSunHouse - 1]?.name}：${HOUSE_DETAILS[srSunHouse - 1]?.keyMeaning}），指出此回歸年度之核心舞台與現實戰場在於【${HOUSE_DETAILS[srSunHouse - 1]?.name}】。`,
+    description: `問事流年時間為【${qYear}年${String(qMonth).padStart(2, '0')}月${String(qDay).padStart(2, '0')}日 ${String(qHour).padStart(2, '0')}:${String(qMin).padStart(2, '0')}】（問事地點：經度 ${transitLongitude}° / 緯度 ${transitLatitude}° / 時區 UTC${transitTimezone >= 0 ? '+' : ''}${transitTimezone}）。${isPriorToSR ? `因問事時間尚未達到 ${qYear} 年出生地太陽回歸時刻（${srResultThisYear.exactTimeFormatted}），故運勢主軸採用前一年（${activeSRYear} 年）之太陽回歸盤。` : `因問事時間已到達/超過 ${qYear} 年出生地太陽回歸時刻（${srResultThisYear.exactTimeFormatted}），故採用當年（${activeSRYear} 年）之太陽回歸盤。`}\n\n本期精確太陽回歸時刻（依出生地考量：經度 ${birthLon}° / 緯度 ${birthLat}° / 時區 UTC${birthTz >= 0 ? '+' : ''}${birthTz}）為【${srResult.exactTimeFormatted}】。回歸盤上升星座落在【${srAscSign}】（年度主命星：${srRuler.planet}），年度太陽落在第 ${srSunHouse} 宮（${HOUSE_DETAILS[srSunHouse - 1]?.name}：${HOUSE_DETAILS[srSunHouse - 1]?.keyMeaning}），指出此回歸年度之核心舞台與現實戰場在於【${HOUSE_DETAILS[srSunHouse - 1]?.name}】。`,
     houses: solarReturnHouses
   };
   const getEclipsesForYear = (tYear: number, sunHouse: number) => {
