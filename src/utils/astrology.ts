@@ -976,6 +976,12 @@ export function getOuterPlanetAspectQuotes(
       }
     }
 
+    const opHouseNum = tp.house || 1;
+    const npHouseNum = np.house || 1;
+    const opHouseName = HOUSE_DETAILS[opHouseNum - 1]?.name || `第 ${opHouseNum} 宮`;
+    const npHouseName = HOUSE_DETAILS[npHouseNum - 1]?.name || `第 ${npHouseNum} 宮`;
+    const impactHouses = `流年${opHouseName} ✖ 本命${npHouseName}`;
+
     quotes.push({
       transitingPlanet: transitingLabel,
       targetPlanet: targetLabel,
@@ -984,7 +990,8 @@ export function getOuterPlanetAspectQuotes(
       period: exactPeriodStr,
       aspectType,
       aspectMeaning,
-      orbVal: Math.abs(angle - 0)
+      orbVal: Math.abs(angle - 0),
+      impactHouses
     });
   }
 
@@ -1105,6 +1112,12 @@ export function getMonthlyAspectQuotes(
         }
       }
 
+      const tpHouseNum = tp.house || 1;
+      const npHouseNum = np.house || 1;
+      const tpHouseName = HOUSE_DETAILS[tpHouseNum - 1]?.name || `第 ${tpHouseNum} 宮`;
+      const npHouseName = HOUSE_DETAILS[npHouseNum - 1]?.name || `第 ${npHouseNum} 宮`;
+      const impactHouses = `流年${tpHouseName} ✖ 本命${npHouseName}`;
+
       quotes.push({
         transitingPlanet: transitingLabel,
         targetPlanet: targetLabel,
@@ -1113,7 +1126,8 @@ export function getMonthlyAspectQuotes(
         period: exactPeriodStr,
         aspectType,
         aspectMeaning,
-        orbVal: Math.abs(degDiff)
+        orbVal: Math.abs(degDiff),
+        impactHouses
       });
     }
   }
@@ -1123,6 +1137,11 @@ export function getMonthlyAspectQuotes(
     const nSun = natalChart.planets.find(p => p.id === 'sun') || natalChart.planets[0];
     const nMoon = natalChart.planets.find(p => p.id === 'moon') || natalChart.planets[1];
 
+    const nSunHouseNum = nSun.house || 1;
+    const nSunHouseName = HOUSE_DETAILS[nSunHouseNum - 1]?.name || `第 ${nSunHouseNum} 宮`;
+    const nMoonHouseNum = nMoon.house || 1;
+    const nMoonHouseName = HOUSE_DETAILS[nMoonHouseNum - 1]?.name || `第 ${nMoonHouseNum} 宮`;
+
     quotes.push({
       transitingPlanet: `☉ 流年太陽`,
       targetPlanet: `本命${nSun.name}`,
@@ -1131,7 +1150,8 @@ export function getMonthlyAspectQuotes(
       period: `${monthNum}月10日～${monthNum}月20日（精確高峰：${monthNum}月15日）`,
       aspectType: 'soft',
       aspectMeaning: `流年太陽於${monthNum}月中旬精確引動本命${nSun.name}相應宮位，開創自我實現與生活重心的能量舞台。`,
-      orbVal: 1.0
+      orbVal: 1.0,
+      impactHouses: `流年第一宮（命宮） ✖ 本命${nSunHouseName}`
     });
 
     quotes.push({
@@ -1142,7 +1162,8 @@ export function getMonthlyAspectQuotes(
       period: `${monthNum}月12日～${monthNum}月18日（精確高峰：${monthNum}月15日）`,
       aspectType: 'soft',
       aspectMeaning: `流年水星過境溝通宮位，有利於心理對話、情緒梳理與合約行政事務處置。`,
-      orbVal: 1.5
+      orbVal: 1.5,
+      impactHouses: `流年第三宮（兄弟宮） ✖ 本命${nMoonHouseName}`
     });
   }
 

@@ -3157,10 +3157,16 @@ export default function App() {
                                           </div>
                                           {ht.outerPlanetAspects.map((opa, opaIdx) => (
                                             <div key={`opa-${opaIdx}`} className="text-[9px] text-slate-200 space-y-0.5 pt-1 border-t border-white/5 first:border-0 first:pt-0">
-                                              <div className="font-bold text-[#e5c583] flex justify-between items-center">
+                                              <div className="font-bold text-[#e5c583] flex justify-between items-center flex-wrap gap-1">
                                                 <span>{opa.title}</span>
                                                 <span className="text-[8px] text-emerald-400/90 font-mono">{opa.period}</span>
                                               </div>
+                                              {opa.impactHouses && (
+                                                <div className="text-[8px] text-amber-200/90 font-semibold flex items-center gap-1">
+                                                  <span>🏛️ 影響宮位：</span>
+                                                  <span className="text-amber-100">{opa.impactHouses}</span>
+                                                </div>
+                                              )}
                                               <p className="text-[8.5px] text-slate-300 leading-snug">{opa.aspectMeaning}</p>
                                             </div>
                                           ))}
@@ -3232,8 +3238,16 @@ export default function App() {
                                       </span>
                                     </div>
                                     <p className="leading-snug mb-1 text-slate-200">{q.aspectMeaning}</p>
-                                    <div className="flex justify-between items-center text-[8.5px] text-amber-300/90 font-mono pt-0.5">
-                                      <span>🗓️ 精確影響日期：{q.period}</span>
+                                    <div className="space-y-1 text-[8.5px] font-mono pt-0.5">
+                                      <div className="flex justify-between items-center text-amber-300/90">
+                                        <span>🗓️ 精確影響日期：{q.period}</span>
+                                      </div>
+                                      {q.impactHouses && (
+                                        <div className="flex items-center gap-1.5 text-amber-200/90 font-sans font-semibold text-[10px] pt-0.5 border-t border-white/5">
+                                          <span>🏛️ 影響宮位：</span>
+                                          <span className="text-amber-100">{q.impactHouses}</span>
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                 ))}
