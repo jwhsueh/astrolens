@@ -2797,8 +2797,16 @@ export default function App() {
 
                   {/* Step 2 */}
                   <div className="p-4 bg-black/45 border border-white/10 rounded-2xl space-y-3">
-                    <h3 className="font-extrabold text-[#e5c583] flex items-center gap-2 text-sm">
-                      <span>2️⃣</span><span>太陽回歸盤年運主題 ({pred.solarReturn.year}) (Solar Return Theme)</span>
+                    <h3 className="font-extrabold text-[#e5c583] flex items-center justify-between text-sm flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <span>2️⃣</span><span>太陽回歸盤年運主題 ({pred.solarReturn.year}) (Solar Return Theme)</span>
+                      </div>
+                      {pred.solarReturn.exactTime && (
+                        <span className="text-xs font-mono text-emerald-300 bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-500/30 shadow-sm flex items-center gap-1">
+                          <span>⏱️</span>
+                          <span>精確回歸時刻：{pred.solarReturn.exactTime}</span>
+                        </span>
+                      )}
                     </h3>
                     <div className="p-3 bg-[#c5a059]/10 rounded-xl border border-[#c5a059]/20 text-xs space-y-1.5">
                       <strong className="text-[#e5c583] block text-sm">🌟 年度核心舞台：{pred.solarReturn.annualTheme}</strong>

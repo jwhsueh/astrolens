@@ -571,6 +571,7 @@ export interface AstrologicalPredictionReport {
   sensitivePoints: SensitivePoint[];
   solarReturn: {
     year: number;
+    exactTime: string;
     sunSign: string;
     sunHouse: number;
     ascSign: string;
@@ -624,6 +625,196 @@ export interface AstrologicalPredictionReport {
   scoringConclusion: {
     majorThemes: string[];
     secondaryThemes: string[];
+  };
+}
+
+/**
+ * Calculates the exact moment (Julian Date and local calendar time)
+ * when the transiting Sun returns to the exact longitude of the natal Sun,
+ * and generates the complete Solar Return chart for that exact moment.
+ */
+export function calculateExactSolarReturnChart(
+  natalChart: AstrologyChart,
+  targetYear: number,
+  locationLongitude: number = 121.5,
+  locationLatitude: number = 25.03,
+  timezoneOffsetHours: number = 8
+): {
+  exactDateStr: string;
+  exactTimeFormatted: string;
+  srChart: AstrologyChart;
+} {
+  const natalSunLong = natalChart.planets[0]?.longitude ?? 0;
+
+  // Extract month, day, hour, minute from natalChart local time
+  let bMonth = 3;
+  let bDay = 17;
+  let bHour = 6;
+  let bMinute = 2;
+
+  if (natalChart.localTime && natalChart.localTime.includes('T')) {
+    const [dPart, tPart] = natalChart.localTime.split('T');
+    if (dPart && tPart) {
+      const [mStr, dStr] = dPart.split('-').slice(1);
+      const [hStr, minStr] = tPart.split(':');
+      const m = parseInt(mStr, 10);
+      const d = parseInt(dStr, 10);
+      const h = parseInt(hStr, 10);
+      const min = parseInt(minStr, 10);
+      if (!isNaN(m) && !isNaN(d)) {
+        bMonth = m;
+        bDay = d;
+        bHour = isNaN(h) ? 12 : h;
+        bMinute = isNaN(min) ? 0 : min;
+      }
+    }
+  }
+
+  let guessY = targetYear;
+  let guessM = bMonth;
+  let guessD = bDay;
+  let guessH = bHour;
+  let guessMin = bMinute;
+
+  let currentJD = calculateJulianDate(guessY, guessM, guessD, guessH, guessMin, timezoneOffsetHours);
+
+  // Iterative solver for Sun longitude matching
+  for (let iter = 0; iter < 10; iter++) {
+    const Z = Math.floor(currentJD + 0.5);
+    const F = (currentJD + 0.5) - Z;
+    let A = Z;
+    if (Z >= 2299161) {
+      const alpha = Math.floor((Z - 1867216.25) / 36524.25);
+      A = Z + 1 + alpha - Math.floor(alpha / 4);
+    }
+    const B = A + 1524;
+    const C = Math.floor((B - 122.1) / 365.25);
+    const D = Math.floor(365.25 * C);
+    const E = Math.floor((B - D) / 30.6001);
+
+    const dayDecimal = B - D - Math.floor(30.6001 * E) + F;
+    const dayInt = Math.floor(dayDecimal);
+    const dayFrac = dayDecimal - dayInt;
+
+    let monthNum = (E < 14) ? (E - 1) : (E - 13);
+    let yearNum = (monthNum > 2) ? (C - 4716) : (C - 4615);
+
+    let totalUtcMin = Math.round(dayFrac * 1440);
+    let utcH = Math.floor(totalUtcMin / 60);
+    let utcMin = totalUtcMin % 60;
+
+    let localH = utcH + timezoneOffsetHours;
+    let localDay = dayInt;
+    let localMonth = monthNum;
+    let localYear = yearNum;
+
+    if (localH >= 24) {
+      localH -= 24;
+      localDay += 1;
+      const daysInMonth = new Date(localYear, localMonth, 0).getDate();
+      if (localDay > daysInMonth) {
+        localDay -= daysInMonth;
+        localMonth += 1;
+        if (localMonth > 12) {
+          localMonth = 1;
+          localYear += 1;
+        }
+      }
+    } else if (localH < 0) {
+      localH += 24;
+      localDay -= 1;
+      if (localDay < 1) {
+        localMonth -= 1;
+        if (localMonth < 1) {
+          localMonth = 12;
+          localYear -= 1;
+        }
+        const daysInPrevMonth = new Date(localYear, localMonth, 0).getDate();
+        localDay = daysInPrevMonth;
+      }
+    }
+
+    const isoStr = `${localYear}-${String(localMonth).padStart(2, '0')}-${String(localDay).padStart(2, '0')}T${String(localH).padStart(2, '0')}:${String(utcMin).padStart(2, '0')}`;
+
+    const tempChart = calculateAstrology(isoStr, locationLongitude, locationLatitude, timezoneOffsetHours);
+    const currentSunLong = tempChart.planets[0]?.longitude ?? 0;
+
+    let diff = natalSunLong - currentSunLong;
+    while (diff > 180) diff -= 360;
+    while (diff < -180) diff += 360;
+
+    if (Math.abs(diff) < 0.0001) {
+      break;
+    }
+
+    const deltaDays = diff / 0.9856474;
+    currentJD += deltaDays;
+  }
+
+  // Final exact local date and time string from final currentJD
+  const Z = Math.floor(currentJD + 0.5);
+  const F = (currentJD + 0.5) - Z;
+  let A = Z;
+  if (Z >= 2299161) {
+    const alpha = Math.floor((Z - 1867216.25) / 36524.25);
+    A = Z + 1 + alpha - Math.floor(alpha / 4);
+  }
+  const B = A + 1524;
+  const C = Math.floor((B - 122.1) / 365.25);
+  const D = Math.floor(365.25 * C);
+  const E = Math.floor((B - D) / 30.6001);
+
+  const dayDecimal = B - D - Math.floor(30.6001 * E) + F;
+  const dayInt = Math.floor(dayDecimal);
+  const dayFrac = dayDecimal - dayInt;
+
+  let monthNum = (E < 14) ? (E - 1) : (E - 13);
+  let yearNum = (monthNum > 2) ? (C - 4716) : (C - 4615);
+
+  let totalUtcMin = Math.round(dayFrac * 1440);
+  let utcH = Math.floor(totalUtcMin / 60);
+  let utcMin = totalUtcMin % 60;
+
+  let localH = utcH + timezoneOffsetHours;
+  let localDay = dayInt;
+  let localMonth = monthNum;
+  let localYear = yearNum;
+
+  if (localH >= 24) {
+    localH -= 24;
+    localDay += 1;
+    const daysInMonth = new Date(localYear, localMonth, 0).getDate();
+    if (localDay > daysInMonth) {
+      localDay -= daysInMonth;
+      localMonth += 1;
+      if (localMonth > 12) {
+        localMonth = 1;
+        localYear += 1;
+      }
+    }
+  } else if (localH < 0) {
+    localH += 24;
+    localDay -= 1;
+    if (localDay < 1) {
+      localMonth -= 1;
+      if (localMonth < 1) {
+        localMonth = 12;
+        localYear -= 1;
+      }
+      const daysInPrevMonth = new Date(localYear, localMonth, 0).getDate();
+      localDay = daysInPrevMonth;
+    }
+  }
+
+  const finalIsoStr = `${localYear}-${String(localMonth).padStart(2, '0')}-${String(localDay).padStart(2, '0')}T${String(localH).padStart(2, '0')}:${String(utcMin).padStart(2, '0')}`;
+  const exactTimeFormatted = `${localYear}年${String(localMonth).padStart(2, '0')}月${String(localDay).padStart(2, '0')}日 ${String(localH).padStart(2, '0')}:${String(utcMin).padStart(2, '0')}`;
+
+  const srChart = calculateAstrology(finalIsoStr, locationLongitude, locationLatitude, timezoneOffsetHours);
+
+  return {
+    exactDateStr: finalIsoStr,
+    exactTimeFormatted,
+    srChart
   };
 }
 
@@ -706,19 +897,22 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
     }
   ];
 
-  // Step 2: Solar Return
-  const birthDate = new Date(natalChart.localTime);
-  const birthYear = isNaN(birthDate.getTime()) ? 1995 : birthDate.getFullYear();
-  const age = Math.abs(transitYear - birthYear);
+  // Step 2: Exact Solar Return Moment and Chart Calculation
+  const srResult = calculateExactSolarReturnChart(natalChart, transitYear);
+  const srChart = srResult.srChart;
 
-  // Approximate Solar Return Ascendant:
-  // A typical shift is ~87.2 degrees per year.
-  const srAscLongitude = (natalChart.ascendant + age * 87.2) % 360;
-  const srAscSignIndex = Math.floor(srAscLongitude / 30);
+  const srAscIndex = Math.floor(srChart.ascendant / 30);
+  const srAscSign = ZODIAC_SIGNS[srAscIndex]?.name || '牡羊座';
 
-  // The Solar Return Sun is at the exact same longitude as the natal Sun:
-  const natalSunLong = natalChart.planets[0]?.longitude ?? 0;
-  const srSunHouse = (Math.floor((natalSunLong - srAscLongitude + 360) % 360 / 30) % 12) + 1;
+  const srSun = srChart.planets.find(p => p.id === 'sun') || srChart.planets[0];
+  const srMoon = srChart.planets.find(p => p.id === 'moon') || srChart.planets[1];
+
+  const srSunSign = ZODIAC_SIGNS[srSun.signIndex].name;
+  const srSunHouse = srSun.house;
+  const srMoonSign = ZODIAC_SIGNS[srMoon.signIndex].name;
+  const srMoonHouse = srMoon.house;
+
+  const srRuler = ascRulerMap[srAscSign] || { planet: '太陽 (Sun)', meaning: '象徵核心自我與生命活力' };
 
   const themeMap: Record<number, string> = {
     1: '自我蛻變與個人形象重建年（落第1宮）',
@@ -735,117 +929,18 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
     12: '靈性內省、因果沉澱與幕後潛能轉化年（落第12宮）',
   };
 
-  const getSolarReturnPlanetPlacements = (tYear: number, srSunH: number, moonH: number) => {
-    const getPlanetHouse = (planetId: string, defaultOffset: number) => {
-      const natalP = natalChart.planets.find(p => p.id === planetId);
-      if (!natalP) return ((srSunH - 1 + defaultOffset) % 12) + 1;
-      let transitLong = natalP.longitude;
-      if (planetId === 'mercury') {
-        transitLong = (natalP.longitude + age * 30.5 + tYear * 1.2) % 360;
-      } else if (planetId === 'venus') {
-        transitLong = (natalP.longitude + age * 18.2 + tYear * 1.6) % 360;
-      } else if (planetId === 'mars') {
-        transitLong = (natalP.longitude + age * 5.6 + tYear * 2.1) % 360;
-      } else if (planetId === 'jupiter') {
-        transitLong = (natalP.longitude + age * 30.3) % 360;
-      } else if (planetId === 'saturn') {
-        transitLong = (natalP.longitude + age * 12.2) % 360;
-      } else if (planetId === 'uranus') {
-        transitLong = (natalP.longitude + age * 4.2) % 360;
-      } else if (planetId === 'neptune') {
-        transitLong = (natalP.longitude + age * 2.2) % 360;
-      } else if (planetId === 'pluto') {
-        transitLong = (natalP.longitude + age * 1.5) % 360;
-      } else if (planetId === 'rahu') {
-        transitLong = (natalP.longitude - age * 19.3) % 360;
-      }
-      if (transitLong < 0) transitLong += 360;
-      return (Math.floor((transitLong - srAscLongitude + 360) % 360 / 30) % 12) + 1;
-    };
-
-    const placements = [
-      { name: '太陽', symbol: '☉', house: srSunH },
-      { name: '月亮', symbol: '☽', house: moonH },
-      {
-        name: '水星',
-        symbol: '☿',
-        house: getPlanetHouse('mercury', 0),
-        isRetrograde: (tYear % 3 === 0)
-      },
-      {
-        name: '金星',
-        symbol: '♀',
-        house: getPlanetHouse('venus', 2),
-        isRetrograde: (tYear % 8 === 0)
-      },
-      {
-        name: '火星',
-        symbol: '♂',
-        house: getPlanetHouse('mars', 4),
-        isRetrograde: (tYear % 2 === 0)
-      },
-      {
-        name: '木星',
-        symbol: '♃',
-        house: getPlanetHouse('jupiter', 6),
-        isRetrograde: (tYear % 3 !== 1)
-      },
-      {
-        name: '土星',
-        symbol: '♄',
-        house: getPlanetHouse('saturn', 8),
-        isRetrograde: (tYear % 2 === 1)
-      },
-      {
-        name: '天王星',
-        symbol: '♅',
-        house: getPlanetHouse('uranus', 10),
-        isRetrograde: true
-      },
-      {
-        name: '海王星',
-        symbol: '♆',
-        house: getPlanetHouse('neptune', 1),
-        isRetrograde: true
-      },
-      {
-        name: '冥王星',
-        symbol: '♇',
-        house: getPlanetHouse('pluto', 3),
-        isRetrograde: true
-      },
-      {
-        name: '北交點',
-        symbol: '☊',
-        house: getPlanetHouse('rahu', 5)
-      }
-    ];
-
-    const rahuH = placements.find(p => p.name === '北交點')!.house;
-    const ketuH = ((rahuH - 1 + 6) % 12) + 1;
-    placements.push({ name: '南交點', symbol: '☋', house: ketuH });
-
-    return placements;
-  };
-
-  const srSunH = srSunHouse;
-  const natalMoon = natalChart.planets.find(p => p.id === 'moon');
-  const approxMoonLong = natalMoon ? (natalMoon.longitude + age * 115.3 + transitYear * 13.1) % 360 : (natalSunLong + 90) % 360;
-  const moonH = (Math.floor((approxMoonLong - srAscLongitude + 360) % 360 / 30) % 12) + 1;
-  const srPlacements = getSolarReturnPlanetPlacements(transitYear, srSunH, moonH);
-
   const solarReturnHouses: SolarReturnHouseDetail[] = [];
   for (let h = 1; h <= 12; h++) {
-    const signIndex = (srAscSignIndex + h - 1) % 12;
-    const signName = ZODIAC_SIGNS[signIndex].name;
+    const houseData = srChart.houses[h - 1];
+    const signName = ZODIAC_SIGNS[houseData.signIndex].name;
     const houseMeaning = HOUSE_DETAILS[h - 1].keyMeaning;
 
-    const planetsInHouse = srPlacements
+    const planetsInHouse = srChart.planets
       .filter(p => p.house === h)
       .map(p => ({
         name: p.name,
         symbol: p.symbol,
-        sign: signName,
+        sign: ZODIAC_SIGNS[p.signIndex].name,
         isRetrograde: p.isRetrograde
       }));
 
@@ -858,20 +953,19 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
     });
   }
 
-  const moonSignIndex = Math.floor(((approxMoonLong % 360) + 360) % 360 / 30);
-
   const solarReturn = {
     year: transitYear,
-    sunSign: ZODIAC_SIGNS[natalChart.planets[0].signIndex].name,
+    exactTime: srResult.exactTimeFormatted,
+    sunSign: srSunSign,
     sunHouse: srSunHouse,
-    ascSign: ZODIAC_SIGNS[srAscSignIndex].name,
-    rulingPlanet: ruler.planet,
-    rulingPlanetMeaning: ruler.meaning,
+    ascSign: srAscSign,
+    rulingPlanet: srRuler.planet,
+    rulingPlanetMeaning: srRuler.meaning,
     clusteringHouse: srSunHouse,
     annualTheme: themeMap[srSunHouse] || '全方位成長與心靈突破年',
-    moonSign: ZODIAC_SIGNS[moonSignIndex].name,
-    moonHouse: moonH,
-    description: `回歸盤上升星座落在【${ZODIAC_SIGNS[srAscSignIndex].name}】（主命星：${ruler.planet} - ${ruler.meaning}），年度太陽落在第 ${srSunHouse} 宮（${HOUSE_DETAILS[srSunHouse - 1]?.name}：${HOUSE_DETAILS[srSunHouse - 1]?.keyMeaning}），指向年度主戰場為【${HOUSE_DETAILS[srSunHouse - 1]?.name}】。本年度情緒需求著重於內在心靈與外界期待的平衡。`,
+    moonSign: srMoonSign,
+    moonHouse: srMoonHouse,
+    description: `太陽回歸精確時刻為【${srResult.exactTimeFormatted}】。回歸盤上升星座落在【${srAscSign}】（年度主命星：${srRuler.planet}），年度太陽落在第 ${srSunHouse} 宮（${HOUSE_DETAILS[srSunHouse - 1]?.name}：${HOUSE_DETAILS[srSunHouse - 1]?.keyMeaning}），指出本年度核心舞台與現實戰場在於【${HOUSE_DETAILS[srSunHouse - 1]?.name}】。`,
     houses: solarReturnHouses
   };
   const getEclipsesForYear = (tYear: number, sunHouse: number) => {
@@ -1110,7 +1204,7 @@ export function generatePredictiveReport(natalChart: AstrologyChart, transitDate
     // Calculate Monthly House Transits for Outer Planets
     const houseTransits: MonthlyHouseTransitDetail[] = [];
     const outerNames = ['木星', '土星', '天王星', '海王星', '冥王星'];
-    const outerPlanetsList = srPlacements.filter(p => outerNames.includes(p.name));
+    const outerPlanetsList = srChart.planets.filter(p => outerNames.includes(p.name));
 
     // Sun house for this month
     const sh = ((srSunHouse - 1 + (monthNum - 1)) % 12) + 1;
