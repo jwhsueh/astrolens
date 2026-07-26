@@ -13,6 +13,8 @@ import {
   PLANET_SIGN_INTERPRETATIONS,
   PLANET_HOUSE_INTERPRETATIONS,
   PLANET_ASPECT_TRANSITS,
+  PLANET_ANGLE_TRANSITS,
+  PLANET_ANGLE_REMINDERS,
   getPlanetSignInterpretation,
   getPlanetHouseInterpretation,
   getPlanetAspectTransitGuide,
@@ -3340,31 +3342,50 @@ export default function App() {
                     </p>
                     <div className="space-y-3">
                       {pred.outerPlanetAspects && pred.outerPlanetAspects.length > 0 ? (
-                        pred.outerPlanetAspects.map((opa, idx) => (
-                          <div key={`annual-opa-${idx}`} className="p-3.5 bg-white/5 rounded-xl border border-white/5 text-xs space-y-2">
-                            <div className="flex flex-wrap justify-between items-center gap-2 font-bold">
-                              <span className="text-[#e5c583] text-sm">{opa.title}</span>
-                              <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${opa.aspectType === 'soft' ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/30' : 'bg-rose-950/80 text-rose-300 border border-rose-500/30'}`}>
-                                {opa.aspectType === 'soft' ? '✨ 和諧滋養 (Soft)' : '⚡ 考驗重組 (Hard)'}
-                              </span>
-                            </div>
-                            <div className="p-2 bg-black/40 rounded-lg border border-amber-500/20 font-mono text-xs text-amber-300 space-y-1">
-                              <div className="flex items-center gap-1.5">
-                                <span>🗓️</span>
-                                <span>精確影響日期與高峰：{opa.period}</span>
-                              </div>
-                              {opa.impactHouses && (
-                                <div className="flex items-center gap-1.5 text-amber-200/90 font-sans font-semibold text-[11px] pt-0.5 border-t border-white/5">
-                                  <span>🏛️ 影響宮位：</span>
-                                  <span className="text-amber-100">{opa.impactHouses}</span>
+                        pred.outerPlanetAspects.map((opa, idx) => {
+                          const isAngleCrossing = opa.title.includes('過軸');
+                          return (
+                            <div
+                              key={`annual-opa-${idx}`}
+                              className={`p-3.5 rounded-xl border text-xs space-y-2 ${
+                                isAngleCrossing
+                                  ? 'bg-amber-950/40 border-amber-500/40 shadow-lg shadow-amber-950/30 ring-1 ring-amber-500/20'
+                                  : 'bg-white/5 border-white/5'
+                              }`}
+                            >
+                              <div className="flex flex-wrap justify-between items-center gap-2 font-bold">
+                                <span className={`text-sm ${isAngleCrossing ? 'text-amber-300 font-extrabold' : 'text-[#e5c583]'}`}>
+                                  {opa.title}
+                                </span>
+                                <div className="flex items-center gap-1.5">
+                                  {isAngleCrossing && (
+                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse">
+                                      ⚡ 重磅四軸轉折
+                                    </span>
+                                  )}
+                                  <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${opa.aspectType === 'soft' ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/30' : 'bg-rose-950/80 text-rose-300 border border-rose-500/30'}`}>
+                                    {opa.aspectType === 'soft' ? '✨ 和諧滋養 (Soft)' : '⚡ 考驗重組 (Hard)'}
+                                  </span>
                                 </div>
-                              )}
+                              </div>
+                              <div className="p-2 bg-black/40 rounded-lg border border-amber-500/20 font-mono text-xs text-amber-300 space-y-1">
+                                <div className="flex items-center gap-1.5">
+                                  <span>🗓️</span>
+                                  <span>精確影響日期與高峰：{opa.period}</span>
+                                </div>
+                                {opa.impactHouses && (
+                                  <div className="flex items-center gap-1.5 text-amber-200/90 font-sans font-semibold text-[11px] pt-0.5 border-t border-white/5">
+                                    <span>🏛️ 影響宮位／軸點：</span>
+                                    <span className="text-amber-100">{opa.impactHouses}</span>
+                                  </div>
+                                )}
+                              </div>
+                              <p className="text-slate-200 leading-relaxed text-xs pt-0.5">
+                                {opa.aspectMeaning}
+                              </p>
                             </div>
-                            <p className="text-slate-200 leading-relaxed text-xs pt-0.5">
-                              {opa.aspectMeaning}
-                            </p>
-                          </div>
-                        ))
+                          );
+                        })
                       ) : (
                         <div className="p-3 text-xs text-slate-400 italic">本年度外行星與本命主要星體無緊密過境相位（處於平穩背景期）。</div>
                       )}
@@ -3763,6 +3784,63 @@ export default function App() {
                               <span className="font-bold text-amber-300 block">{it.target}</span>
                               <p className="text-emerald-300/90">🟢 <strong>柔和相位：</strong>{it.soft}</p>
                               <p className="text-amber-200/90">🔴 <strong>困難相位：</strong>{it.hard}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 第五部：行星過軸線 (Cross-Angle Transits) 完整解讀指南 */}
+                <div className="pt-6 border-t border-white/15">
+                  <h4 className="text-xs font-bold text-amber-200 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <span>⚡</span>
+                    <span>第五部：行星過軸線 (Cross-Angle Transits) 完整解讀對照</span>
+                  </h4>
+
+                  {/* Concepts & Reminders Box */}
+                  <div className="bg-black/30 p-4 rounded-xl border border-[#c5a059]/30 text-xs text-slate-300 space-y-2.5 mb-4 leading-relaxed">
+                    <strong className="text-[#e5c583] block text-[12.5px] flex items-center gap-1.5">
+                      <span>📌</span><span>過軸線的核心意義與三大使用提醒：</span>
+                    </strong>
+                    <p className="text-slate-200">
+                      四軸點（上升 ASC、天頂 MC、下降 DSC、天底 IC）是星盤中最為敏感且最具事件顯化張力的「四骨架」。當流年行星行經或合相四軸時，會直接注入該行星的核心能量，觸發關鍵的人生階段轉變與顯化契機。
+                    </p>
+                    <div className="space-y-1.5 pt-1 text-[11px]">
+                      {PLANET_ANGLE_REMINDERS.map((rem, rIdx) => (
+                        <p key={`ang-rem-${rIdx}`} className="text-amber-200/95 flex items-start gap-1.5 bg-white/5 p-2 rounded border border-white/5">
+                          <span className="text-amber-400 font-bold shrink-0">💡</span>
+                          <span>{rem}</span>
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 4 Angle Groups Grid */}
+                  <div className="space-y-4">
+                    {PLANET_ANGLE_TRANSITS.map((group, gIdx) => (
+                      <div key={`ang-group-${gIdx}`} className="bg-black/25 p-4 rounded-xl border border-[#c5a059]/20 space-y-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-base bg-[#c5a059]/20 text-[#e5c583] px-2 py-0.5 rounded font-bold font-mono border border-[#c5a059]/30">
+                              {group.angleCode}
+                            </span>
+                            <span className="font-extrabold text-[#e5c583] text-sm">{group.angleName}</span>
+                          </div>
+                          <span className="text-xs text-emerald-300/90 font-medium bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                            {group.energyTheme}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                          {group.items.map((item, iIdx) => (
+                            <div key={`ang-item-${gIdx}-${iIdx}`} className="bg-white/5 p-2.5 rounded-lg border border-white/5 text-[11px] space-y-1 hover:bg-white/10 transition-colors">
+                              <div className="flex items-center gap-1.5 font-bold text-slate-200 text-[12px] border-b border-white/5 pb-1">
+                                <span className="text-amber-300 font-serif text-sm">{item.symbol}</span>
+                                <span className="text-[#e5c583]">{item.planet}</span>
+                              </div>
+                              <p className="text-slate-300 leading-relaxed pt-0.5">{item.interpretation}</p>
                             </div>
                           ))}
                         </div>
@@ -4255,7 +4333,7 @@ export default function App() {
                             6️⃣ 外行星流年相位與長期趨勢
                           </strong>
                           {printPred.outerPlanetAspects && printPred.outerPlanetAspects.length > 0 ? (
-                            printPred.outerPlanetAspects.slice(0, 4).map((opa, idx) => (
+                            printPred.outerPlanetAspects.slice(0, 6).map((opa, idx) => (
                               <div key={`print-opa-${idx}`} className="text-[10px] text-[#2c2416] space-y-0.5 border-b border-[#e8dfcb] pb-1 last:border-0">
                                 <div className="flex justify-between items-center flex-wrap gap-1">
                                   <span className="font-bold text-[#785b24]">{opa.title}</span>

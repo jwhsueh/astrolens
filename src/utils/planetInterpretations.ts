@@ -797,4 +797,94 @@ export function getTransitAspectGuide(planetA: string, planetB: string, harmony:
   return `${phaseRef}\n📌 天空中${pA}與${pB}交會，對照第四部流年觸發原則：帶來集體心理氛圍的轉折點與強烈觸發。`;
 }
 
+export interface PlanetAngleTransitItem {
+  symbol: string;
+  planet: string;
+  interpretation: string;
+}
+
+export interface PlanetAngleTransitGroup {
+  angleName: string;
+  angleCode: string;
+  energyTheme: string;
+  items: PlanetAngleTransitItem[];
+}
+
+export const PLANET_ANGLE_TRANSITS: PlanetAngleTransitGroup[] = [
+  {
+    angleName: '過上升 ASC',
+    angleCode: 'ASC',
+    energyTheme: '能量上身：自我、身體、人生方向',
+    items: [
+      { symbol: '☉', planet: '太陽', interpretation: '每年固定的「個人新年」，活力與存在感的起點日；適合啟動個人計畫 (1-2天)' },
+      { symbol: '☽', planet: '月亮', interpretation: '每月一次，情緒與需求浮上檯面的一兩天；易感日，適合照顧自己' },
+      { symbol: '☿', planet: '水星', interpretation: '表達欲與思緒活躍的幾天；適合發言、面談、自我介紹' },
+      { symbol: '♀', planet: '金星', interpretation: '魅力小高峰；人緣好、適合亮相、改造形象的幾天' },
+      { symbol: '♂', planet: '火星', interpretation: '精力(與火氣)飆升的一週；行動力強但易衝動、留意小傷' },
+      { symbol: '♃', planet: '木星', interpretation: '約12年一次，個人擴張新週期的開端；自信、機會與能見度上升的數週，留意體重也跟著擴張' },
+      { symbol: '♄', planet: '土星', interpretation: '約29年一次，新一輪責任週期的開始；形象與生活方式沉澱重塑，體感偏累但是成熟的門檻 (數月)' },
+      { symbol: '♅', planet: '天王星', interpretation: '一生1-2次；強烈的自我改造與掙脫期，形象、生活型態常出現他人眼中的「突變」 (一年上下)' },
+      { symbol: '♆', planet: '海王星', interpretation: '一生至多一次；自我邊界消融、方向朦朧但直覺與靈性大開，忌重大身分決定 (一年以上)' },
+      { symbol: '♇', planet: '冥王星', interpretation: '一生至多一次；由內而外的徹底蛻變，舊的自己逐步拆除重建，意志力驚人 (數年)' }
+    ]
+  },
+  {
+    angleName: '過天頂 MC',
+    angleCode: 'MC',
+    energyTheme: '能量灌入事業、名聲、公眾形象',
+    items: [
+      { symbol: '☉', planet: '太陽', interpretation: '年度曝光日；被上位者看見、適合發表與爭取的一兩天' },
+      { symbol: '☽', planet: '月亮', interpretation: '每月的職場情緒能見日；公眾情感連結佳，但情緒也易被看見' },
+      { symbol: '☿', planet: '水星', interpretation: '適合簡報、提案、公開發言與職涯洽談的幾天' },
+      { symbol: '♀', planet: '金星', interpretation: '職場人緣與公眾好感的小甜點；適合社交性商務、亮相' },
+      { symbol: '♂', planet: '火星', interpretation: '事業衝刺週；企圖心外顯，易與上司權威擦槍走火' },
+      { symbol: '♃', planet: '木星', interpretation: '約12年一次的事業順風高點；擢升、曝光、貴人提拔的經典訊號 (數週至數月)' },
+      { symbol: '♄', planet: '土星', interpretation: '約29年一次的事業總驗收；累積扎實者登頂掌權、根基虛者被問責——升遷與重擔同時到來 (數月)' },
+      { symbol: '♅', planet: '天王星', interpretation: '職涯急轉彎期；轉行、離開體制、以出人意表的方式改寫社會角色 (一年上下)' },
+      { symbol: '♆', planet: '海王星', interpretation: '事業方向進入迷霧；定位模糊、卻也是藝術/療癒/公益路線的靈感高峰 (一年以上)' },
+      { symbol: '♇', planet: '冥王星', interpretation: '權力主題的多年工程；經歷組織權力鬥爭或徹底轉型，最終走向更大的掌控力與影響力 (數年)' }
+    ]
+  },
+  {
+    angleName: '過下降 DSC',
+    angleCode: 'DSC',
+    energyTheme: '能量灌入伴侶、合作、重要他人',
+    items: [
+      { symbol: '☉', planet: '太陽', interpretation: '每年的關係聚焦期起點；重要他人成為主角的日子' },
+      { symbol: '☽', planet: '月亮', interpretation: '每月的親密需求日；想要陪伴、也易受伴侶情緒牽動' },
+      { symbol: '☿', planet: '水星', interpretation: '適合與伴侶/合夥人談判、協調、把話說開的幾天' },
+      { symbol: '♀', planet: '金星', interpretation: '關係和諧的小高峰；約會、修好、簽合作的好日子' },
+      { symbol: '♂', planet: '火星', interpretation: '關係攻防週；熱度與摩擦同升，吵架高風險期' },
+      { symbol: '♃', planet: '木星', interpretation: '關係擴張的順風段；遇見貴人型對象、合作升級、婚約承諾的經典窗口 (數週至數月)' },
+      { symbol: '♄', planet: '土星', interpretation: '關係的定型測試期；認真的走向承諾、含糊的現出原形，合夥重新立約 (數月)' },
+      { symbol: '♅', planet: '天王星', interpretation: '關係型態劇變期；閃聚閃離、或既有關係被迫改寫相處規則以容納自由 (一年上下)' },
+      { symbol: '♆', planet: '海王星', interpretation: '關係濾鏡最厚期；極致浪漫與識人不清並存，慎防理想化與犧牲式關係 (一年以上)' },
+      { symbol: '♇', planet: '冥王星', interpretation: '命運級的關係轉化；深度羈絆、權力拉鋸、或透過關係經歷徹底蛻變 (數年)' }
+    ]
+  },
+  {
+    angleName: '過天底 IC',
+    angleCode: 'IC',
+    energyTheme: '能量灌入家庭、居所、內在根基',
+    items: [
+      { symbol: '☉', planet: '太陽', interpretation: '每年的「回家充電」期起點；重心自然轉向家與私生活' },
+      { symbol: '☽', planet: '月亮', interpretation: '每月歸巢日；最需要窩著的一兩天，適合家庭時光' },
+      { symbol: '☿', planet: '水星', interpretation: '適合處理家中文書、與家人溝通、規劃居家事務的幾天' },
+      { symbol: '♀', planet: '金星', interpretation: '家中和樂的小甜點；適合佈置、家聚、房屋洽談' },
+      { symbol: '♂', planet: '火星', interpretation: '家務與家人火氣升溫週；裝修動工可、口角也易發' },
+      { symbol: '♃', planet: '木星', interpretation: '家運擴張段；購屋、搬大房、添丁、家族喜事的經典窗口 (數週至數月)' },
+      { symbol: '♄', planet: '土星', interpretation: '家庭責任沉重期；扛房貸、修繕、照顧長輩，為根基打地基的務實階段 (數月)' },
+      { symbol: '♅', planet: '天王星', interpretation: '居住劇變期；搬遷常來得突然，家庭結構重組 (一年上下)' },
+      { symbol: '♆', planet: '海王星', interpretation: '對「家」的想像期；夢想家園但易看走眼，家中隱情浮動，購屋務必核實 (一年以上)' },
+      { symbol: '♇', planet: '冥王星', interpretation: '根基的翻土工程；家族深層議題、祖產、老屋改建，內在安全感砍掉重練 (數年)' }
+    ]
+  }
+];
+
+export const PLANET_ANGLE_REMINDERS = [
+  "第一，軸點是成對的——行星過上升的同時必然對分下降、過天頂必然對分天底，所以讀「土星過ASC」時可以順手參照DSC表的土星條目，對面的領域會以「拉扯」的形式共鳴。",
+  "第二，外行星過軸因逆行會三次跨越同一軸點，套用之前的三幕劇讀法（登場 ➔ 重審 ➔ 定案）。",
+  "第三，內行星（日、月、水、金、火）過軸為短效觸發器，宜把握當下時機；外行星（木、土、天、海、冥）過軸則為人生長遠結構性的轉折門檻。"
+];
+
 

@@ -1,4 +1,4 @@
-import { PLANET_ASPECT_TRANSITS, PLANET_RETROGRADE_GUIDE } from './planetInterpretations';
+import { PLANET_ASPECT_TRANSITS, PLANET_RETROGRADE_GUIDE, PLANET_ANGLE_TRANSITS } from './planetInterpretations';
 
 /**
  * Astrology Calculation Engine and Interpretation Content
@@ -1497,6 +1497,102 @@ export function getAnnualOuterPlanetAspects(
         aspectMeaning: `${aspectMeaning}（作為長效趨勢，主導相應人生領域之深層轉化與階段進化）`,
         orbVal: minOrbInTransitYear,
         impactHouses: impactHousesStr
+      });
+    }
+  }
+
+  // --- Check Outer Planet Angle Crossings (外行星過四軸重大事件) ---
+  const angles = [
+    { name: '上升點 (ASC)', code: 'ASC', degree: natalChart.ascendant, house: 1 },
+    { name: '天頂點 (MC)', code: 'MC', degree: natalChart.midheaven, house: 10 },
+    { name: '下降點 (DSC)', code: 'DSC', degree: normalizeDegrees(natalChart.ascendant + 180), house: 7 },
+    { name: '天底點 (IC)', code: 'IC', degree: normalizeDegrees(natalChart.midheaven + 180), house: 4 }
+  ];
+
+  for (const op of outerCheck) {
+    for (const angle of angles) {
+      const activeInTransitYear: {
+        month: number;
+        orb: number;
+      }[] = [];
+
+      monthlyCharts.forEach((chart, idx) => {
+        const monthNum = idx + 1;
+        const tp = chart.planets.find(p => p.id === op.id || p.name.includes(op.name));
+        if (!tp) return;
+
+        const diff = normalizeDegrees(tp.longitude - angle.degree);
+        const orb = diff > 180 ? 360 - diff : diff;
+
+        if (orb <= orbMax) {
+          activeInTransitYear.push({
+            month: monthNum,
+            orb
+          });
+        }
+      });
+
+      if (activeInTransitYear.length === 0) continue;
+
+      // Find exact multi-year start and end dates across years
+      const exactBounds = findOuterAspectExactBounds(
+        op.id,
+        op.name,
+        angle.code,
+        angle.degree,
+        0, // targetAngle = 0 for conjunction
+        orbMax,
+        transitYear,
+        transitLongitude,
+        transitLatitude,
+        transitTimezone
+      );
+
+      let minOrbInTransitYear = 99;
+      activeInTransitYear.forEach(a => { if (a.orb < minOrbInTransitYear) minOrbInTransitYear = a.orb; });
+      const peakMonthsInTransitYear = activeInTransitYear
+        .filter(a => Math.abs(a.orb - minOrbInTransitYear) <= 0.4)
+        .map(a => a.month);
+
+      const peakStr = peakMonthsInTransitYear.length > 0
+        ? peakMonthsInTransitYear.map(m => `${m}月`).join('、')
+        : `${activeInTransitYear[0].month}月`;
+
+      const startMonthStr = String(exactBounds.startM).padStart(2, '0');
+      const endMonthStr = String(exactBounds.endM).padStart(2, '0');
+
+      let periodStr = '';
+      const isCrossYear = exactBounds.startY < transitYear || exactBounds.endY > transitYear;
+
+      if (isCrossYear) {
+        periodStr = `${exactBounds.startY}年${startMonthStr}月～${exactBounds.endY}年${endMonthStr}月（跨年度重磅軸點轉折，問事年${transitYear}內精確高峰：${peakStr}）`;
+      } else {
+        periodStr = `${transitYear}年${startMonthStr}月～${transitYear}年${endMonthStr}月（重磅軸點轉折效期，精確高峰：${peakStr}）`;
+      }
+
+      const transitingLabel = `${op.symbol} 流年${op.name}`;
+      const targetLabel = `本命${angle.name}`;
+      const title = `⚡ [過軸重磅事件] ${op.symbol} 流年${op.name} 合相 本命${angle.name}`;
+
+      // Meaning lookup
+      const primaryMeaning = getAngleCrossingMeaning(op.name, angle.name);
+      const angleGroup = PLANET_ANGLE_TRANSITS.find(g => g.angleCode === angle.code);
+      const angleItem = angleGroup?.items.find(i => i.planet === op.name);
+      const detailedMeaning = angleItem ? angleItem.interpretation : '';
+
+      const aspectMeaning = `${primaryMeaning}${detailedMeaning ? `【解讀】${detailedMeaning}` : ''}（外行星過四軸乃人生結構性重大門檻，帶來根本性的轉型與生命新篇章）`;
+
+      const key = `angle-${op.id}-${angle.code}`;
+      quotesMap.set(key, {
+        transitingPlanet: transitingLabel,
+        targetPlanet: targetLabel,
+        title,
+        aspectName: '合相過軸 (0°)',
+        period: periodStr,
+        aspectType: op.id === 'jupiter' ? 'soft' : 'hard',
+        aspectMeaning,
+        orbVal: minOrbInTransitYear - 0.5, // Priority slight boost for angle crossing
+        impactHouses: `本命第 ${angle.house} 宮 (${angle.name}) 軸點焦點`
       });
     }
   }
