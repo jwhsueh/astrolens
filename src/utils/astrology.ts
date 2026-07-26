@@ -269,23 +269,21 @@ export function calculateAstrology(
   }
 
   // 3. Compute Local Sidereal Time for Ascendant and Houses
-  // Greenwich Sidereal Time GST in hours
-  // GST at UT 00:00 is: 6.6460656 + 2400.0513 * T (centuries from 1900)
-  // Simplified robust GST
-  const UT_hours = hour - safeTimezone + minute / 60.0;
-  const GST_hours = normalizeDegrees((18.697374558 + 24.06570982441908 * d) + UT_hours) * 15; // as degrees
-  const LST_deg = normalizeDegrees(GST_hours + safeLongitude);
+  // Greenwich Mean Sidereal Time (GMST) in degrees
+  // d = JD - 2451545.0 is fractional days from epoch J2000.0 (includes UTC time fraction)
+  const GMST_deg = normalizeDegrees(280.46061837 + 360.98564736629 * d);
+  const LST_deg = normalizeDegrees(GMST_deg + safeLongitude);
 
   // Ascendant ASC calculation
-  const obliquity = 23.439 * Math.PI / 180;
-  const alphaOutput = LST_deg * Math.PI / 180;
+  const obliquity = 23.4393 * Math.PI / 180;
+  const ramcRad = LST_deg * Math.PI / 180;
   const latRads = safeLatitude * Math.PI / 180;
 
-  // ASC longitude formulas
-  let ascendant = normalizeDegrees(Math.atan2(
-    Math.sin(alphaOutput),
-    Math.cos(alphaOutput) * Math.cos(obliquity) - Math.tan(latRads) * Math.sin(obliquity)
-  ) * 180 / Math.PI);
+  // ASC longitude formula:
+  // tan(ASC) = cos(RAMC) / (-sin(RAMC) * cos(obliquity) - tan(lat) * sin(obliquity))
+  const yAsc = Math.cos(ramcRad);
+  const xAsc = -Math.sin(ramcRad) * Math.cos(obliquity) - Math.tan(latRads) * Math.sin(obliquity);
+  let ascendant = normalizeDegrees(Math.atan2(yAsc, xAsc) * 180 / Math.PI);
 
   // Equal House system divides exactly 12 houses of 30 degrees, starting from ASC
   const houses: HouseData[] = [];
@@ -304,7 +302,10 @@ export function calculateAstrology(
   }
 
   // MC Calculation
-  const midheaven = normalizeDegrees(Math.atan2(Math.sin(alphaOutput), Math.cos(alphaOutput) * Math.cos(obliquity)) * 180 / Math.PI);
+  // tan(MC) = sin(RAMC) / (cos(RAMC) * cos(obliquity))
+  const yMc = Math.sin(ramcRad);
+  const xMc = Math.cos(ramcRad) * Math.cos(obliquity);
+  const midheaven = normalizeDegrees(Math.atan2(yMc, xMc) * 180 / Math.PI);
 
   // Match computed planets to sign indices + houses
   const finalPlanets: PlanetPosition[] = PLANETS_METADATA.map(meta => {
