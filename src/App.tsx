@@ -3137,19 +3137,30 @@ export default function App() {
                                   return (
                                     <div key={`ht-${m.month}-${htIdx}`} className="bg-black/35 border border-white/5 p-2 rounded-lg space-y-1 text-[9.5px] leading-relaxed text-slate-300">
                                       {/* Outer Planet sitting in House */}
-                                      <div className="flex justify-between items-center text-slate-300 font-bold">
-                                        <span className="flex items-center gap-1 text-[#e5c583]">
-                                          <span className="font-serif text-[11px]">{ht.outerPlanet?.symbol || '☉'}</span>
-                                          <span>{ht.outerPlanet?.name || '太陽 (行運焦點)'}</span>
-                                          {ht.outerPlanet?.isRetrograde && (
-                                            <span className="text-[8px] text-red-400 font-bold bg-red-500/20 border border-red-500/30 px-1 py-0.2 rounded ml-0.5">逆行</span>
-                                          )}
-                                          <span className="text-slate-400 font-normal">→ 第 {ht.houseNumber} 宮</span>
-                                        </span>
-                                        <span className="text-[8.5px] bg-[#c5a059]/10 text-amber-300 border border-[#c5a059]/30 px-1 py-0.5 rounded font-medium">
-                                          {ht.houseName}
-                                        </span>
-                                      </div>
+                                      {ht.outerPlanet ? (
+                                        <div className="flex justify-between items-center text-slate-300 font-bold">
+                                          <span className="flex items-center gap-1 text-[#e5c583]">
+                                            <span className="font-serif text-[11px]">{ht.outerPlanet.symbol}</span>
+                                            <span>{ht.outerPlanet.name}</span>
+                                            {ht.outerPlanet.isRetrograde && (
+                                              <span className="text-[8px] text-red-400 font-bold bg-red-500/20 border border-red-500/30 px-1 py-0.2 rounded ml-0.5">逆行</span>
+                                            )}
+                                            <span className="text-slate-400 font-normal">→ 第 {ht.houseNumber} 宮</span>
+                                          </span>
+                                          <span className="text-[8.5px] bg-[#c5a059]/10 text-amber-300 border border-[#c5a059]/30 px-1 py-0.5 rounded font-medium">
+                                            {ht.houseName}
+                                          </span>
+                                        </div>
+                                      ) : (
+                                        <div className="flex justify-between items-center text-slate-300 font-bold">
+                                          <span className="text-[#e5c583]">
+                                            第 {ht.houseNumber} 宮
+                                          </span>
+                                          <span className="text-[8.5px] bg-[#c5a059]/10 text-amber-300 border border-[#c5a059]/30 px-1 py-0.5 rounded font-medium">
+                                            {ht.houseName}
+                                          </span>
+                                        </div>
+                                      )}
 
                                       {/* Angle Crossing Events (行星過四軸) */}
                                       {ht.angleEvents && ht.angleEvents.length > 0 && (

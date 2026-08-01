@@ -1008,8 +1008,8 @@ export function getOuterPlanetAspectQuotes(
       }
     }
 
-    const opHouseNum = tp.house || 1;
-    const npHouseNum = np.house || 1;
+    const opHouseNum = Math.floor(normalizeDegrees(tp.longitude - natalChart.ascendant) / 30) + 1;
+    const npHouseNum = Math.floor(normalizeDegrees(np.longitude - natalChart.ascendant) / 30) + 1;
     const opHouseName = HOUSE_DETAILS[opHouseNum - 1]?.name || `第 ${opHouseNum} 宮`;
     const npHouseName = HOUSE_DETAILS[npHouseNum - 1]?.name || `第 ${npHouseNum} 宮`;
     const impactHouses = `流年${opHouseName} ✖ 本命${npHouseName}`;
@@ -1160,8 +1160,8 @@ export function getMonthlyAspectQuotes(
         }
       }
 
-      const tpHouseNum = tp.house || 1;
-      const npHouseNum = np.house || 1;
+      const tpHouseNum = Math.floor(normalizeDegrees(tp.longitude - natalChart.ascendant) / 30) + 1;
+      const npHouseNum = Math.floor(normalizeDegrees(np.longitude - natalChart.ascendant) / 30) + 1;
       const tpHouseName = HOUSE_DETAILS[tpHouseNum - 1]?.name || `第 ${tpHouseNum} 宮`;
       const npHouseName = HOUSE_DETAILS[npHouseNum - 1]?.name || `第 ${npHouseNum} 宮`;
       const impactHouses = `流年${tpHouseName} ✖ 本命${npHouseName}`;
@@ -1403,7 +1403,7 @@ export function getAnnualOuterPlanetAspects(
             targetAngle,
             aspectType,
             orb: orbVal,
-            opHouse: tp.house || 1
+            opHouse: Math.floor(normalizeDegrees(tp.longitude - natalChart.ascendant) / 30) + 1
           });
         }
       });
@@ -1457,7 +1457,7 @@ export function getAnnualOuterPlanetAspects(
 
       // Transiting Outer Planet House ✖ Natal Target Planet House
       const opHouseNum = primaryAspect.opHouse || 1;
-      const npHouseNum = np.house || 1;
+      const npHouseNum = Math.floor(normalizeDegrees(np.longitude - natalChart.ascendant) / 30) + 1;
       const opHouseName = HOUSE_DETAILS[opHouseNum - 1]?.name || `第 ${opHouseNum} 宮`;
       const npHouseName = HOUSE_DETAILS[npHouseNum - 1]?.name || `第 ${npHouseNum} 宮`;
       const impactHousesStr = `流年${opHouseName} ✖ 本命${npHouseName}`;
@@ -2329,8 +2329,8 @@ export function generatePredictiveReport(
     allMonthlyCharts.push(monthlyChart);
 
     const mSun = monthlyChart.planets.find(p => p.id === 'sun') || monthlyChart.planets[0];
-    // Calculate Sun's transit house relative to Solar Return chart's ascendant
-    const currentSunHouse = Math.floor(normalizeDegrees(mSun.longitude - srChart.ascendant) / 30) + 1;
+    // Calculate Sun's transit house relative to natal chart's ascendant
+    const currentSunHouse = Math.floor(normalizeDegrees(mSun.longitude - natalChart.ascendant) / 30) + 1;
     const currentSunSign = ZODIAC_SIGNS[mSun.signIndex]?.name || '';
 
     // Hotspot conditions: current Sun house month at query location, eclipse months for this transitYear, or square/opposite house months
@@ -2379,7 +2379,7 @@ export function generatePredictiveReport(
       });
     }
 
-    // Calculate Monthly House Transits for planets at query location relative to SR chart houses
+    // Calculate Monthly House Transits for planets at query location relative to Natal chart houses
     const outerNames = ['木星', '土星', '天王星', '海王星', '冥王星'];
     const outerPlanetsList = monthlyChart.planets.filter(p => outerNames.includes(p.name));
 
@@ -2397,7 +2397,7 @@ export function generatePredictiveReport(
 
       // Find outer planet in this house if any
       const opInHouse = outerPlanetsList.find(op => {
-        const opHouse = Math.floor(normalizeDegrees(op.longitude - srChart.ascendant) / 30) + 1;
+        const opHouse = Math.floor(normalizeDegrees(op.longitude - natalChart.ascendant) / 30) + 1;
         return opHouse === hNum;
       });
 
@@ -2413,7 +2413,7 @@ export function generatePredictiveReport(
       monthlyChart.planets
         .filter(p => {
           if (!innerIds.includes(p.id)) return false;
-          const ipHouse = Math.floor(normalizeDegrees(p.longitude - srChart.ascendant) / 30) + 1;
+          const ipHouse = Math.floor(normalizeDegrees(p.longitude - natalChart.ascendant) / 30) + 1;
           return ipHouse === hNum;
         })
         .forEach(ip => {
@@ -2444,14 +2444,14 @@ export function generatePredictiveReport(
         hasLuminaries = { type: '滿月', date: `${monthNum}月23日` };
       }
 
-      const houseSignName = opInHouse ? ZODIAC_SIGNS[opInHouse.signIndex]?.name : ZODIAC_SIGNS[srChart.houses[hNum - 1]?.signIndex]?.name;
+      const houseSignName = opInHouse ? ZODIAC_SIGNS[opInHouse.signIndex]?.name : ZODIAC_SIGNS[natalChart.houses[hNum - 1]?.signIndex]?.name;
 
       const detail: MonthlyHouseTransitDetail = {
         houseNumber: hNum,
         houseName: `${hName}${houseSignName ? ` (${houseSignName})` : ''}`,
         outerPlanet: opInHouse
           ? { name: opInHouse.name, symbol: opInHouse.symbol, isRetrograde: opInHouse.isRetrograde }
-          : { name: '太陽 (行運焦點)', symbol: '☉', isRetrograde: false },
+          : (hNum === currentSunHouse ? { name: '太陽 (行運焦點)', symbol: '☉', isRetrograde: false } : undefined),
         outerPlanetAspects,
         innerPlanets,
         angleEvents: houseAngleEvents.length > 0 ? houseAngleEvents : undefined,
@@ -2465,7 +2465,7 @@ export function generatePredictiveReport(
 
     // 1. Add houses with outer planets
     outerPlanetsList.forEach(op => {
-      const hNum = Math.floor(normalizeDegrees(op.longitude - srChart.ascendant) / 30) + 1;
+      const hNum = Math.floor(normalizeDegrees(op.longitude - natalChart.ascendant) / 30) + 1;
       getOrCreateHouseDetail(hNum);
     });
 
