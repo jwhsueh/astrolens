@@ -1595,7 +1595,7 @@ export default function App() {
             <div className="mt-5 pt-4 border-t border-[#c5a059]/20 text-[11px] text-slate-400 flex items-start space-x-2">
               <Info className="w-4 h-4 text-[#c5a059] shrink-0 mt-0.5" />
               <span className="italic leading-normal">
-                Equal House 系統由上升點 ASC 作為第一宮起始點，依次每 30° 順時針推衍算一宮位。具有極佳的高緯度計算穩定性。
+                Equal House 系統由上升點 ASC 作為第一宮起始點，依次每 30° 逆時針方向（黃道經度增加方向）推衍算一宮位。具有極佳的高緯度計算穩定性與古典對稱性。
               </span>
             </div>
           </div>
@@ -2163,14 +2163,11 @@ export default function App() {
                                   const pNatalAspects = natalNatalAspects.filter(a =>
                                     a.planetA.includes(p.name) || a.planetB.includes(p.name)
                                   );
-                                  const pTransitAspects = transitNatalAspects.filter(a =>
-                                    a.planetB.includes(p.name) || a.planetA.includes(p.name)
-                                  );
 
                                   return (
                                     <div className="text-[11px] text-slate-200 bg-black/40 p-2 rounded-lg border border-white/10 space-y-2">
                                       <strong className="text-[#e5c583] font-mono text-[10px] uppercase block">
-                                        📐 {p.name} 相位互動與天象感應：
+                                        📐 {p.name} 本命相位資訊：
                                       </strong>
 
                                       {/* 本命盤內固有相位 */}
@@ -2209,38 +2206,6 @@ export default function App() {
                                       ) : (
                                         <div className="text-[10px] text-slate-400 italic">
                                           🏡 本命盤無顯著主要相位（合相/六分/四分/三分/對分）。
-                                        </div>
-                                      )}
-
-                                      {/* 當前流年天象交會 */}
-                                      {pTransitAspects.length > 0 && (
-                                        <div className="space-y-1.5 pt-1.5 border-t border-white/5">
-                                          <span className="text-[10px] text-[#e5c583] font-bold block">🪐 當前流年天象感應 ({pTransitAspects.length})：</span>
-                                          <div className="space-y-1.5">
-                                            {pTransitAspects.map((tAsp, tIdx) => {
-                                              const guide = getPlanetAspectTransitGuide(tAsp.planetA, tAsp.planetB, tAsp.harmony, tAsp.name);
-
-                                              let badgeBg = 'bg-amber-500/10 border-amber-500/30 text-amber-400';
-                                              if (tAsp.harmony === 'positive') badgeBg = 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400';
-                                              if (tAsp.harmony === 'challenging') badgeBg = 'bg-red-500/10 border-red-500/20 text-red-400';
-
-                                              return (
-                                                <div key={`p-transit-asp-${p.id}-${tIdx}`} className="bg-black/50 p-2 rounded-md border border-white/5 space-y-1 text-[10.5px]">
-                                                  <div className="flex justify-between items-center flex-wrap gap-1">
-                                                    <span className="font-bold text-[#e2ca9c]">
-                                                      {tAsp.planetA} ✖ {tAsp.planetB}
-                                                    </span>
-                                                    <span className={`text-[9px] px-1.5 py-0.2 rounded border ${badgeBg} font-mono`}>
-                                                      {tAsp.name} ({tAsp.angle}°) • 容許度 {tAsp.orb.toFixed(2)}°
-                                                    </span>
-                                                  </div>
-                                                  <p className="text-slate-350 text-[10px] leading-relaxed">
-                                                    {guide || tAsp.description}
-                                                  </p>
-                                                </div>
-                                              );
-                                            })}
-                                          </div>
                                         </div>
                                       )}
                                     </div>
@@ -2441,8 +2406,8 @@ export default function App() {
                       <span>1️⃣</span><span>本命敏感點基準與主命星 (Sensitive Points & Ruling Planet)</span>
                     </h3>
                     <div className="p-3 bg-[#c5a059]/10 rounded-xl border border-[#c5a059]/20 text-xs space-y-1.5">
-                      <strong className="text-[#e5c583] block text-sm">⭐ 個人命主星 (Ruling Planet)：{pred.solarReturn.rulingPlanet}</strong>
-                      <p className="text-slate-300 leading-relaxed">{pred.solarReturn.rulingPlanetMeaning}</p>
+                      <strong className="text-[#e5c583] block text-sm">⭐ 本命主命星 (Natal Ruling Planet)：{pred.natalRuler?.planet || pred.solarReturn.rulingPlanet}</strong>
+                      <p className="text-slate-300 leading-relaxed">{pred.natalRuler?.meaning || pred.solarReturn.rulingPlanetMeaning}</p>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                       {pred.sensitivePoints.map((pt, i) => (
@@ -2758,11 +2723,11 @@ export default function App() {
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {pred.monthlyTimeline.map(m => (
-                        <div key={`m-main-${m.month}`} className={`p-3 rounded-xl border text-xs flex flex-col justify-between space-y-2.5 ${m.intensity === 'high' ? 'bg-amber-500/10 border-amber-500/30 text-amber-300' : 'bg-white/5 border-white/5 text-slate-300'}`}>
+                        <div key={`m-main-${m.month}`} className={`p-3 rounded-xl border text-xs flex flex-col justify-between space-y-2.5 ${m.intensity === 'high' ? 'bg-amber-500/10 border-amber-500/30 text-amber-300' : (m.intensity === 'medium' ? 'bg-sky-500/10 border-sky-500/25 text-sky-200' : 'bg-white/5 border-white/5 text-slate-300')}`}>
                           <div className="flex justify-between items-center font-bold">
                             <span>{m.monthName}</span>
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${m.intensity === 'high' ? 'bg-amber-500/20 text-amber-200' : 'bg-white/10 text-slate-400'}`}>
-                              {m.intensity === 'high' ? '🔥 事件熱區' : '平穩期'}
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${m.intensity === 'high' ? 'bg-amber-500/20 text-amber-200' : (m.intensity === 'medium' ? 'bg-sky-500/20 text-sky-300' : 'bg-white/10 text-slate-400')}`}>
+                              {m.intensity === 'high' ? '🔥 事件熱區' : (m.intensity === 'medium' ? '⚡ 動能活躍期' : '🌿 平穩推進期')}
                             </span>
                           </div>
                           <p className="text-[11px] text-slate-300 leading-snug font-medium">{m.theme}</p>
@@ -2892,7 +2857,7 @@ export default function App() {
                                       {hasLuminaries && (
                                         <div className="flex items-center gap-1 text-[8.5px] bg-sky-500/5 border border-sky-500/15 p-1 rounded mt-0.5 text-sky-300 font-medium">
                                           <span className="text-amber-300">{ht.hasLuminaries.type === '新月' ? '🌑' : '🌕'}</span>
-                                          <span>{ht.hasLuminaries.date} {ht.hasLuminaries.type}啟動本宮能量</span>
+                                          <span>{ht.hasLuminaries.date} {ht.hasLuminaries.timeStr ? `${ht.hasLuminaries.timeStr} ` : ''}{ht.hasLuminaries.type}{ht.hasLuminaries.sign ? ` (${ht.hasLuminaries.sign}${ht.hasLuminaries.degree !== undefined ? ` ${ht.hasLuminaries.degree}°` : ''})` : ''} 啟動本宮能量</span>
                                         </div>
                                       )}
 
@@ -3066,7 +3031,7 @@ export default function App() {
                     </h3>
                     <div className="space-y-3 text-xs">
                       <div>
-                        <strong className="text-emerald-400 block mb-1 text-sm">✨ 全年最高權重主要議題 (三層疊加全中)：</strong>
+                        <strong className="text-emerald-400 block mb-1 text-sm">✨ 三層技術交叉驗證與年度主要議題 (Three-Tier Convergence Analysis)：</strong>
                         <ul className="list-disc pl-5 space-y-1 text-slate-300">
                           {pred.scoringConclusion.majorThemes.map((thm, i) => (
                             <li key={`maj-main-${i}`}>{thm}</li>
@@ -3952,7 +3917,8 @@ export default function App() {
                         <strong className="block text-xs text-[#785b24] font-extrabold border-b border-[#e8dfcb] pb-1">
                           1️⃣ 主命星與 2️⃣ 太陽回歸主題
                         </strong>
-                        <div className="text-[#2c2416] font-bold">⭐ 個人命主星：{printPred.solarReturn.rulingPlanet} - {printPred.solarReturn.rulingPlanetMeaning}</div>
+                        <div className="text-[#2c2416] font-bold">⭐ 本命主命星：{printPred.natalRuler?.planet || printPred.solarReturn.rulingPlanet} - {printPred.natalRuler?.meaning || printPred.solarReturn.rulingPlanetMeaning}</div>
+                        <div className="text-[#5c4a24] text-xs font-semibold">🌟 年度回歸主命星：{printPred.solarReturn.rulingPlanet}</div>
                         <p className="text-[#2c2416] text-[11px]">{printPred.solarReturn.description}</p>
                         <div className="text-[10px] text-[#6e6350]">年度焦點：{printPred.solarReturn.annualTheme}</div>
                       </div>

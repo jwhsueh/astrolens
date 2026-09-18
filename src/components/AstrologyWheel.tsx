@@ -6,6 +6,7 @@ interface AstrologyWheelProps {
     planets: PlanetPosition[];
     houses: HouseData[];
     ascendant: number;
+    midheaven?: number;
     aspects: Aspect[];
   };
   transitChart: {
@@ -39,16 +40,18 @@ export default function AstrologyWheel({
   const asc = natalChart.ascendant;
 
   // Convert longitude (0-360) to SVG screen coordinates
-  // ASC is pointing left (9 o'clock) which of 180 degrees, and longitudes increase counter-clockwise.
+  // ASC is pointing left (9 o'clock) at 180 degrees.
+  // Western astrology convention: longitudes and houses advance COUNTER-CLOCKWISE.
+  // In SVG (where y increases downwards), counter-clockwise rotation corresponds to (180 - relLong).
   const getCoords = (longitude: number, radius: number) => {
     // Relative angle from ascendant
-    const relLong = longitude - asc;
-    // Map to standard screen angles: ASC at 180, rotating counter-clockwise (increasing angle)
-    const angleRads = (180 + relLong) * (Math.PI / 180);
+    const relLong = ((longitude - asc) % 360 + 360) % 360;
+    // Map to standard screen angles: ASC at 180, rotating counter-clockwise
+    const angleRads = (180 - relLong) * (Math.PI / 180);
     return {
       x: cx + radius * Math.cos(angleRads),
       y: cy + radius * Math.sin(angleRads),
-      angle: (180 + relLong) % 360,
+      angle: (180 - relLong + 360) % 360,
     };
   };
 
@@ -122,7 +125,7 @@ export default function AstrologyWheel({
             <g key={sign.name}>
               {/* Pie Slice section for Zodiac */}
               <path
-                d={`M ${cx} ${cy} L ${startCoords.x} ${startCoords.y} A ${rZodiac} ${rZodiac} 0 0 1 ${endCoords.x} ${endCoords.y} Z`}
+                d={`M ${cx} ${cy} L ${startCoords.x} ${startCoords.y} A ${rZodiac} ${rZodiac} 0 0 0 ${endCoords.x} ${endCoords.y} Z`}
                 fill={fillHex}
                 stroke="rgba(197, 160, 89, 0.12)"
                 strokeWidth="0.5"
@@ -178,7 +181,7 @@ export default function AstrologyWheel({
             >
               {/* Slices of Houses */}
               <path
-                d={`M ${cx} ${cy} L ${getCoords(startCusp, rHouses).x} ${getCoords(startCusp, rHouses).y} A ${rHouses} ${rHouses} 0 0 1 ${getCoords(endCusp, rHouses).x} ${getCoords(endCusp, rHouses).y} Z`}
+                d={`M ${cx} ${cy} L ${getCoords(startCusp, rHouses).x} ${getCoords(startCusp, rHouses).y} A ${rHouses} ${rHouses} 0 0 0 ${getCoords(endCusp, rHouses).x} ${getCoords(endCusp, rHouses).y} Z`}
                 fill={isHovered ? 'rgba(197, 160, 89, 0.1)' : 'transparent'}
                 stroke={isHovered ? '#c5a059' : 'rgba(197, 160, 89, 0.15)'}
                 strokeWidth={isHovered ? '1.5' : '0.5'}
@@ -390,7 +393,7 @@ export default function AstrologyWheel({
           );
         })}
 
-        {/* 6. Ascendant indicator line pointing West */}
+        {/* 6. Ascendant indicator line pointing West (9 o'clock) */}
         <line
           x1={cx - rTransit - 10}
           y1={cy}
@@ -407,6 +410,32 @@ export default function AstrologyWheel({
             ASC
           </text>
         </g>
+
+        {/* 7. Midheaven (MC) indicator axis */}
+        {natalChart.midheaven !== undefined && (() => {
+          const mcOuter = getCoords(natalChart.midheaven, rTransit + 10);
+          const mcInner = getCoords(natalChart.midheaven, rNatal - 15);
+          const mcLabel = getCoords(natalChart.midheaven, rTransit + 22);
+          return (
+            <g key="mc-axis">
+              <line
+                x1={mcOuter.x}
+                y1={mcOuter.y}
+                x2={mcInner.x}
+                y2={mcInner.y}
+                stroke="#3b82f6"
+                strokeWidth="1.5"
+                strokeDasharray="3,2"
+              />
+              <g transform={`translate(${mcLabel.x}, ${mcLabel.y})`}>
+                <rect x="-9" y="-7" width="18" height="14" rx="3" fill="#3b82f6" />
+                <text textAnchor="middle" y="3.5" className="fill-white font-mono text-[8px] font-bold">
+                  MC
+                </text>
+              </g>
+            </g>
+          );
+        })()}
       </svg>
 
       <div className="mt-2 flex justify-center items-center space-x-4 text-[10px] text-slate-300 glass p-2.5 rounded-2xl font-mono border border-[#c5a059]/10">
@@ -419,7 +448,10 @@ export default function AstrologyWheel({
           <span>🪐 流年盤 (外)</span>
         </div>
         <div className="flex items-center space-x-1 text-red-400 font-bold">
-          <span>ASC 上升點</span>
+          <span>ASC 上升</span>
+        </div>
+        <div className="flex items-center space-x-1 text-blue-400 font-bold">
+          <span>MC 天頂</span>
         </div>
       </div>
     </div>

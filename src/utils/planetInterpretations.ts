@@ -400,7 +400,7 @@ export const PLANET_HOUSE_INTERPRETATIONS: PlanetHouseInterpretation[] = [
 
 export function getPlanetSignInterpretation(planetName: string, signName: string): string {
   // Normalize planetName (e.g. "本命太陽 (Sun)" -> "太陽", "Sun" -> "太陽")
-  let cleanPlanet = '太陽';
+  let cleanPlanet = '';
   if (planetName.includes('月亮') || planetName.includes('Moon')) cleanPlanet = '月亮';
   else if (planetName.includes('水星') || planetName.includes('Mercury')) cleanPlanet = '水星';
   else if (planetName.includes('金星') || planetName.includes('Venus')) cleanPlanet = '金星';
@@ -411,14 +411,19 @@ export function getPlanetSignInterpretation(planetName: string, signName: string
   else if (planetName.includes('海王') || planetName.includes('Neptune')) cleanPlanet = '海王星';
   else if (planetName.includes('冥王') || planetName.includes('Pluto')) cleanPlanet = '冥王星';
   else if (planetName.includes('太陽') || planetName.includes('Sun')) cleanPlanet = '太陽';
+  else if (planetName.includes('北交') || planetName.includes('Rahu')) return `北交點落入${signName}：靈魂演化的成長方向，學習放下南交慣性，向${signName}的特質前進。`;
+  else if (planetName.includes('南交') || planetName.includes('Ketu')) return `南交點落入${signName}：過去世或早年熟悉的行為慣性與天賦舒適圈，需避免過度依賴${signName}模式。`;
+  else if (planetName.includes('上升') || planetName.includes('ASC')) return `上升點落在${signName}：個人對外展現的形象人格面具與世界互動的第一本能。`;
+  else if (planetName.includes('天頂') || planetName.includes('MC')) return `天頂點落在${signName}：個人的事業追求、公眾聲望、社會成就與人生最高志向。`;
 
+  if (!cleanPlanet) return '';
   const pObj = PLANET_SIGN_INTERPRETATIONS.find(p => p.planet === cleanPlanet);
   if (!pObj) return '';
   return pObj.signs[signName] || '';
 }
 
 export function getPlanetHouseInterpretation(planetName: string, houseNum: number): string {
-  let cleanPlanet = '太陽';
+  let cleanPlanet = '';
   if (planetName.includes('月亮') || planetName.includes('Moon')) cleanPlanet = '月亮';
   else if (planetName.includes('水星') || planetName.includes('Mercury')) cleanPlanet = '水星';
   else if (planetName.includes('金星') || planetName.includes('Venus')) cleanPlanet = '金星';
@@ -429,7 +434,12 @@ export function getPlanetHouseInterpretation(planetName: string, houseNum: numbe
   else if (planetName.includes('海王') || planetName.includes('Neptune')) cleanPlanet = '海王星';
   else if (planetName.includes('冥王') || planetName.includes('Pluto')) cleanPlanet = '冥王星';
   else if (planetName.includes('太陽') || planetName.includes('Sun')) cleanPlanet = '太陽';
+  else if (planetName.includes('北交') || planetName.includes('Rahu')) return `北交點入第 ${houseNum} 宮：今生靈魂渴望開拓的生活領域，在此宮位跨越未知、建立新體驗。`;
+  else if (planetName.includes('南交') || planetName.includes('Ketu')) return `南交點入第 ${houseNum} 宮：過度熟悉或容易產生執念的宮位領域，需學會轉化為滋養第 ${((houseNum + 5) % 12) + 1} 宮的養分。`;
+  else if (planetName.includes('上升') || planetName.includes('ASC')) return `上升點定義第 1 宮宮頭：生命的起點，奠定個人整體活力與外在展現方式。`;
+  else if (planetName.includes('天頂') || planetName.includes('MC')) return `天頂點標誌第 10 宮天頂：志業舞台與社會成就展現的最高點。`;
 
+  if (!cleanPlanet) return '';
   const pObj = PLANET_HOUSE_INTERPRETATIONS.find(p => p.planet === cleanPlanet);
   if (!pObj) return '';
   return pObj.houses[houseNum] || '';
@@ -716,8 +726,21 @@ export function getPlanetAspectTransitGuide(transitPlanetName: string, natalPlan
   let cleanT = transitPlanetName.replace(/^(本命|流年)\s*/, '');
   let cleanN = natalPlanetName.replace(/^(本命|流年)\s*/, '');
 
-  const group = PLANET_ASPECT_TRANSITS.find(g => g.planet.includes(cleanT)) || PLANET_ASPECT_TRANSITS[0];
-  const item = group.items.find(i => i.target.includes(cleanN)) || group.items[0];
+  const group = PLANET_ASPECT_TRANSITS.find(g => g.planet.includes(cleanT));
+  const item = group ? group.items.find(i => i.target.includes(cleanN)) : undefined;
+
+  let period = '效期約數天至數週';
+  if (cleanT.includes('月亮')) period = '效期約 1-2 天：快速情緒與直覺觸發';
+  else if (cleanT.includes('太陽')) period = '效期約 2-3 天：意識焦點與核心活力注入';
+  else if (cleanT.includes('水星')) period = '效期數天至一週：心智溝通、思維與合約校準';
+  else if (cleanT.includes('金星')) period = '效期數天至一週：社交人際、美感與財務互動';
+  else if (cleanT.includes('火星')) period = '效期約一週：行動力激發與衝突引信';
+  else if (cleanT.includes('木星')) period = '效期數週至數月：擴張、信念與好運契機窗口';
+  else if (cleanT.includes('土星')) period = '效期數月：結構考驗、責任承擔與耐心驗收';
+  else if (cleanT.includes('天王星')) period = '效期約一年：突變創新、打破框架與原創突破';
+  else if (cleanT.includes('海王星')) period = '效期一年以上：靈感夢想、理想化與迷惘消融';
+  else if (cleanT.includes('冥王星')) period = '效期數年：命運級徹底重生與深層意志轉化';
+  else if (group) period = group.period;
 
   let phaseRef = '【第四部：行星相位性質與流年觸發對照】';
   if (aspectName) {
@@ -734,8 +757,11 @@ export function getPlanetAspectTransitGuide(transitPlanetName: string, natalPlan
     }
   }
 
-  const text = harmony === 'positive' ? `🟢 柔和相位指引：${item.soft}` : harmony === 'challenging' ? `🔴 困難相位指引：${item.hard}` : `🟢 柔和：${item.soft} | 🔴 困難：${item.hard}`;
-  return `${phaseRef}\n⏱️ 觸發週期：${group.period}\n${text}`;
+  let softText = item ? item.soft : `流年${cleanT}與本命${cleanN}帶來流暢的正面助力與良好時機。`;
+  let hardText = item ? item.hard : `流年${cleanT}激發本命${cleanN}的潛在張力，需藉由調和與意識轉化克服考驗。`;
+
+  const text = harmony === 'positive' ? `🟢 柔和相位指引：${softText}` : harmony === 'challenging' ? `🔴 困難相位指引：${hardText}` : `🟢 柔和：${softText} | 🔴 困難：${hardText}`;
+  return `${phaseRef}\n⏱️ 觸發週期：${period}\n${text}`;
 }
 
 export function getRetrogradeGuideQuote(planetName: string, houseNum: number): string {

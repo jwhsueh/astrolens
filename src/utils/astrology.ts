@@ -1,3 +1,4 @@
+import * as Astronomy from 'astronomy-engine';
 import { PLANET_ASPECT_TRANSITS, PLANET_RETROGRADE_GUIDE, PLANET_ANGLE_TRANSITS } from './planetInterpretations';
 
 /**
@@ -556,6 +557,9 @@ export interface MonthlyHouseTransitDetail {
   hasLuminaries?: {
     type: '新月' | '滿月';
     date: string;
+    sign?: string;
+    degree?: number;
+    timeStr?: string;
   };
 }
 
@@ -602,6 +606,10 @@ export interface SolarReturnHouseDetail {
 
 export interface AstrologicalPredictionReport {
   sensitivePoints: SensitivePoint[];
+  natalRuler: {
+    planet: string;
+    meaning: string;
+  };
   solarReturn: {
     year: number;
     exactTime: string;
@@ -2063,261 +2071,418 @@ export function generatePredictiveReport(
     description: `問事流年時間為【${qYear}年${String(qMonth).padStart(2, '0')}月${String(qDay).padStart(2, '0')}日 ${String(qHour).padStart(2, '0')}:${String(qMin).padStart(2, '0')}】（問事地點：經度 ${transitLongitude}° / 緯度 ${transitLatitude}° / 時區 UTC${transitTimezone >= 0 ? '+' : ''}${transitTimezone}）。${isPriorToSR ? `因問事時間尚未達到 ${qYear} 年出生地太陽回歸時刻（${srResultThisYear.exactTimeFormatted}），故運勢主軸採用前一年（${activeSRYear} 年）之太陽回歸盤。` : `因問事時間已到達/超過 ${qYear} 年出生地太陽回歸時刻（${srResultThisYear.exactTimeFormatted}），故採用當年（${activeSRYear} 年）之太陽回歸盤。`}\n\n本期精確太陽回歸時刻（依出生地考量：經度 ${birthLon}° / 緯度 ${birthLat}° / 時區 UTC${birthTz >= 0 ? '+' : ''}${birthTz}）為【${srResult.exactTimeFormatted}】。回歸盤上升星座落在【${srAscSign}】（年度主命星：${srRuler.planet}），年度太陽落在第 ${srSunHouse} 宮（${HOUSE_DETAILS[srSunHouse - 1]?.name}：${HOUSE_DETAILS[srSunHouse - 1]?.keyMeaning}），指出此回歸年度之核心舞台與現實戰場在於【${HOUSE_DETAILS[srSunHouse - 1]?.name}】。`,
     houses: solarReturnHouses
   };
-  const getEclipsesForYear = (tYear: number, sunHouse: number) => {
-    // Determine approximate eclipse months and signs based on year
-    let m1 = 3, m2 = 9;
-    let s1 = '白羊座', s2 = '雙魚座';
-    let d1 = `${tYear}-03-25`, d2 = `${tYear}-09-18`;
+  // --- Astronomical Event Calculation Helpers ---
+  // 1. Calculate Real Moon Phases (New Moons & Full Moons) using Astronomy Engine
+  const getAstronomicalMoonPhasesForYear = (tYear: number, natalAsc: number, tzOffset: number = 8) => {
+    const events: {
+      type: '新月' | '滿月';
+      month: number;
+      day: number;
+      dateStr: string;
+      timeStr: string;
+      longitude: number;
+      sign: string;
+      degree: number;
+      house: number;
+    }[] = [];
 
-    if (tYear === 2024) {
-      m1 = 4; m2 = 9;
-      s1 = '白羊座'; s2 = '雙魚座';
-      d1 = `${tYear}-04-08`; d2 = `${tYear}-09-18`;
-    } else if (tYear === 2025) {
-      m1 = 3; m2 = 9;
-      s1 = '牡羊座'; s2 = '處女座';
-      d1 = `${tYear}-03-29`; d2 = `${tYear}-09-07`;
-    } else if (tYear === 2026) {
-      m1 = 2; m2 = 8;
-      s1 = '水瓶座'; s2 = '獅子座';
-      d1 = `${tYear}-02-17`; d2 = `${tYear}-08-12`;
-    } else if (tYear === 2027) {
-      m1 = 2; m2 = 8;
-      s1 = '水瓶座'; s2 = '獅子座';
-      d1 = `${tYear}-02-06`; d2 = `${tYear}-08-02`;
-    } else if (tYear === 2028) {
-      m1 = 1; m2 = 7;
-      s1 = '水瓶座'; s2 = '巨蟹座';
-      d1 = `${tYear}-01-26`; d2 = `${tYear}-07-22`;
-    } else {
-      // Dynamic fallback for other years
-      const shift = ((tYear - 2026) % 12 + 12) % 12;
-      m1 = ((2 - Math.floor(shift / 2) + 12) % 12) + 1;
-      m2 = ((m1 + 5) % 12) + 1;
-      d1 = `${tYear}-${String(m1).padStart(2, '0')}-15`;
-      d2 = `${tYear}-${String(m2).padStart(2, '0')}-18`;
+    const startTime = new Astronomy.AstroTime(new Date(Date.UTC(tYear, 0, 1) - 7 * 86400000));
+    const endTime = new Astronomy.AstroTime(new Date(Date.UTC(tYear + 1, 0, 2)));
+
+    // New Moons (0°)
+    let t = startTime;
+    while (true) {
+      const nextNew = Astronomy.SearchMoonPhase(0, t, 40);
+      if (!nextNew || nextNew.date > endTime.date) break;
+      const localMs = nextNew.date.getTime() + tzOffset * 3600000;
+      const localDate = new Date(localMs);
+      if (localDate.getUTCFullYear() === tYear) {
+        const m = localDate.getUTCMonth() + 1;
+        const d = localDate.getUTCDate();
+        const hours = String(localDate.getUTCHours()).padStart(2, '0');
+        const mins = String(localDate.getUTCMinutes()).padStart(2, '0');
+        const moonGeo = Astronomy.GeoVector(Astronomy.Body.Moon, nextNew, true);
+        const moonEcl = Astronomy.Ecliptic(moonGeo);
+        const lon = normalizeDegrees(moonEcl.elon);
+        const signIdx = Math.floor(lon / 30);
+        const deg = lon % 30;
+        const house = Math.floor(normalizeDegrees(lon - natalAsc) / 30) + 1;
+        events.push({
+          type: '新月',
+          month: m,
+          day: d,
+          dateStr: `${m}月${String(d).padStart(2, '0')}日`,
+          timeStr: `${hours}:${mins}`,
+          longitude: lon,
+          sign: ZODIAC_SIGNS[signIdx]?.name || '',
+          degree: Number(deg.toFixed(1)),
+          house
+        });
+      }
+      t = nextNew.AddDays(1);
     }
 
-    return {
-      m1, m2,
-      list: [
-        {
-          date: d1,
-          type: '日蝕 (Solar Eclipse - 新篇章開啟)',
-          degree: 14,
-          sign: s1,
-          house: ((sunHouse + 1) % 12) + 1,
-          sunSign: s1,
-          sunHouse: ((sunHouse + 1) % 12) + 1,
-          moonSign: s1,
-          moonHouse: ((sunHouse + 1) % 12) + 1,
-          meaning: `在${s1}引發新篇章開啟，注入強大變革與主動突破能量。`
-        },
-        {
-          date: d2,
-          type: '月蝕 (Lunar Eclipse - 揭曉與關係收尾)',
-          degree: 25,
-          sign: s2,
-          house: ((sunHouse + 6) % 12) + 1,
-          sunSign: s2,
-          sunHouse: sunHouse,
-          moonSign: s2,
-          moonHouse: ((sunHouse + 6) % 12) + 1,
-          meaning: `在${s2}帶來階段性結果揭曉，伴隨情感沉澱或階段性任務圓滿收尾。`
-        }
-      ]
-    };
+    // Full Moons (180°)
+    t = startTime;
+    while (true) {
+      const nextFull = Astronomy.SearchMoonPhase(180, t, 40);
+      if (!nextFull || nextFull.date > endTime.date) break;
+      const localMs = nextFull.date.getTime() + tzOffset * 3600000;
+      const localDate = new Date(localMs);
+      if (localDate.getUTCFullYear() === tYear) {
+        const m = localDate.getUTCMonth() + 1;
+        const d = localDate.getUTCDate();
+        const hours = String(localDate.getUTCHours()).padStart(2, '0');
+        const mins = String(localDate.getUTCMinutes()).padStart(2, '0');
+        const moonGeo = Astronomy.GeoVector(Astronomy.Body.Moon, nextFull, true);
+        const moonEcl = Astronomy.Ecliptic(moonGeo);
+        const lon = normalizeDegrees(moonEcl.elon);
+        const signIdx = Math.floor(lon / 30);
+        const deg = lon % 30;
+        const house = Math.floor(normalizeDegrees(lon - natalAsc) / 30) + 1;
+        events.push({
+          type: '滿月',
+          month: m,
+          day: d,
+          dateStr: `${m}月${String(d).padStart(2, '0')}日`,
+          timeStr: `${hours}:${mins}`,
+          longitude: lon,
+          sign: ZODIAC_SIGNS[signIdx]?.name || '',
+          degree: Number(deg.toFixed(1)),
+          house
+        });
+      }
+      t = nextFull.AddDays(1);
+    }
+
+    events.sort((a, b) => (a.month !== b.month ? a.month - b.month : a.day - b.day));
+    return events;
   };
 
-  const eclipseData = getEclipsesForYear(transitYear, srSunHouse);
-  const eclipses = eclipseData.list;
+  // 2. Calculate Real Eclipses (Solar & Lunar) using Astronomy Engine
+  const getAstronomicalEclipsesForYear = (tYear: number, natalAsc: number, tzOffset: number = 8) => {
+    const list: {
+      date: string;
+      dateStr: string;
+      month: number;
+      day: number;
+      type: string;
+      degree: number;
+      sign: string;
+      house: number;
+      sunSign: string;
+      sunHouse: number;
+      moonSign: string;
+      moonHouse: number;
+      meaning: string;
+      kind: 'solar' | 'lunar';
+    }[] = [];
 
-  // Step 4: Planet Retrogrades tailored for transitYear
-  const getRetrogradesForYear = (
+    const startT = new Astronomy.AstroTime(new Date(Date.UTC(tYear, 0, 1)));
+    const endT = new Astronomy.AstroTime(new Date(Date.UTC(tYear + 1, 0, 1)));
+
+    // Solar Eclipses
+    let sol = Astronomy.SearchGlobalSolarEclipse(startT);
+    while (sol && sol.peak.date < endT.date) {
+      const localMs = sol.peak.date.getTime() + tzOffset * 3600000;
+      const localDate = new Date(localMs);
+      const m = localDate.getUTCMonth() + 1;
+      const d = localDate.getUTCDate();
+      const sunGeo = Astronomy.GeoVector(Astronomy.Body.Sun, sol.peak, true);
+      const sunEcl = Astronomy.Ecliptic(sunGeo);
+      const lon = normalizeDegrees(sunEcl.elon);
+      const signIdx = Math.floor(lon / 30);
+      const deg = lon % 30;
+      const house = Math.floor(normalizeDegrees(lon - natalAsc) / 30) + 1;
+      const signName = ZODIAC_SIGNS[signIdx]?.name || '';
+
+      let typeStr = '日食 (Solar Eclipse)';
+      if (sol.kind === 'total') typeStr = '日全食 (Total Solar Eclipse)';
+      else if (sol.kind === 'annular') typeStr = '日環食 (Annular Solar Eclipse)';
+      else if (sol.kind === 'partial') typeStr = '日偏食 (Partial Solar Eclipse)';
+
+      list.push({
+        date: `${tYear}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`,
+        dateStr: `${m}月${String(d).padStart(2, '0')}日`,
+        month: m,
+        day: d,
+        type: typeStr,
+        degree: Number(deg.toFixed(1)),
+        sign: signName,
+        house,
+        sunSign: signName,
+        sunHouse: house,
+        moonSign: signName,
+        moonHouse: house,
+        meaning: `在${signName}（第 ${house} 宮：${HOUSE_DETAILS[house - 1]?.name || `第${house}宮`}）引發新篇章開啟，注入強大變革與主動突破動能。`,
+        kind: 'solar'
+      });
+      sol = Astronomy.NextGlobalSolarEclipse(sol.peak);
+    }
+
+    // Lunar Eclipses
+    let lun = Astronomy.SearchLunarEclipse(startT);
+    while (lun && lun.peak.date < endT.date) {
+      const localMs = lun.peak.date.getTime() + tzOffset * 3600000;
+      const localDate = new Date(localMs);
+      const m = localDate.getUTCMonth() + 1;
+      const d = localDate.getUTCDate();
+      const moonGeo = Astronomy.GeoVector(Astronomy.Body.Moon, lun.peak, true);
+      const moonEcl = Astronomy.Ecliptic(moonGeo);
+      const lon = normalizeDegrees(moonEcl.elon);
+      const signIdx = Math.floor(lon / 30);
+      const deg = lon % 30;
+      const house = Math.floor(normalizeDegrees(lon - natalAsc) / 30) + 1;
+      const signName = ZODIAC_SIGNS[signIdx]?.name || '';
+
+      const sunLon = normalizeDegrees(lon + 180);
+      const sunSignIdx = Math.floor(sunLon / 30);
+      const sunHouse = Math.floor(normalizeDegrees(sunLon - natalAsc) / 30) + 1;
+
+      let typeStr = '月食 (Lunar Eclipse)';
+      if (lun.kind === 'total') typeStr = '月全食 (Total Lunar Eclipse)';
+      else if (lun.kind === 'partial') typeStr = '月偏食 (Partial Lunar Eclipse)';
+      else if (lun.kind === 'penumbral') typeStr = '半影月食 (Penumbral Lunar Eclipse)';
+
+      list.push({
+        date: `${tYear}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`,
+        dateStr: `${m}月${String(d).padStart(2, '0')}日`,
+        month: m,
+        day: d,
+        type: typeStr,
+        degree: Number(deg.toFixed(1)),
+        sign: signName,
+        house,
+        sunSign: ZODIAC_SIGNS[sunSignIdx]?.name || '',
+        sunHouse,
+        moonSign: signName,
+        moonHouse: house,
+        meaning: `在${signName}（第 ${house} 宮：${HOUSE_DETAILS[house - 1]?.name || `第${house}宮`}）帶來階段性結果揭曉，伴隨情感沉澱或關係任務收尾。`,
+        kind: 'lunar'
+      });
+      lun = Astronomy.NextLunarEclipse(lun.peak);
+    }
+
+    list.sort((a, b) => (a.month !== b.month ? a.month - b.month : a.day - b.day));
+    return list;
+  };
+
+  // 3. Astronomical Retrograde Scanner for Inner & Outer Planets
+  const getAstronomicalRetrogradesForYear = (
     tYear: number,
-    sunHouse: number,
-    natalChart?: AstrologyChart,
+    natalAsc: number,
+    chart?: AstrologyChart,
     tLon: number = 121.5,
     tLat: number = 25.04,
     tTz: number = 8
   ) => {
-    let m1Start = `${tYear}-02-26`;
-    let m1End = `${tYear}-03-20`;
-    let m2Start = `${tYear}-06-29`;
-    let m2End = `${tYear}-07-23`;
-    let m3Start = `${tYear}-10-24`;
-    let m3End = `${tYear}-11-13`;
+    const getPlanetLonAtTime = (body: Astronomy.Body, time: Astronomy.AstroTime) => {
+      const geo = Astronomy.GeoVector(body, time, true);
+      return normalizeDegrees(Astronomy.Ecliptic(geo).elon);
+    };
 
-    let mDates1 = `${tYear}年02月26日 ~ ${tYear}年03月20日`;
-    let mDates2 = `${tYear}年06月29日 ~ ${tYear}年07月23日`;
-    let mDates3 = `${tYear}年10月24日 ~ ${tYear}年11月13日`;
+    const scanBodyRetrogrades = (body: Astronomy.Body) => {
+      const intervals: {
+        startIso: string;
+        endIso: string;
+        startLon: number;
+        endLon: number;
+        startMonth: number;
+        startDay: number;
+        endMonth: number;
+        endDay: number;
+        sYear: number;
+        eYear: number;
+      }[] = [];
 
-    if (tYear === 2025) {
-      m1Start = `${tYear}-03-15`; m1End = `${tYear}-04-07`;
-      m2Start = `${tYear}-07-18`; m2End = `${tYear}-08-11`;
-      m3Start = `${tYear}-11-09`; m3End = `${tYear}-11-29`;
-      mDates1 = `${tYear}年03月15日 ~ ${tYear}年04月07日`;
-      mDates2 = `${tYear}年07月18日 ~ ${tYear}年08月11日`;
-      mDates3 = `${tYear}年11月09日 ~ ${tYear}年11月29日`;
-    } else if (tYear === 2027) {
-      m1Start = `${tYear}-02-09`; m1End = `${tYear}-03-03`;
-      m2Start = `${tYear}-06-10`; m2End = `${tYear}-07-04`;
-      m3Start = `${tYear}-10-07`; m3End = `${tYear}-10-28`;
-      mDates1 = `${tYear}年02月09日 ~ ${tYear}年03月03日`;
-      mDates2 = `${tYear}年06月10日 ~ ${tYear}年07月04日`;
-      mDates3 = `${tYear}年10月07日 ~ ${tYear}年10月28日`;
-    } else if (tYear === 2028) {
-      m1Start = `${tYear}-01-24`; m1End = `${tYear}-02-15`;
-      m2Start = `${tYear}-05-21`; m2End = `${tYear}-06-13`;
-      m3Start = `${tYear}-09-19`; m3End = `${tYear}-10-11`;
-      mDates1 = `${tYear}年01月24日 ~ ${tYear}年02月15日`;
-      mDates2 = `${tYear}年05月21日 ~ ${tYear}年06月13日`;
-      mDates3 = `${tYear}年09月19日 ~ ${tYear}年10月11日`;
-    }
+      const startMs = Date.UTC(tYear, 0, 1) - 20 * 86400000;
+      const endMs = Date.UTC(tYear, 11, 31) + 20 * 86400000;
+      const stepMs = 86400000;
+
+      let prevTime = new Astronomy.AstroTime(new Date(startMs));
+      let prevLon = getPlanetLonAtTime(body, prevTime);
+      let isRetro = false;
+      let retroStart: Date | null = null;
+      let retroStartLon = 0;
+
+      for (let ms = startMs + stepMs; ms <= endMs; ms += stepMs) {
+        const curTime = new Astronomy.AstroTime(new Date(ms));
+        const curLon = getPlanetLonAtTime(body, curTime);
+        let diff = curLon - prevLon;
+        if (diff > 180) diff -= 360;
+        if (diff < -180) diff += 360;
+
+        const currentlyRetro = diff < 0;
+        if (currentlyRetro && !isRetro) {
+          isRetro = true;
+          retroStart = new Date(ms);
+          retroStartLon = curLon;
+        } else if (!currentlyRetro && isRetro) {
+          isRetro = false;
+          const retroEnd = new Date(ms);
+          const retroEndLon = curLon;
+
+          const localStart = new Date(retroStart!.getTime() + tTz * 3600000);
+          const localEnd = new Date(retroEnd.getTime() + tTz * 3600000);
+          if (localEnd.getUTCFullYear() >= tYear && localStart.getUTCFullYear() <= tYear) {
+            intervals.push({
+              startIso: localStart.toISOString().slice(0, 10),
+              endIso: localEnd.toISOString().slice(0, 10),
+              startLon: retroStartLon,
+              endLon: retroEndLon,
+              startMonth: localStart.getUTCMonth() + 1,
+              startDay: localStart.getUTCDate(),
+              endMonth: localEnd.getUTCMonth() + 1,
+              endDay: localEnd.getUTCDate(),
+              sYear: localStart.getUTCFullYear(),
+              eYear: localEnd.getUTCFullYear()
+            });
+          }
+          retroStart = null;
+        }
+        prevLon = curLon;
+      }
+      return intervals;
+    };
 
     const broadMercuryDesc = '水星逆行代表思維步調放緩，溝通、合約、交通與電子設備易有延誤或反覆。適合進行「Re-」思考：複盤（Review）、修正（Revision）、重逢舊友（Reconnect）與重審過往決策。';
+    const allRetroList: AstrologicalPredictionReport['retrogrades'] = [];
 
-    const m1Aspects = checkInnerPlanetRetrogradeAspects('mercury', '水星', m1Start, m1End, natalChart, tLon, tLat, tTz);
-    const m2Aspects = checkInnerPlanetRetrogradeAspects('mercury', '水星', m2Start, m2End, natalChart, tLon, tLat, tTz);
-    const m3Aspects = checkInnerPlanetRetrogradeAspects('mercury', '水星', m3Start, m3End, natalChart, tLon, tLat, tTz);
+    // Mercury Retrogrades
+    const mercIntervals = scanBodyRetrogrades(Astronomy.Body.Mercury);
+    mercIntervals.forEach((mInt, mIdx) => {
+      const startSign = ZODIAC_SIGNS[Math.floor(mInt.startLon / 30)]?.name || '';
+      const endSign = ZODIAC_SIGNS[Math.floor(mInt.endLon / 30)]?.name || '';
+      const startHouse = Math.floor(normalizeDegrees(mInt.startLon - natalAsc) / 30) + 1;
+      const endHouse = Math.floor(normalizeDegrees(mInt.endLon - natalAsc) / 30) + 1;
+      const houseText = startHouse === endHouse ? `第 ${startHouse} 宮` : `第 ${startHouse} 宮 ➔ 第 ${endHouse} 宮`;
+      const signText = startSign === endSign ? startSign : `${startSign} ➔ ${endSign}`;
 
-    const mvStart = tYear % 2 === 0 ? `${tYear - 1}-12-06` : `${tYear}-03-02`;
-    const mvEnd = tYear % 2 === 0 ? `${tYear}-02-24` : `${tYear}-04-12`;
-    const mvPlanetId = tYear % 2 === 0 ? 'mars' : 'venus';
-    const mvPlanetName = tYear % 2 === 0 ? '火星' : '金星';
-    const mvAspects = checkInnerPlanetRetrogradeAspects(mvPlanetId, mvPlanetName, mvStart, mvEnd, natalChart, tLon, tLat, tTz);
-
-    const h1 = sunHouse;
-    const h1Name = HOUSE_DETAILS[h1 - 1]?.name || `第 ${h1} 宮`;
-
-    const h2 = ((sunHouse + 3) % 12) + 1;
-    const h2Name = HOUSE_DETAILS[h2 - 1]?.name || `第 ${h2} 宮`;
-
-    const h3 = ((sunHouse + 6) % 12) + 1;
-    const h3Name = HOUSE_DETAILS[h3 - 1]?.name || `第 ${h3} 宮`;
-
-    const h4 = ((sunHouse + 1) % 12) + 1;
-    const h4Name = HOUSE_DETAILS[h4 - 1]?.name || `第 ${h4} 宮`;
-
-    const h5 = ((sunHouse + 4) % 12) + 1;
-    const h5Name = HOUSE_DETAILS[h5 - 1]?.name || `第 ${h5} 宮`;
-
-    const h6 = ((sunHouse + 6) % 12) + 1;
-    const h6Name = HOUSE_DETAILS[h6 - 1]?.name || `第 ${h6} 宮`;
-
-    const h7 = ((sunHouse + 9) % 12) + 1;
-    const h7Name = HOUSE_DETAILS[h7 - 1]?.name || `第 ${h7} 宮`;
-
-    return [
-      {
+      const aspects = checkInnerPlanetRetrogradeAspects('mercury', '水星', mInt.startIso, mInt.endIso, chart, tLon, tLat, tTz);
+      allRetroList.push({
         planet: '水星',
         symbol: '☿',
-        period: '第1次逆行（春季）',
-        exactDates: mDates1,
-        stationPoint: `精確轉向停滯期（前後各 3 天影響最強）`,
-        type: '水星逆行 (第 1 次)',
+        period: `第${mIdx + 1}次逆行（${mInt.startMonth}月 ~ ${mInt.endMonth}月）`,
+        exactDates: `${mInt.sYear}年${String(mInt.startMonth).padStart(2, '0')}月${String(mInt.startDay).padStart(2, '0')}日 ~ ${mInt.eYear}年${String(mInt.endMonth).padStart(2, '0')}月${String(mInt.endDay).padStart(2, '0')}日`,
+        stationPoint: `留（Station）轉向點：${mInt.startMonth}月${String(mInt.startDay).padStart(2, '0')}日（留轉逆）與 ${mInt.endMonth}月${String(mInt.endDay).padStart(2, '0')}日（留轉順）前後各3天`,
+        type: `水星逆行 (第 ${mIdx + 1} 次)`,
         description: broadMercuryDesc,
-        sign: ZODIAC_SIGNS[(sunHouse + 0) % 12].name,
-        house: h1,
-        houseName: h1Name,
+        sign: signText,
+        house: startHouse,
+        houseName: `${houseText}（${HOUSE_DETAILS[startHouse - 1]?.name || ''}）`,
         isInnerPlanet: true,
-        hasNatalAspects: m1Aspects.hasNatalAspects,
-        natalAspectsSummary: m1Aspects.natalAspectsSummary
-      },
-      {
-        planet: '水星',
-        symbol: '☿',
-        period: '第2次逆行（夏季）',
-        exactDates: mDates2,
-        stationPoint: `精確轉向停滯期（前後各 3 天影響最強）`,
-        type: '水星逆行 (第 2 次)',
-        description: broadMercuryDesc,
-        sign: ZODIAC_SIGNS[(sunHouse + 4) % 12].name,
-        house: h2,
-        houseName: h2Name,
+        hasNatalAspects: aspects.hasNatalAspects,
+        natalAspectsSummary: aspects.natalAspectsSummary
+      });
+    });
+
+    // Venus Retrogrades
+    const venusIntervals = scanBodyRetrogrades(Astronomy.Body.Venus);
+    venusIntervals.forEach((vInt) => {
+      const startSign = ZODIAC_SIGNS[Math.floor(vInt.startLon / 30)]?.name || '';
+      const endSign = ZODIAC_SIGNS[Math.floor(vInt.endLon / 30)]?.name || '';
+      const startHouse = Math.floor(normalizeDegrees(vInt.startLon - natalAsc) / 30) + 1;
+      const endHouse = Math.floor(normalizeDegrees(vInt.endLon - natalAsc) / 30) + 1;
+      const houseText = startHouse === endHouse ? `第 ${startHouse} 宮` : `第 ${startHouse} 宮 ➔ 第 ${endHouse} 宮`;
+      const signText = startSign === endSign ? startSign : `${startSign} ➔ ${endSign}`;
+      const aspects = checkInnerPlanetRetrogradeAspects('venus', '金星', vInt.startIso, vInt.endIso, chart, tLon, tLat, tTz);
+
+      allRetroList.push({
+        planet: '金星',
+        symbol: '♀',
+        period: `金星逆行週期（每 18 個月一次）`,
+        exactDates: `${vInt.sYear}年${String(vInt.startMonth).padStart(2, '0')}月${String(vInt.startDay).padStart(2, '0')}日 ~ ${vInt.eYear}年${String(vInt.endMonth).padStart(2, '0')}月${String(vInt.endDay).padStart(2, '0')}日`,
+        stationPoint: `留（Station）轉向點：${vInt.startMonth}月${String(vInt.startDay).padStart(2, '0')}日與 ${vInt.endMonth}月${String(vInt.endDay).padStart(2, '0')}日`,
+        type: '金星逆行 (價值觀與情感沉澱)',
+        description: '檢視感情互動模式、金錢收支平衡與自我價值評估，適合重修舊好或重新審視合作條款。',
+        sign: signText,
+        house: startHouse,
+        houseName: `${houseText}（${HOUSE_DETAILS[startHouse - 1]?.name || ''}）`,
         isInnerPlanet: true,
-        hasNatalAspects: m2Aspects.hasNatalAspects,
-        natalAspectsSummary: m2Aspects.natalAspectsSummary
-      },
-      {
-        planet: '水星',
-        symbol: '☿',
-        period: '第3次逆行（秋季）',
-        exactDates: mDates3,
-        stationPoint: `精確轉向停滯期（前後各 3 天影響最強）`,
-        type: '水星逆行 (第 3 次)',
-        description: broadMercuryDesc,
-        sign: ZODIAC_SIGNS[(sunHouse + 8) % 12].name,
-        house: h3,
-        houseName: h3Name,
+        hasNatalAspects: aspects.hasNatalAspects,
+        natalAspectsSummary: aspects.natalAspectsSummary
+      });
+    });
+
+    // Mars Retrogrades
+    const marsIntervals = scanBodyRetrogrades(Astronomy.Body.Mars);
+    marsIntervals.forEach((mInt) => {
+      const startSign = ZODIAC_SIGNS[Math.floor(mInt.startLon / 30)]?.name || '';
+      const endSign = ZODIAC_SIGNS[Math.floor(mInt.endLon / 30)]?.name || '';
+      const startHouse = Math.floor(normalizeDegrees(mInt.startLon - natalAsc) / 30) + 1;
+      const endHouse = Math.floor(normalizeDegrees(mInt.endLon - natalAsc) / 30) + 1;
+      const houseText = startHouse === endHouse ? `第 ${startHouse} 宮` : `第 ${startHouse} 宮 ➔ 第 ${endHouse} 宮`;
+      const signText = startSign === endSign ? startSign : `${startSign} ➔ ${endSign}`;
+      const aspects = checkInnerPlanetRetrogradeAspects('mars', '火星', mInt.startIso, mInt.endIso, chart, tLon, tLat, tTz);
+
+      allRetroList.push({
+        planet: '火星',
+        symbol: '♂',
+        period: `火星逆行週期（每 26 個月一次）`,
+        exactDates: `${mInt.sYear}年${String(mInt.startMonth).padStart(2, '0')}月${String(mInt.startDay).padStart(2, '0')}日 ~ ${mInt.eYear}年${String(mInt.endMonth).padStart(2, '0')}月${String(mInt.endDay).padStart(2, '0')}日`,
+        stationPoint: `留（Station）轉向點：${mInt.startMonth}月${String(mInt.startDay).padStart(2, '0')}日與 ${mInt.endMonth}月${String(mInt.endDay).padStart(2, '0')}日`,
+        type: '火星逆行 (行動調節與能量內化)',
+        description: '行動步調面臨阻滯或重整，熱情內轉，避免魯莽決策或正面衝突，適度沉澱蓄力。',
+        sign: signText,
+        house: startHouse,
+        houseName: `${houseText}（${HOUSE_DETAILS[startHouse - 1]?.name || ''}）`,
         isInnerPlanet: true,
-        hasNatalAspects: m3Aspects.hasNatalAspects,
-        natalAspectsSummary: m3Aspects.natalAspectsSummary
-      },
-      {
-        planet: '火星 / 金星',
-        symbol: '♀/♂',
-        period: '火星約 2 年一次 / 金星約 18 個月一次',
-        exactDates: tYear % 2 === 0 ? `火星逆行：${tYear - 1}年12月 ~ ${tYear}年02月24日` : `金星逆行：${tYear}年03月 ~ ${tYear}年04月`,
-        stationPoint: `停滯點：${tYear}年轉換期（行動力內轉與價值重整）`,
-        type: '行動與情感價值重審',
-        description: '考驗行動力受阻、熱情內轉或價值觀的深層變革。',
-        sign: ZODIAC_SIGNS[(sunHouse + 2) % 12].name,
-        house: h4,
-        houseName: h4Name,
-        guideQuote: `金星：${PLANET_RETROGRADE_GUIDE.find(g => g.planet === '金星')?.houses[h4] || ''}\n火星：${PLANET_RETROGRADE_GUIDE.find(g => g.planet === '火星')?.houses[h4] || ''}`,
-        isInnerPlanet: true,
-        hasNatalAspects: mvAspects.hasNatalAspects,
-        natalAspectsSummary: mvAspects.natalAspectsSummary
-      },
-      {
-        planet: '木星',
-        symbol: '♃',
-        period: '每年逆行約 4 個月',
-        exactDates: `${tYear}年11月上旬 ~ ${tYear + 1}年03月`,
-        stationPoint: `停滯點：${tYear}年11月（擴張與信念的內部沈澱）`,
-        type: '木星逆行 (心智哲學與機會重整)',
-        description: '外行星三次觸發中第一波，檢視過去一年獲得的機會與擴張是否過度。',
-        sign: ZODIAC_SIGNS[(sunHouse + 7) % 12].name,
-        house: h5,
-        houseName: h5Name,
-        guideQuote: PLANET_RETROGRADE_GUIDE.find(g => g.planet === '木星')?.houses[h5] || '',
-        isInnerPlanet: false
-      },
-      {
-        planet: '土星',
-        symbol: '♄',
-        period: '每年逆行約 4.5 個月',
-        exactDates: `${tYear}年07月中旬 ~ ${tYear}年11月下旬`,
-        stationPoint: `停滯點：${tYear}年07月中與11月下旬（結構、責任與壓力測試）`,
-        type: '土星逆行 (責任與現實考驗的三次觸發)',
-        description: '對本命敏感點形成三部曲（順行碰 ➔ 逆行碰 ➔ 順行定案），經歷結構重組。',
-        sign: ZODIAC_SIGNS[(sunHouse + 9) % 12].name,
-        house: h6,
-        houseName: h6Name,
-        guideQuote: PLANET_RETROGRADE_GUIDE.find(g => g.planet === '土星')?.houses[h6] || '',
-        isInnerPlanet: false
-      },
-      {
-        planet: '天王星 / 海王星 / 冥王星',
-        symbol: '♅/♆/♇',
-        period: '每年固定逆行 5 個月',
-        exactDates: `冥王星：${tYear}年05月 ~ ${tYear}年10月\n海王星：${tYear}年06月 ~ ${tYear}年11月\n天王星：${tYear}年09月 ~ ${tYear + 1}年01月`,
-        stationPoint: `長期世代轉化停滯點（年度心靈與體制轉折關鍵週）`,
-        type: '遠行星集體潛意識與世代變革',
-        description: '流年冥王星在本命宮位長期停留並多次逆行折返，促成數年長期的深層重整。',
-        sign: ZODIAC_SIGNS[(sunHouse + 10) % 12].name,
-        house: h7,
-        houseName: h7Name,
-        guideQuote: `天王星：${PLANET_RETROGRADE_GUIDE.find(g => g.planet === '天王星')?.houses[h7] || ''}\n海王星：${PLANET_RETROGRADE_GUIDE.find(g => g.planet === '海王星')?.houses[h7] || ''}\n冥王星：${PLANET_RETROGRADE_GUIDE.find(g => g.planet === '冥王星')?.houses[h7] || ''}`,
-        isInnerPlanet: false
-      }
+        hasNatalAspects: aspects.hasNatalAspects,
+        natalAspectsSummary: aspects.natalAspectsSummary
+      });
+    });
+
+    // Outer Planets (Jupiter, Saturn, Uranus, Neptune, Pluto)
+    const outerBodies = [
+      { body: Astronomy.Body.Jupiter, name: '木星', symbol: '♃', desc: '心智哲學與機會重整，檢視過度擴張與核心信念。', type: '木星逆行' },
+      { body: Astronomy.Body.Saturn, name: '土星', symbol: '♄', desc: '現實邊界與責任結構壓力測試，經歷結構重組。', type: '土星逆行' },
+      { body: Astronomy.Body.Uranus, name: '天王星', symbol: '♅', desc: '體制突破與獨立原創性的內化沉澱。', type: '天王星逆行' },
+      { body: Astronomy.Body.Neptune, name: '海王星', symbol: '♆', desc: '靈性幻象消退與集體潛意識直覺淨化。', type: '海王星逆行' },
+      { body: Astronomy.Body.Pluto, name: '冥王星', symbol: '♇', desc: '世代深層權力與心理重塑轉化。', type: '冥王星逆行' }
     ];
+
+    outerBodies.forEach(ob => {
+      const intervals = scanBodyRetrogrades(ob.body);
+      intervals.forEach(oInt => {
+        const startSign = ZODIAC_SIGNS[Math.floor(oInt.startLon / 30)]?.name || '';
+        const endSign = ZODIAC_SIGNS[Math.floor(oInt.endLon / 30)]?.name || '';
+        const startHouse = Math.floor(normalizeDegrees(oInt.startLon - natalAsc) / 30) + 1;
+        const endHouse = Math.floor(normalizeDegrees(oInt.endLon - natalAsc) / 30) + 1;
+        const houseText = startHouse === endHouse ? `第 ${startHouse} 宮` : `第 ${startHouse} 宮 ➔ 第 ${endHouse} 宮`;
+        const signText = startSign === endSign ? startSign : `${startSign} ➔ ${endSign}`;
+
+        allRetroList.push({
+          planet: ob.name,
+          symbol: ob.symbol,
+          period: `每年固定逆行約 4~5 個月`,
+          exactDates: `${oInt.sYear}年${String(oInt.startMonth).padStart(2, '0')}月${String(oInt.startDay).padStart(2, '0')}日 ~ ${oInt.eYear}年${String(oInt.endMonth).padStart(2, '0')}月${String(oInt.endDay).padStart(2, '0')}日`,
+          stationPoint: `轉向停滯點：${oInt.startMonth}月${String(oInt.startDay).padStart(2, '0')}日與 ${oInt.endMonth}月${String(oInt.endDay).padStart(2, '0')}日`,
+          type: ob.type,
+          description: ob.desc,
+          sign: signText,
+          house: startHouse,
+          houseName: `${houseText}（${HOUSE_DETAILS[startHouse - 1]?.name || ''}）`,
+          guideQuote: PLANET_RETROGRADE_GUIDE.find(g => g.planet === ob.name)?.houses[startHouse] || '',
+          isInnerPlanet: false
+        });
+      });
+    });
+
+    return allRetroList;
   };
 
-  const retrogrades = getRetrogradesForYear(transitYear, srSunHouse, natalChart, transitLongitude, transitLatitude, transitTimezone);
+  const eclipses = getAstronomicalEclipsesForYear(transitYear, natalChart.ascendant, transitTimezone);
+  const moonPhases = getAstronomicalMoonPhasesForYear(transitYear, natalChart.ascendant, transitTimezone);
+  const retrogrades = getAstronomicalRetrogradesForYear(
+    transitYear,
+    natalChart.ascendant,
+    natalChart,
+    transitLongitude,
+    transitLatitude,
+    transitTimezone
+  );
 
-  // Step 5 & 6: Monthly Timeline & Scoring (Calculated at query/transit location)
+  // Step 5 & 6: Monthly Timeline & Astronomical Event Scoring (Calculated at query/transit location)
   const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
   const allMonthlyCharts: AstrologyChart[] = [];
   const monthlyTimeline: MonthlyForecastItem[] = months.map((mName, idx) => {
@@ -2333,35 +2498,52 @@ export function generatePredictiveReport(
     const currentSunHouse = Math.floor(normalizeDegrees(mSun.longitude - natalChart.ascendant) / 30) + 1;
     const currentSunSign = ZODIAC_SIGNS[mSun.signIndex]?.name || '';
 
-    // Hotspot conditions: current Sun house month at query location, eclipse months for this transitYear, or square/opposite house months
-    const isHotspot = monthNum === currentSunHouse ||
-                      monthNum === ((currentSunHouse + 3) % 12) + 1 ||
-                      monthNum === ((currentSunHouse + 9) % 12) + 1 ||
-                      monthNum === eclipseData.m1 ||
-                      monthNum === eclipseData.m2;
+    // Query Real Astronomical Events for this month
+    const monthEclipses = eclipses.filter(e => e.month === monthNum);
+    const monthLuminaries = moonPhases.filter(m => m.month === monthNum);
 
-    const score = isHotspot ? 3 : (monthNum % 2 === 0 ? 2 : 1);
-    let triggerEvents: string[] = [];
+    // Check inner planet stations & retrogrades in this month
+    const stationEventsInMonth: { planet: string; type: string; dateStr: string; house: number; sign: string }[] = [];
+    const activeRetrogradesInMonth: { planet: string; house: number; periodStr: string }[] = [];
 
-    if (isHotspot) {
-      if (monthNum === currentSunHouse) {
-        triggerEvents = [`問事地點行運太陽精確進駐第 ${currentSunHouse} 宮 (${currentSunSign})`, `主命星【${ruler.planet}】強勢引動第 ${currentSunHouse} 宮`, `問事地點核心舞台與決策焦點啟動`];
-      } else if (monthNum === eclipseData.m1 || monthNum === eclipseData.m2) {
-        triggerEvents = [`${activeSRYear}年日月蝕軸線強烈交會問事地點第 ${currentSunHouse} 宮`, `突發環境變動與心態轉折點`, `重要合約、合作或人際關係重整`];
-      } else {
-        triggerEvents = [`問事地點行運外行星（土/冥/木）與本命敏感點形成緊密四分/對分相`, `壓力測試與結構性突破期`];
+    retrogrades.forEach(r => {
+      // Parse dates to check exact stations
+      const dateMatch = r.exactDates.match(/(\d{4})年(\d{2})月(\d{2})日\s*~\s*(\d{4})年(\d{2})月(\d{2})日/);
+      if (dateMatch) {
+        const sm = parseInt(dateMatch[2], 10);
+        const sd = parseInt(dateMatch[3], 10);
+        const em = parseInt(dateMatch[5], 10);
+        const ed = parseInt(dateMatch[6], 10);
+
+        if (sm === monthNum) {
+          stationEventsInMonth.push({
+            planet: r.planet,
+            type: '留轉逆行',
+            dateStr: `${sm}月${String(sd).padStart(2, '0')}日`,
+            house: r.house,
+            sign: r.sign
+          });
+        }
+        if (em === monthNum) {
+          stationEventsInMonth.push({
+            planet: r.planet,
+            type: '留轉順行',
+            dateStr: `${em}月${String(ed).padStart(2, '0')}日`,
+            house: r.house,
+            sign: r.sign
+          });
+        }
+        if ((sm <= em && monthNum >= sm && monthNum <= em) || (sm > em && (monthNum >= sm || monthNum <= em))) {
+          if (r.isInnerPlanet) {
+            activeRetrogradesInMonth.push({
+              planet: r.planet,
+              house: r.house,
+              periodStr: r.exactDates
+            });
+          }
+        }
       }
-    } else {
-      if (monthNum % 3 === 0) {
-        triggerEvents = [`水星逆行停滯期（檢視與舊案重審）`, `日常行政細節覆核與溝通校準`];
-      } else {
-        triggerEvents = [];
-      }
-    }
-
-    // Calculate ALL Monthly Transit Aspect Quotes dynamically comparing monthlyChart vs natalChart (INNER PLANETS ONLY)
-    const aspectQuotes = getMonthlyAspectQuotes(natalChart, monthlyChart, monthNum, activeSRYear);
-    const aspectQuote = aspectQuotes[0];
+    });
 
     // Calculate Monthly Angle Crossings (行星過四軸事件)
     const angleCrossings = getMonthlyAngleCrossings(
@@ -2373,20 +2555,87 @@ export function generatePredictiveReport(
       transitTimezone
     );
 
-    if (angleCrossings.length > 0) {
-      angleCrossings.forEach(ae => {
-        triggerEvents.push(`⚡ [行星過軸] 流年${ae.planet}${ae.isRetrograde ? ' (逆行)' : ''}合相本命${ae.angleName} (${ae.exactDateStr})`);
+    // Calculate ALL Monthly Transit Aspect Quotes dynamically comparing monthlyChart vs natalChart
+    const aspectQuotes = getMonthlyAspectQuotes(natalChart, monthlyChart, monthNum, activeSRYear);
+    const aspectQuote = aspectQuotes[0];
+
+    // Check Solar Return Month (Birthday Activation)
+    const natalSunMonth = (natalChart.planets.find(p => p.id === 'sun')?.signIndex !== undefined)
+      ? Math.floor((natalChart.planets.find(p => p.id === 'sun')!.signIndex + 3) % 12) + 1
+      : 0;
+    const isSolarReturnMonth = activeSRYear === transitYear && srResult.exactTimeFormatted.includes(`-${String(monthNum).padStart(2, '0')}-`);
+
+    // Compile dynamic, real astronomical trigger events
+    const triggerEvents: string[] = [];
+
+    // 1. Eclipses in this month
+    monthEclipses.forEach(ec => {
+      triggerEvents.push(`⚡ [${ec.type}] ${ec.dateStr} 重磅引動本命第 ${ec.house} 宮【${HOUSE_DETAILS[ec.house - 1]?.name || ''}】（${ec.sign} ${ec.degree}°）`);
+    });
+
+    // 2. Planet Stations in this month
+    stationEventsInMonth.forEach(st => {
+      triggerEvents.push(`☿ [留點停滯] ${st.planet}於 ${st.dateStr} ${st.type}（${st.sign}，第 ${st.house} 宮），進入關鍵重整轉折期`);
+    });
+
+    // 3. Angle Crossings in this month
+    angleCrossings.forEach(ae => {
+      triggerEvents.push(`⚡ [行星過軸] 流年${ae.planet}${ae.isRetrograde ? ' (逆行)' : ''}合相本命${ae.angleName} (${ae.exactDateStr})`);
+    });
+
+    // 4. Real Moon Phases (New & Full Moons) in this month
+    monthLuminaries.forEach(mp => {
+      triggerEvents.push(`${mp.type === '新月' ? '🌑' : '🌕'} ${mp.dateStr} ${mp.timeStr} ${mp.type} (${mp.sign} ${mp.degree}°) 點亮本命第 ${mp.house} 宮【${HOUSE_DETAILS[mp.house - 1]?.name || ''}】動能`);
+    });
+
+    // 5. Birthday / Solar Return activation
+    if (isSolarReturnMonth) {
+      triggerEvents.push(`☀️ 太陽回歸生日月份：啟動本年度回歸第 ${srSunHouse} 宮【${HOUSE_DETAILS[srSunHouse - 1]?.name || ''}】全年生涯核心戰場`);
+    }
+
+    // 6. Active outer aspects if tight
+    if (aspectQuotes && aspectQuotes.length > 0) {
+      aspectQuotes.slice(0, 1).forEach(aq => {
+        triggerEvents.push(`🪐 ${aq.title}：${aq.aspectMeaning}`);
       });
+    }
+
+    if (triggerEvents.length === 0) {
+      triggerEvents.push(`✨ 內行星平穩過境本命第 ${currentSunHouse} 宮【${HOUSE_DETAILS[currentSunHouse - 1]?.name || ''}】（${currentSunSign}），維持日常步調與穩定推進`);
+    }
+
+    // --- Astronomical Intensity Scoring (Evidence-Based, Zero Hardcoded Parity) ---
+    let eventIntensityScore = 0;
+    if (monthEclipses.length > 0) eventIntensityScore += 3.0 * monthEclipses.length;
+    if (angleCrossings.length > 0) eventIntensityScore += 2.0 * angleCrossings.length;
+    if (stationEventsInMonth.length > 0) eventIntensityScore += 1.5 * stationEventsInMonth.length;
+    if (isSolarReturnMonth) eventIntensityScore += 2.0;
+    if (aspectQuotes.length > 0) eventIntensityScore += 1.0;
+    if (monthLuminaries.length > 0) eventIntensityScore += 0.5;
+
+    const isHotspot = eventIntensityScore >= 3.0;
+    const intensity: 'high' | 'medium' | 'low' = isHotspot ? 'high' : (eventIntensityScore >= 1.5 ? 'medium' : 'low');
+    const score = isHotspot ? 3 : (eventIntensityScore >= 1.5 ? 2 : 1);
+
+    // Derived Dynamic Theme
+    let dynamicTheme = `平穩推進期`;
+    if (monthEclipses.length > 0) {
+      dynamicTheme = `${monthEclipses[0].type}聚焦第 ${monthEclipses[0].house} 宮【${HOUSE_DETAILS[monthEclipses[0].house - 1]?.name || ''}】重大突破與轉化`;
+    } else if (angleCrossings.length > 0) {
+      dynamicTheme = `流年星體合相本命【${angleCrossings[0].angleName}】，外在生活情勢重大躍進`;
+    } else if (isSolarReturnMonth) {
+      dynamicTheme = `太陽回歸生日點啟動，聚焦第 ${srSunHouse} 宮【${HOUSE_DETAILS[srSunHouse - 1]?.name || ''}】年度核心舞台`;
+    } else if (stationEventsInMonth.length > 0) {
+      dynamicTheme = `${stationEventsInMonth[0].planet}${stationEventsInMonth[0].type}，第 ${stationEventsInMonth[0].house} 宮深度檢視與校準`;
+    } else if (isHotspot) {
+      dynamicTheme = `高能聚焦期：多重星象交會引動本命第 ${currentSunHouse} 宮【${HOUSE_DETAILS[currentSunHouse - 1]?.name || ''}】`;
+    } else {
+      dynamicTheme = `內行星常態巡行第 ${currentSunHouse} 宮【${HOUSE_DETAILS[currentSunHouse - 1]?.name || ''}】，步調沉著穩健`;
     }
 
     // Calculate Monthly House Transits for planets at query location relative to Natal chart houses
     const outerNames = ['木星', '土星', '天王星', '海王星', '冥王星'];
     const outerPlanetsList = monthlyChart.planets.filter(p => outerNames.includes(p.name));
-
-    // Sun house at query location for this month
-    const sh = currentSunHouse;
-    // Opposite house for Full Moon
-    const fh = ((sh + 5) % 12) + 1;
 
     const houseTransitsMap = new Map<number, MonthlyHouseTransitDetail>();
 
@@ -2428,21 +2677,23 @@ export function generatePredictiveReport(
       // Filter angle crossing events for this house
       const houseAngleEvents = angleCrossings.filter(ae => ae.houseNumber === hNum);
 
-      // Check Eclipse
-      let hasEclipse: { type: string; date: string } | undefined = undefined;
-      if (monthNum === eclipseData.m1 && hNum === ((currentSunHouse + 1) % 12) + 1) {
-        hasEclipse = { type: '日食 (新能量突破)', date: `${monthNum}月15日` };
-      } else if (monthNum === eclipseData.m2 && hNum === ((currentSunHouse + 6) % 12) + 1) {
-        hasEclipse = { type: '月食 (關係收尾驗收)', date: `${monthNum}月18日` };
-      }
+      // Check Eclipse in this house
+      const eclipseInThisHouse = monthEclipses.find(e => e.house === hNum);
+      const hasEclipse = eclipseInThisHouse
+        ? { type: eclipseInThisHouse.type, date: eclipseInThisHouse.dateStr }
+        : undefined;
 
-      // Check New Moon / Full Moon
-      let hasLuminaries: { type: '新月' | '滿月'; date: string } | undefined = undefined;
-      if (hNum === sh) {
-        hasLuminaries = { type: '新月', date: `${monthNum}月08日` };
-      } else if (hNum === fh) {
-        hasLuminaries = { type: '滿月', date: `${monthNum}月23日` };
-      }
+      // Check Real New Moon / Full Moon in this house
+      const moonInThisHouse = monthLuminaries.find(m => m.house === hNum);
+      const hasLuminaries = moonInThisHouse
+        ? {
+            type: moonInThisHouse.type,
+            date: moonInThisHouse.dateStr,
+            sign: moonInThisHouse.sign,
+            degree: moonInThisHouse.degree,
+            timeStr: moonInThisHouse.timeStr
+          }
+        : undefined;
 
       const houseSignName = opInHouse ? ZODIAC_SIGNS[opInHouse.signIndex]?.name : ZODIAC_SIGNS[natalChart.houses[hNum - 1]?.signIndex]?.name;
 
@@ -2477,18 +2728,25 @@ export function generatePredictiveReport(
     // 3. Guarantee currentSunHouse (focal house for the month) is included
     getOrCreateHouseDetail(currentSunHouse);
 
-    // 4. Add full moon house
-    getOrCreateHouseDetail(fh);
+    // 4. Guarantee houses with real eclipses this month are included
+    monthEclipses.forEach(e => {
+      getOrCreateHouseDetail(e.house);
+    });
+
+    // 5. Guarantee houses with real New Moon / Full Moon this month are included
+    monthLuminaries.forEach(m => {
+      getOrCreateHouseDetail(m.house);
+    });
 
     const houseTransits = Array.from(houseTransitsMap.values()).sort((a, b) => a.houseNumber - b.houseNumber);
 
     return {
       month: monthNum,
       monthName: mName,
-      intensity: (isHotspot ? 'high' : (score === 2 ? 'medium' : 'low')) as 'high' | 'medium' | 'low',
-      theme: isHotspot ? `強效引動問事地點第 ${currentSunHouse} 宮【${HOUSE_DETAILS[currentSunHouse - 1]?.name}】` : `平穩期`,
+      intensity,
+      theme: dynamicTheme,
       timing: `上旬快星觸發，中下旬相位漸趨精確`,
-      aspects: isHotspot ? [`外行星行運過境問事地點星盤`, `日月蝕能量交會期`] : [`快星日常過境`, `平穩維護期`],
+      aspects: isHotspot ? [`外行星行運過境本命盤焦點`, `日月蝕/過軸/留點關鍵能量期`] : [`快星日常過境`, `平穩維護期`],
       triggerEvents,
       score,
       aspectQuote,
@@ -2497,15 +2755,102 @@ export function generatePredictiveReport(
     };
   });
 
+  // --- Step 7: Technical Three-Tier Convergence Cross-Testing ---
+  // Tier 1: Solar Return Focus Houses
+  const srFocusHouses = new Set<number>();
+  srFocusHouses.add(solarReturn.sunHouse);
+  if (solarReturn.clusteringHouse) srFocusHouses.add(solarReturn.clusteringHouse);
+  const srAscNatalHouse = Math.floor(normalizeDegrees(srChart.ascendant - natalChart.ascendant) / 30) + 1;
+  srFocusHouses.add(srAscNatalHouse);
+
+  // Tier 2: Real Eclipse Houses
+  const eclipseHouses = new Set<number>();
+  eclipses.forEach(e => {
+    eclipseHouses.add(e.house);
+    eclipseHouses.add(e.sunHouse);
+    eclipseHouses.add(e.moonHouse);
+  });
+
+  // Tier 3: Major Transit Outer Planet & Angle Crossing Houses
+  const transitOuterHouses = new Set<number>();
+  const outerNames = ['木星', '土星', '天王星', '海王星', '冥王星'];
+  natalChart.planets.forEach(np => {
+    // Check transiting outer planet current houses
+  });
+  if (allMonthlyCharts.length > 0) {
+    allMonthlyCharts.forEach(mc => {
+      mc.planets.filter(p => outerNames.includes(p.name)).forEach(op => {
+        const h = Math.floor(normalizeDegrees(op.longitude - natalChart.ascendant) / 30) + 1;
+        transitOuterHouses.add(h);
+      });
+    });
+  }
+
+  // Cross-reference testing:
+  const threeTierConvergenceHouses = Array.from(srFocusHouses).filter(h =>
+    eclipseHouses.has(h) && transitOuterHouses.has(h)
+  );
+
+  const twoTierSrEclipse = Array.from(srFocusHouses).filter(h => eclipseHouses.has(h) && !threeTierConvergenceHouses.includes(h));
+  const twoTierSrTransit = Array.from(srFocusHouses).filter(h => transitOuterHouses.has(h) && !threeTierConvergenceHouses.includes(h));
+  const twoTierEclipseTransit = Array.from(eclipseHouses).filter(h => transitOuterHouses.has(h) && !threeTierConvergenceHouses.includes(h));
+
+  const majorThemes: string[] = [];
+  const secondaryThemes: string[] = [];
+
+  if (threeTierConvergenceHouses.length > 0) {
+    threeTierConvergenceHouses.forEach(h => {
+      const hName = HOUSE_DETAILS[h - 1]?.name || `第 ${h} 宮`;
+      majorThemes.push(
+        `🎯 【三層共振全面疊加 (Three-Tier Convergence)】第 ${h} 宮【${hName}】：太陽回歸盤核心焦點、年度日月蝕軸線與外行星長期行運三者完全交集！此領域為年度絕對核心戰場，勢必帶來結構性重大突破與命運轉折。`
+      );
+    });
+  } else {
+    majorThemes.push(
+      `🔍 【三層技術交叉檢驗分析】經太陽回歸盤、年度日月蝕軸線與外行星行運之交叉比對，本年度各技術維度「未出現單一宮位之三層疊加（非極端聚焦型年運）」。回歸太陽坐落第 ${srSunHouse} 宮【${HOUSE_DETAILS[srSunHouse - 1]?.name}】，日月蝕聚焦於第 ${Array.from(eclipseHouses).join('、')} 宮，外行星駐留於第 ${Array.from(transitOuterHouses).sort((a,b)=>a-b).join('、')} 宮。各領域呈現多元獨立推動力，宜採取多線並進、平衡發展策略。`
+    );
+  }
+
+  if (twoTierSrEclipse.length > 0) {
+    twoTierSrEclipse.forEach(h => {
+      const hName = HOUSE_DETAILS[h - 1]?.name || `第 ${h} 宮`;
+      majorThemes.push(
+        `🌟 【雙層共振重點引動】第 ${h} 宮【${hName}】：同時受到「太陽回歸盤」與「年度日月蝕軸線」雙重引爆，為全年度重點轉化與外部機遇舞台。`
+      );
+    });
+  }
+  if (twoTierSrTransit.length > 0) {
+    twoTierSrTransit.forEach(h => {
+      const hName = HOUSE_DETAILS[h - 1]?.name || `第 ${h} 宮`;
+      majorThemes.push(
+        `🌟 【雙層共振重點引動】第 ${h} 宮【${hName}】：同時受到「太陽回歸焦點」與「外行星長期行運」雙重深耕，考驗長期耐力與核心實力建立。`
+      );
+    });
+  }
+  if (twoTierEclipseTransit.length > 0) {
+    twoTierEclipseTransit.forEach(h => {
+      const hName = HOUSE_DETAILS[h - 1]?.name || `第 ${h} 宮`;
+      majorThemes.push(
+        `⚡ 【雙層共振重點引動】第 ${h} 宮【${hName}】：同時受到「日月蝕突發能量」與「外行星行運」交會引動，易迎來外部環境或體制的意外更迭。`
+      );
+    });
+  }
+
+  // Secondary Themes: Real eclipses & retrogrades
+  const eclipseListSummary = eclipses.map(e => `${e.dateStr} ${e.type}（第 ${e.house} 宮）`).join('；');
+  secondaryThemes.push(`🌒 年度日月蝕節奏：${eclipseListSummary || '本年度無主要日月蝕'}`);
+
+  const innerRetros = retrogrades.filter(r => r.isInnerPlanet);
+  if (innerRetros.length > 0) {
+    const retroSummary = innerRetros.map(r => `${r.planet}逆行（${r.exactDates}，${r.sign}，${r.houseName}）`).join('；');
+    secondaryThemes.push(`☿ 個人星體逆行調校：${retroSummary}`);
+  } else {
+    secondaryThemes.push(`☿ 本年度內行星運作平穩，無密集個人行星逆行干擾。`);
+  }
+
   const scoringConclusion = {
-    majorThemes: [
-      solarReturn.annualTheme,
-      `主命星【${ruler.planet}】與第 ${srSunHouse} 宮（${HOUSE_DETAILS[srSunHouse - 1]?.name}）之長效外行星觸發（三層全中：回歸盤+蝕相+行運）`
-    ],
-    secondaryThemes: [
-      `春季與秋季日月蝕交會帶來的情感與事業轉折`,
-      `水星逆行（共3次）期間的溝通重審與合約校準`
-    ]
+    majorThemes,
+    secondaryThemes
   };
 
   const rahuPlanet = natalChart.planets.find(p => p.id === 'rahu' || p.name === '北交點');
@@ -2563,6 +2908,10 @@ export function generatePredictiveReport(
 
   return {
     sensitivePoints,
+    natalRuler: {
+      planet: ruler.planet,
+      meaning: ruler.meaning
+    },
     solarReturn,
     houseSignifications,
     signSignifications,
