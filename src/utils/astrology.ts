@@ -568,7 +568,7 @@ export interface AspectQuoteItem {
   targetPlanet: string;
   title: string;
   aspectName?: string;
-  period: string;
+  period?: string;
   aspectType: 'soft' | 'hard';
   aspectMeaning: string;
   orbVal?: number;
@@ -654,6 +654,13 @@ export interface AstrologicalPredictionReport {
     hasNatalAspects?: boolean;
     natalAspectsSummary?: string;
     guideQuote?: string;
+    planetId?: string;
+    startLon?: number;
+    endLon?: number;
+    startMonth?: number;
+    startDay?: number;
+    endMonth?: number;
+    endDay?: number;
   }[];
   monthlyTimeline: MonthlyForecastItem[];
   outerPlanetAspects?: AspectQuoteItem[];
@@ -1807,6 +1814,9 @@ export function getMonthlyAngleCrossings(
 ): AngleCrossingEvent[] {
   if (!natalChart) return [];
 
+  // 1. 過四軸: 只計慢行星, 且只在 exact 過軸的月份計
+  const ANGLE_CROSSING_PLANETS = ['jupiter', 'saturn', 'uranus', 'neptune', 'pluto'];
+
   const angles = [
     { name: '上升點 (ASC)', degree: natalChart.ascendant, house: 1 },
     { name: '天頂點 (MC)', degree: natalChart.midheaven, house: 10 },
@@ -1814,54 +1824,62 @@ export function getMonthlyAngleCrossings(
     { name: '天底點 (IC)', degree: normalizeDegrees(natalChart.midheaven + 180), house: 4 }
   ];
 
-  const sampleDays = [1, 8, 15, 22, 28];
-  const orbMax = 3.5;
-  const recorded = new Map<string, { event: AngleCrossingEvent; orb: number }>();
+  const daysInMonth = new Date(transitYear, monthNum, 0).getDate() || 30;
+  const recorded = new Map<string, AngleCrossingEvent>();
 
-  for (const day of sampleDays) {
-    const mm = String(monthNum).padStart(2, '0');
-    const dd = String(day).padStart(2, '0');
-    const isoStr = `${transitYear}-${mm}-${dd}T12:00`;
+  // Check day by day for exact zero-crossing of angle degree during this month
+  for (const pid of ANGLE_CROSSING_PLANETS) {
+    for (const angle of angles) {
+      const key = `${pid}-${angle.name}`;
+      let prevDiff: number | null = null;
+      let prevSpeed: number | null = null;
 
-    let chart: AstrologyChart;
-    try {
-      chart = calculateAstrology(isoStr, transitLongitude, transitLatitude, transitTimezone);
-    } catch {
-      continue;
-    }
+      for (let day = 1; day <= daysInMonth; day++) {
+        const mm = String(monthNum).padStart(2, '0');
+        const dd = String(day).padStart(2, '0');
+        const isoStr = `${transitYear}-${mm}-${dd}T12:00`;
 
-    const testPlanets = chart.planets.filter(p => p.id !== 'moon');
+        let chart: AstrologyChart;
+        try {
+          chart = calculateAstrology(isoStr, transitLongitude, transitLatitude, transitTimezone);
+        } catch {
+          continue;
+        }
 
-    for (const p of testPlanets) {
-      for (const angle of angles) {
-        const diff = normalizeDegrees(p.longitude - angle.degree);
-        const orb = diff > 180 ? 360 - diff : diff;
+        const p = chart.planets.find(item => item.id === pid);
+        if (!p) continue;
 
-        if (orb <= orbMax) {
-          const key = `${p.id}-${angle.name}`;
-          const existing = recorded.get(key);
-          const dateStr = `${monthNum}月${day}日前後`;
+        let diff = p.longitude - angle.degree;
+        if (diff > 180) diff -= 360;
+        if (diff < -180) diff += 360;
 
-          if (!existing || orb < existing.orb) {
-            recorded.set(key, {
-              orb,
-              event: {
+        if (prevDiff !== null) {
+          const crossedZero = (prevDiff * diff <= 0) && (Math.abs(diff - prevDiff) < 15);
+          const stationaryTouch = Math.abs(diff) <= 0.08 && Math.abs(p.speed) < 0.02;
+
+          if (crossedZero || stationaryTouch) {
+            if (!recorded.has(key)) {
+              recorded.set(key, {
                 planet: p.name,
                 symbol: p.symbol,
                 angleName: angle.name,
                 houseNumber: angle.house,
                 description: getAngleCrossingMeaning(p.name, angle.name),
-                exactDateStr: dateStr,
+                exactDateStr: `${monthNum}月${day}日前後`,
                 isRetrograde: p.isRetrograde
-              }
-            });
+              });
+            }
+            break; // 同月內同一行星×同一軸去重 (只算 1 次)
           }
         }
+
+        prevDiff = diff;
+        prevSpeed = p.speed;
       }
     }
   }
 
-  return Array.from(recorded.values()).map(r => r.event);
+  return Array.from(recorded.values());
 }
 
 export function generatePredictiveReport(
@@ -2371,6 +2389,13 @@ export function generatePredictiveReport(
         house: startHouse,
         houseName: `${houseText}（${HOUSE_DETAILS[startHouse - 1]?.name || ''}）`,
         isInnerPlanet: true,
+        planetId: 'mercury',
+        startLon: mInt.startLon,
+        endLon: mInt.endLon,
+        startMonth: mInt.startMonth,
+        startDay: mInt.startDay,
+        endMonth: mInt.endMonth,
+        endDay: mInt.endDay,
         hasNatalAspects: aspects.hasNatalAspects,
         natalAspectsSummary: aspects.natalAspectsSummary
       });
@@ -2399,6 +2424,13 @@ export function generatePredictiveReport(
         house: startHouse,
         houseName: `${houseText}（${HOUSE_DETAILS[startHouse - 1]?.name || ''}）`,
         isInnerPlanet: true,
+        planetId: 'venus',
+        startLon: vInt.startLon,
+        endLon: vInt.endLon,
+        startMonth: vInt.startMonth,
+        startDay: vInt.startDay,
+        endMonth: vInt.endMonth,
+        endDay: vInt.endDay,
         hasNatalAspects: aspects.hasNatalAspects,
         natalAspectsSummary: aspects.natalAspectsSummary
       });
@@ -2427,6 +2459,13 @@ export function generatePredictiveReport(
         house: startHouse,
         houseName: `${houseText}（${HOUSE_DETAILS[startHouse - 1]?.name || ''}）`,
         isInnerPlanet: true,
+        planetId: 'mars',
+        startLon: mInt.startLon,
+        endLon: mInt.endLon,
+        startMonth: mInt.startMonth,
+        startDay: mInt.startDay,
+        endMonth: mInt.endMonth,
+        endDay: mInt.endDay,
         hasNatalAspects: aspects.hasNatalAspects,
         natalAspectsSummary: aspects.natalAspectsSummary
       });
@@ -2434,11 +2473,11 @@ export function generatePredictiveReport(
 
     // Outer Planets (Jupiter, Saturn, Uranus, Neptune, Pluto)
     const outerBodies = [
-      { body: Astronomy.Body.Jupiter, name: '木星', symbol: '♃', desc: '心智哲學與機會重整，檢視過度擴張與核心信念。', type: '木星逆行' },
-      { body: Astronomy.Body.Saturn, name: '土星', symbol: '♄', desc: '現實邊界與責任結構壓力測試，經歷結構重組。', type: '土星逆行' },
-      { body: Astronomy.Body.Uranus, name: '天王星', symbol: '♅', desc: '體制突破與獨立原創性的內化沉澱。', type: '天王星逆行' },
-      { body: Astronomy.Body.Neptune, name: '海王星', symbol: '♆', desc: '靈性幻象消退與集體潛意識直覺淨化。', type: '海王星逆行' },
-      { body: Astronomy.Body.Pluto, name: '冥王星', symbol: '♇', desc: '世代深層權力與心理重塑轉化。', type: '冥王星逆行' }
+      { id: 'jupiter', body: Astronomy.Body.Jupiter, name: '木星', symbol: '♃', desc: '心智哲學與機會重整，檢視過度擴張與核心信念。', type: '木星逆行' },
+      { id: 'saturn', body: Astronomy.Body.Saturn, name: '土星', symbol: '♄', desc: '現實邊界與責任結構壓力測試，經歷結構重組。', type: '土星逆行' },
+      { id: 'uranus', body: Astronomy.Body.Uranus, name: '天王星', symbol: '♅', desc: '體制突破與獨立原創性的內化沉澱。', type: '天王星逆行' },
+      { id: 'neptune', body: Astronomy.Body.Neptune, name: '海王星', symbol: '♆', desc: '靈性幻象消退與集體潛意識直覺淨化。', type: '海王星逆行' },
+      { id: 'pluto', body: Astronomy.Body.Pluto, name: '冥王星', symbol: '♇', desc: '世代深層權力與心理重塑轉化。', type: '冥王星逆行' }
     ];
 
     outerBodies.forEach(ob => {
@@ -2453,6 +2492,7 @@ export function generatePredictiveReport(
 
         allRetroList.push({
           planet: ob.name,
+          planetId: ob.id,
           symbol: ob.symbol,
           period: `每年固定逆行約 4~5 個月`,
           exactDates: `${oInt.sYear}年${String(oInt.startMonth).padStart(2, '0')}月${String(oInt.startDay).padStart(2, '0')}日 ~ ${oInt.eYear}年${String(oInt.endMonth).padStart(2, '0')}月${String(oInt.endDay).padStart(2, '0')}日`,
@@ -2463,7 +2503,13 @@ export function generatePredictiveReport(
           house: startHouse,
           houseName: `${houseText}（${HOUSE_DETAILS[startHouse - 1]?.name || ''}）`,
           guideQuote: PLANET_RETROGRADE_GUIDE.find(g => g.planet === ob.name)?.houses[startHouse] || '',
-          isInnerPlanet: false
+          isInnerPlanet: false,
+          startLon: oInt.startLon,
+          endLon: oInt.endLon,
+          startMonth: oInt.startMonth,
+          startDay: oInt.startDay,
+          endMonth: oInt.endMonth,
+          endDay: oInt.endDay
         });
       });
     });
@@ -2481,6 +2527,364 @@ export function generatePredictiveReport(
     transitLatitude,
     transitTimezone
   );
+
+  // Define Natal Filter Points for personalized aspects & stations
+  const natalFilterPoints = [
+    ...natalChart.planets
+      .filter(p => ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'].includes(p.id))
+      .map(p => ({
+        id: p.id,
+        name: p.name,
+        symbol: p.symbol,
+        degree: p.longitude
+      })),
+    { id: 'asc', name: '上升點 (ASC)', symbol: '⎈', degree: natalChart.ascendant },
+    { id: 'dsc', name: '下降點 (DSC)', symbol: '⎈', degree: normalizeDegrees(natalChart.ascendant + 180) },
+    { id: 'mc', name: '天頂點 (MC)', symbol: 'M', degree: natalChart.midheaven },
+    { id: 'ic', name: '天底點 (IC)', symbol: 'M', degree: normalizeDegrees(natalChart.midheaven + 180) }
+  ];
+
+  // ── 權重與係數規則 (調降修正版) ──
+  // 1. 慢行星過四軸基礎權重
+  const getAngleBaseScore = (planetName: string): number => {
+    if (planetName.includes('木星')) return 1.5;
+    if (planetName.includes('土星')) return 2.0;
+    return 2.0; // 天王星 / 海王星 / 冥王星
+  };
+
+  // 2. 留點基礎權重 (須過個人化濾網 orb ≤ 2.0°)
+  const getStationBaseScore = (planetId: string): number => {
+    if (planetId === 'mercury') return 0.5; // 水星一年六次，降為 0.5
+    if (planetId === 'venus' || planetId === 'mars') return 1.0;
+    return 1.5; // jupiter, saturn, uranus, neptune, pluto
+  };
+
+  // 3. 緊密行運相位基礎權重 (orb ≤ 1.0°)
+  const getTransitPlanetWeight = (planetId: string): number => {
+    switch (planetId) {
+      case 'mars': return 0.5;
+      case 'jupiter': return 0.75;
+      case 'saturn': return 1.25;
+      case 'uranus':
+      case 'neptune':
+      case 'pluto': return 1.5;
+      default: return 0.5;
+    }
+  };
+
+  // 相位性質係數
+  const getAspectFactor = (targetAngle: number): number => {
+    if (targetAngle === 120) return 0.6; // soft 相位體感較輕，降權
+    return 1.0; // conjunction (0°), opposition (180°), square (90°)
+  };
+
+  // 本命點重要性係數
+  const getNatalPointFactor = (pointId: string): number => {
+    if (['sun', 'moon', 'asc', 'mc', 'dsc', 'ic'].includes(pointId)) return 1.2;
+    if (['mercury', 'venus', 'mars'].includes(pointId)) return 1.0;
+    if (['jupiter', 'saturn'].includes(pointId)) return 0.8;
+    if (['uranus', 'neptune', 'pluto'].includes(pointId)) return 0.5; // 外行星對外行星，世代性質，體感弱
+    return 1.0;
+  };
+
+  // 遞減累加 (關鍵防通膨機制: 第1名×1.0, 第2名×0.7, 第3名×0.49, 第4名×0.34...)
+  const aggregateScores = (scores: number[]): number => {
+    const sorted = [...scores].sort((a, b) => b - a);
+    return sorted.reduce((sum, s, i) => sum + s * Math.pow(0.7, i), 0);
+  };
+
+  // ── 過境期唯一化 Precomputation 1: 慢行星過四軸 ──
+  interface ScoredAngleCrossing extends AngleCrossingEvent {
+    passNumber: number;
+    score: number;
+  }
+  const angleEventsByMonth: Record<number, ScoredAngleCrossing[]> = {};
+  const anglePassTracker = new Map<string, number>();
+
+  for (let m = 1; m <= 12; m++) {
+    angleEventsByMonth[m] = [];
+    const monthlyRawCrossings = getMonthlyAngleCrossings(
+      natalChart,
+      m,
+      transitYear,
+      transitLongitude,
+      transitLatitude,
+      transitTimezone
+    );
+
+    monthlyRawCrossings.forEach(cr => {
+      const key = `${cr.planet}-${cr.angleName}`;
+      const currentPass = (anglePassTracker.get(key) || 0) + 1;
+      anglePassTracker.set(key, currentPass);
+
+      const baseScore = getAngleBaseScore(cr.planet);
+      const multiplier = currentPass === 1 ? 1.0 : 0.4;
+      const score = Math.round(baseScore * multiplier * 100) / 100;
+
+      angleEventsByMonth[m].push({
+        ...cr,
+        passNumber: currentPass,
+        score
+      });
+    });
+  }
+
+  // ── 過境期唯一化 Precomputation 2: 留點 (個人化濾網 orb ≤ 2.0°) ──
+  interface StationEventItem {
+    planet: string;
+    planetId: string;
+    symbol: string;
+    type: string;
+    dateStr: string;
+    house: number;
+    sign: string;
+    stationLon: number;
+    passedFilter: boolean;
+    score: number;
+    matchedNatalId?: string;
+    matchedNatalName?: string;
+    aspectName?: string;
+    orb?: number;
+  }
+  const stationEventsByMonth: Record<number, StationEventItem[]> = {};
+  for (let m = 1; m <= 12; m++) {
+    stationEventsByMonth[m] = [];
+  }
+
+  const checkStationAspect = (lon: number) => {
+    let bestOrb = 999;
+    let matched: { id: string; name: string; aspectName: string; orb: number } | null = null;
+    for (const np of natalFilterPoints) {
+      const diff = Math.abs(normalizeDegrees(lon - np.degree));
+      const angle = diff > 180 ? 360 - diff : diff;
+      for (const asp of [0, 90, 120, 180]) {
+        const orb = Math.abs(angle - asp);
+        if (orb <= 2.0 && orb < bestOrb) {
+          bestOrb = orb;
+          let aspectName = '合相 (0°)';
+          if (asp === 90) aspectName = '四分相 (90°)';
+          else if (asp === 120) aspectName = '三分相 (120°)';
+          else if (asp === 180) aspectName = '對分相 (180°)';
+          matched = { id: np.id, name: np.name, aspectName, orb };
+        }
+      }
+    }
+    return matched;
+  };
+
+  retrogrades.forEach(r => {
+    const sm = r.startMonth;
+    const sd = r.startDay;
+    const em = r.endMonth;
+    const ed = r.endDay;
+    const sLon = r.startLon ?? 0;
+    const eLon = r.endLon ?? 0;
+    const pid = r.planetId || (r.planet === '水星' ? 'mercury' : (r.planet === '金星' ? 'venus' : (r.planet === '火星' ? 'mars' : 'outer')));
+
+    if (sm && sm >= 1 && sm <= 12) {
+      const match = checkStationAspect(sLon);
+      const passedFilter = !!match;
+      const score = passedFilter ? getStationBaseScore(pid) : 0;
+      stationEventsByMonth[sm].push({
+        planet: r.planet,
+        planetId: pid,
+        symbol: r.symbol,
+        type: '留轉逆行',
+        dateStr: `${sm}月${String(sd).padStart(2, '0')}日`,
+        house: r.house,
+        sign: r.sign,
+        stationLon: sLon,
+        passedFilter,
+        score,
+        matchedNatalId: match?.id,
+        matchedNatalName: match?.name,
+        aspectName: match?.aspectName,
+        orb: match?.orb
+      });
+    }
+
+    if (em && em >= 1 && em <= 12) {
+      const match = checkStationAspect(eLon);
+      const passedFilter = !!match;
+      const score = passedFilter ? getStationBaseScore(pid) : 0;
+      stationEventsByMonth[em].push({
+        planet: r.planet,
+        planetId: pid,
+        symbol: r.symbol,
+        type: '留轉順行',
+        dateStr: `${em}月${String(ed).padStart(2, '0')}日`,
+        house: r.house,
+        sign: r.sign,
+        stationLon: eLon,
+        passedFilter,
+        score,
+        matchedNatalId: match?.id,
+        matchedNatalName: match?.name,
+        aspectName: match?.aspectName,
+        orb: match?.orb
+      });
+    }
+  });
+
+  // ── 過境期唯一化 Precomputation 3: 緊密行運相位 (orb ≤ 1.0°, 整個過境期只在 peak 計分) ──
+  // 取樣全年 12 個月份的行星位置
+  const sampledChartsByMonth: Record<number, AstrologyChart[]> = {};
+  for (let m = 1; m <= 12; m++) {
+    sampledChartsByMonth[m] = [];
+    const daysInMonth = new Date(transitYear, m, 0).getDate() || 30;
+    const sampleDays = [1, 5, 10, 15, 20, 25, daysInMonth];
+    sampleDays.forEach(d => {
+      const isoStr = `${transitYear}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}T12:00`;
+      try {
+        sampledChartsByMonth[m].push(calculateAstrology(isoStr, transitLongitude, transitLatitude, transitTimezone));
+      } catch {
+        // ignore
+      }
+    });
+  }
+
+  interface PeakTransitAspect {
+    eventKey: string;
+    planetId: string;
+    planetName: string;
+    symbol: string;
+    natalId: string;
+    natalName: string;
+    targetAngle: number;
+    aspectName: string;
+    aspectType: 'soft' | 'hard';
+    minOrb: number;
+    passNumber: number;
+    score: number;
+    month: number;
+  }
+
+  const aspectEventsByMonth: Record<number, PeakTransitAspect[]> = {};
+  for (let m = 1; m <= 12; m++) {
+    aspectEventsByMonth[m] = [];
+  }
+
+  const TRANSIT_BODIES = [
+    { id: 'mars', name: '火星' },
+    { id: 'jupiter', name: '木星' },
+    { id: 'saturn', name: '土星' },
+    { id: 'uranus', name: '天王星' },
+    { id: 'neptune', name: '海王星' },
+    { id: 'pluto', name: '冥王星' }
+  ];
+
+  const TARGET_ASPECTS = [
+    { angle: 0, name: '合相 (0°)', type: 'soft' as const },
+    { angle: 90, name: '四分相 (90°)', type: 'hard' as const },
+    { angle: 120, name: '三分相 (120°)', type: 'soft' as const },
+    { angle: 180, name: '對分相 (180°)', type: 'hard' as const }
+  ];
+
+  for (const tb of TRANSIT_BODIES) {
+    for (const asp of TARGET_ASPECTS) {
+      for (const np of natalFilterPoints) {
+        const eventKey = `${tb.id}-${asp.angle}-${np.id}`;
+
+        // 計算全年 12 個月中該相位的最小容許度
+        const monthlyMinOrbs: { month: number; minOrb: number; symbol: string }[] = [];
+        for (let m = 1; m <= 12; m++) {
+          let bestOrb = 999;
+          let sym = '';
+          for (const sChart of sampledChartsByMonth[m]) {
+            const tp = sChart.planets.find(p => p.id === tb.id);
+            if (!tp) continue;
+            sym = tp.symbol;
+            const diff = Math.abs(normalizeDegrees(tp.longitude - np.degree));
+            const angle = diff > 180 ? 360 - diff : diff;
+            const orb = Math.abs(angle - asp.angle);
+            if (orb < bestOrb) bestOrb = orb;
+          }
+          monthlyMinOrbs.push({ month: m, minOrb: bestOrb, symbol: sym });
+        }
+
+        // 把連續 orb <= 1.0° 的月份切分成獨立過境波次 (Waves)
+        const waves: { month: number; minOrb: number; symbol: string }[][] = [];
+        let currentWave: { month: number; minOrb: number; symbol: string }[] = [];
+
+        for (const item of monthlyMinOrbs) {
+          if (item.minOrb <= 1.0) {
+            if (currentWave.length === 0 || item.month === currentWave[currentWave.length - 1].month + 1) {
+              currentWave.push(item);
+            } else {
+              waves.push(currentWave);
+              currentWave = [item];
+            }
+          } else {
+            if (currentWave.length > 0) {
+              waves.push(currentWave);
+              currentWave = [];
+            }
+          }
+        }
+        if (currentWave.length > 0) {
+          waves.push(currentWave);
+        }
+
+        // 在每一波過境中，只在 orb 達到極小值 (最接近精確 exact) 的月份計分
+        const peakMonthsInYear: { month: number; minOrb: number; symbol: string }[] = [];
+
+        waves.forEach(wave => {
+          if (wave.length === 1) {
+            peakMonthsInYear.push(wave[0]);
+          } else {
+            // 尋找波次內的局部極小點
+            for (let i = 0; i < wave.length; i++) {
+              const prev = i > 0 ? wave[i - 1].minOrb : 999;
+              const curr = wave[i].minOrb;
+              const next = i < wave.length - 1 ? wave[i + 1].minOrb : 999;
+              if (curr <= prev && curr <= next) {
+                if (peakMonthsInYear.length === 0 || peakMonthsInYear[peakMonthsInYear.length - 1].month !== wave[i].month) {
+                  peakMonthsInYear.push(wave[i]);
+                }
+              }
+            }
+            // 兜底保證：若無嚴格局域極小值，選取該波次中全域最小值的那一個月
+            const hasWavePeak = peakMonthsInYear.some(p => wave.some(w => w.month === p.month));
+            if (!hasWavePeak) {
+              let waveBest = wave[0];
+              for (const w of wave) {
+                if (w.minOrb < waveBest.minOrb) waveBest = w;
+              }
+              peakMonthsInYear.push(waveBest);
+            }
+          }
+        });
+
+        // 依波次給分：第 1 次全額，第 2、3 次逆行反覆 exact ×0.4；非 peak 月一律 0
+        const baseWeight = getTransitPlanetWeight(tb.id);
+        const aspectFactor = getAspectFactor(asp.angle);
+        const natalFactor = getNatalPointFactor(np.id);
+        const fullScore = baseWeight * aspectFactor * natalFactor;
+
+        peakMonthsInYear.forEach((peak, pIdx) => {
+          const passNumber = pIdx + 1;
+          const multiplier = passNumber === 1 ? 1.0 : 0.4;
+          const score = Math.round(fullScore * multiplier * 100) / 100;
+
+          aspectEventsByMonth[peak.month].push({
+            eventKey,
+            planetId: tb.id,
+            planetName: tb.name,
+            symbol: peak.symbol,
+            natalId: np.id,
+            natalName: np.name,
+            targetAngle: asp.angle,
+            aspectName: asp.name,
+            aspectType: asp.type,
+            minOrb: peak.minOrb,
+            passNumber,
+            score,
+            month: peak.month
+          });
+        });
+      }
+    }
+  }
 
   // Step 5 & 6: Monthly Timeline & Astronomical Event Scoring (Calculated at query/transit location)
   const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
@@ -2502,37 +2906,80 @@ export function generatePredictiveReport(
     const monthEclipses = eclipses.filter(e => e.month === monthNum);
     const monthLuminaries = moonPhases.filter(m => m.month === monthNum);
 
-    // Check inner planet stations & retrogrades in this month
-    const stationEventsInMonth: { planet: string; type: string; dateStr: string; house: number; sign: string }[] = [];
+    // ── 規則 1. 當月慢行星過四軸事件 ──
+    const monthAngleCrossings = angleEventsByMonth[monthNum] || [];
+
+    // ── 規則 2. 當月留點事件 ──
+    const monthStations = stationEventsByMonth[monthNum] || [];
+
+    // ── 規則 3. 當月緊密行運相位事件 (僅在 exact peak 月計分，單月 cap 取最強 3 筆) ──
+    const monthAspects = [...(aspectEventsByMonth[monthNum] || [])];
+    monthAspects.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return a.minOrb - b.minOrb;
+    });
+    const top3TightAspects = monthAspects.slice(0, 3);
+
+    // ── 規則 4. 同源去重：留點事件與相位事件若為同一行星對，只留分數高者 ──
+    const planetPairDedupMap = new Map<string, {
+      score: number;
+      source: 'station' | 'aspect';
+      label: string;
+    }>();
+
+    // 登錄通過個人化濾網的留點事件
+    monthStations.forEach(st => {
+      if (st.passedFilter && st.matchedNatalId) {
+        const key = `${st.planetId}_${st.matchedNatalId}`;
+        const existing = planetPairDedupMap.get(key);
+        if (!existing || st.score > existing.score) {
+          planetPairDedupMap.set(key, {
+            score: st.score,
+            source: 'station',
+            label: `留點引動：${st.planet}於${st.dateStr}${st.type}緊密${st.aspectName}本命${st.matchedNatalName}`
+          });
+        }
+      }
+    });
+
+    // 登錄單月 Top 3 緊密相位
+    top3TightAspects.forEach(asp => {
+      const key = `${asp.planetId}_${asp.natalId}`;
+      const existing = planetPairDedupMap.get(key);
+      if (!existing || asp.score > existing.score) {
+        planetPairDedupMap.set(key, {
+          score: asp.score,
+          source: 'aspect',
+          label: `緊密行運：${asp.planetName}${asp.aspectName}本命${asp.natalName}`
+        });
+      }
+    });
+
+    // ── 規則 5. 太陽回歸月 (週期標記 +1.0) ──
+    const isSolarReturnMonth = activeSRYear === transitYear && srResult.exactTimeFormatted.includes(`-${String(monthNum).padStart(2, '0')}-`);
+    const srScore = isSolarReturnMonth ? 1.0 : 0;
+
+    // 彙總本月所有事件分數
+    const allScoresInMonth: number[] = [
+      ...monthAngleCrossings.map(ac => ac.score),
+      ...Array.from(planetPairDedupMap.values()).map(item => item.score),
+      ...(srScore > 0 ? [srScore] : [])
+    ];
+
+    // ── 規則 6. 遞減累加與單月總上限 8.0 ──
+    const aggregatedScore = aggregateScores(allScoresInMonth);
+    const score = Math.min(8.0, Math.round(aggregatedScore * 10) / 10);
+
+    // ── 規則 7. 新門檻 (Hotspot ≥ 5.0, Medium ≥ 2.5) ──
+    const isHotspot = score >= 5.0;
+    const intensity: 'high' | 'medium' | 'low' = isHotspot ? 'high' : (score >= 2.5 ? 'medium' : 'low');
+
+    // 內行星當月逆行資訊
     const activeRetrogradesInMonth: { planet: string; house: number; periodStr: string }[] = [];
-
     retrogrades.forEach(r => {
-      // Parse dates to check exact stations
-      const dateMatch = r.exactDates.match(/(\d{4})年(\d{2})月(\d{2})日\s*~\s*(\d{4})年(\d{2})月(\d{2})日/);
-      if (dateMatch) {
-        const sm = parseInt(dateMatch[2], 10);
-        const sd = parseInt(dateMatch[3], 10);
-        const em = parseInt(dateMatch[5], 10);
-        const ed = parseInt(dateMatch[6], 10);
-
-        if (sm === monthNum) {
-          stationEventsInMonth.push({
-            planet: r.planet,
-            type: '留轉逆行',
-            dateStr: `${sm}月${String(sd).padStart(2, '0')}日`,
-            house: r.house,
-            sign: r.sign
-          });
-        }
-        if (em === monthNum) {
-          stationEventsInMonth.push({
-            planet: r.planet,
-            type: '留轉順行',
-            dateStr: `${em}月${String(ed).padStart(2, '0')}日`,
-            house: r.house,
-            sign: r.sign
-          });
-        }
+      const sm = r.startMonth;
+      const em = r.endMonth;
+      if (sm !== undefined && em !== undefined) {
         if ((sm <= em && monthNum >= sm && monthNum <= em) || (sm > em && (monthNum >= sm || monthNum <= em))) {
           if (r.isInnerPlanet) {
             activeRetrogradesInMonth.push({
@@ -2545,88 +2992,78 @@ export function generatePredictiveReport(
       }
     });
 
-    // Calculate Monthly Angle Crossings (行星過四軸事件)
-    const angleCrossings = getMonthlyAngleCrossings(
-      natalChart,
-      monthNum,
-      transitYear,
-      transitLongitude,
-      transitLatitude,
-      transitTimezone
-    );
+    // Format aspectQuotes for display in monthly forecast
+    let aspectQuotes: AspectQuoteItem[] = top3TightAspects.map(ta => ({
+      transitingPlanet: ta.planetName,
+      targetPlanet: ta.natalName,
+      title: `${ta.symbol} 流年${ta.planetName} ✖ 本命${ta.natalName} (${ta.aspectName})`,
+      aspectName: ta.aspectName,
+      period: `${monthNum}月份`,
+      aspectType: ta.aspectType,
+      aspectMeaning: `流年${ta.planetName}達精確容許度 (orb ${ta.minOrb.toFixed(1)}°${ta.passNumber > 1 ? `，第${ta.passNumber}波遞減` : ''})，深刻催化本命${ta.natalName}代表的心理原型與現實議題。`,
+      targetAngle: ta.targetAngle,
+      orbVal: ta.minOrb
+    }));
 
-    // Calculate ALL Monthly Transit Aspect Quotes dynamically comparing monthlyChart vs natalChart
-    const aspectQuotes = getMonthlyAspectQuotes(natalChart, monthlyChart, monthNum, activeSRYear);
+    if (aspectQuotes.length === 0) {
+      aspectQuotes = getMonthlyAspectQuotes(natalChart, monthlyChart, monthNum, activeSRYear);
+    }
     const aspectQuote = aspectQuotes[0];
-
-    // Check Solar Return Month (Birthday Activation)
-    const natalSunMonth = (natalChart.planets.find(p => p.id === 'sun')?.signIndex !== undefined)
-      ? Math.floor((natalChart.planets.find(p => p.id === 'sun')!.signIndex + 3) % 12) + 1
-      : 0;
-    const isSolarReturnMonth = activeSRYear === transitYear && srResult.exactTimeFormatted.includes(`-${String(monthNum).padStart(2, '0')}-`);
 
     // Compile dynamic, real astronomical trigger events
     const triggerEvents: string[] = [];
 
-    // 1. Eclipses in this month
+    // 1. Eclipses in this month (Informational)
     monthEclipses.forEach(ec => {
       triggerEvents.push(`⚡ [${ec.type}] ${ec.dateStr} 重磅引動本命第 ${ec.house} 宮【${HOUSE_DETAILS[ec.house - 1]?.name || ''}】（${ec.sign} ${ec.degree}°）`);
     });
 
-    // 2. Planet Stations in this month
-    stationEventsInMonth.forEach(st => {
-      triggerEvents.push(`☿ [留點停滯] ${st.planet}於 ${st.dateStr} ${st.type}（${st.sign}，第 ${st.house} 宮），進入關鍵重整轉折期`);
+    // 2. Slow Planet Angle Crossings in this month
+    monthAngleCrossings.forEach(ae => {
+      triggerEvents.push(`⚡ [慢星過軸 +${ae.score.toFixed(1)}] 流年${ae.planet}${ae.isRetrograde ? ' (逆行)' : ''}精確合相本命${ae.angleName} (${ae.exactDateStr}${ae.passNumber > 1 ? `，第${ae.passNumber}波遞減` : ''})`);
     });
 
-    // 3. Angle Crossings in this month
-    angleCrossings.forEach(ae => {
-      triggerEvents.push(`⚡ [行星過軸] 流年${ae.planet}${ae.isRetrograde ? ' (逆行)' : ''}合相本命${ae.angleName} (${ae.exactDateStr})`);
+    // 3. Planet Stations in this month
+    monthStations.forEach(st => {
+      if (st.passedFilter && st.matchedNatalName) {
+        triggerEvents.push(`☿ [留點停滯・個人引動 +${st.score.toFixed(1)}] ${st.planet}於 ${st.dateStr} ${st.type}，精確${st.aspectName}本命${st.matchedNatalName} (orb ${st.orb?.toFixed(1)}°)`);
+      } else {
+        triggerEvents.push(`☿ [留點停滯・集體背景] ${st.planet}於 ${st.dateStr} ${st.type}（${st.sign}，第 ${st.house} 宮）`);
+      }
     });
 
-    // 4. Real Moon Phases (New & Full Moons) in this month
+    // 4. Tight Transit Aspects in this month
+    top3TightAspects.forEach(asp => {
+      triggerEvents.push(`🪐 [緊密行運 +${asp.score.toFixed(1)}] 流年${asp.planetName} ${asp.aspectName} 本命${asp.natalName} (orb ${asp.minOrb.toFixed(1)}°${asp.passNumber > 1 ? `，第${asp.passNumber}波遞減` : ''})`);
+    });
+
+    // 5. Birthday / Solar Return activation (+1.0)
+    if (isSolarReturnMonth) {
+      triggerEvents.push(`☀️ [太陽回歸 +1.0] 太陽回歸生日月份：啟動本年度回歸第 ${srSunHouse} 宮【${HOUSE_DETAILS[srSunHouse - 1]?.name || ''}】全年生涯核心戰場`);
+    }
+
+    // 6. Real Moon Phases (New & Full Moons) in this month (Informational)
     monthLuminaries.forEach(mp => {
       triggerEvents.push(`${mp.type === '新月' ? '🌑' : '🌕'} ${mp.dateStr} ${mp.timeStr} ${mp.type} (${mp.sign} ${mp.degree}°) 點亮本命第 ${mp.house} 宮【${HOUSE_DETAILS[mp.house - 1]?.name || ''}】動能`);
     });
-
-    // 5. Birthday / Solar Return activation
-    if (isSolarReturnMonth) {
-      triggerEvents.push(`☀️ 太陽回歸生日月份：啟動本年度回歸第 ${srSunHouse} 宮【${HOUSE_DETAILS[srSunHouse - 1]?.name || ''}】全年生涯核心戰場`);
-    }
-
-    // 6. Active outer aspects if tight
-    if (aspectQuotes && aspectQuotes.length > 0) {
-      aspectQuotes.slice(0, 1).forEach(aq => {
-        triggerEvents.push(`🪐 ${aq.title}：${aq.aspectMeaning}`);
-      });
-    }
 
     if (triggerEvents.length === 0) {
       triggerEvents.push(`✨ 內行星平穩過境本命第 ${currentSunHouse} 宮【${HOUSE_DETAILS[currentSunHouse - 1]?.name || ''}】（${currentSunSign}），維持日常步調與穩定推進`);
     }
 
-    // --- Astronomical Intensity Scoring (Evidence-Based, Zero Hardcoded Parity) ---
-    let eventIntensityScore = 0;
-    if (monthEclipses.length > 0) eventIntensityScore += 3.0 * monthEclipses.length;
-    if (angleCrossings.length > 0) eventIntensityScore += 2.0 * angleCrossings.length;
-    if (stationEventsInMonth.length > 0) eventIntensityScore += 1.5 * stationEventsInMonth.length;
-    if (isSolarReturnMonth) eventIntensityScore += 2.0;
-    if (aspectQuotes.length > 0) eventIntensityScore += 1.0;
-    if (monthLuminaries.length > 0) eventIntensityScore += 0.5;
-
-    const isHotspot = eventIntensityScore >= 3.0;
-    const intensity: 'high' | 'medium' | 'low' = isHotspot ? 'high' : (eventIntensityScore >= 1.5 ? 'medium' : 'low');
-    const score = isHotspot ? 3 : (eventIntensityScore >= 1.5 ? 2 : 1);
-
     // Derived Dynamic Theme
     let dynamicTheme = `平穩推進期`;
-    if (monthEclipses.length > 0) {
-      dynamicTheme = `${monthEclipses[0].type}聚焦第 ${monthEclipses[0].house} 宮【${HOUSE_DETAILS[monthEclipses[0].house - 1]?.name || ''}】重大突破與轉化`;
-    } else if (angleCrossings.length > 0) {
-      dynamicTheme = `流年星體合相本命【${angleCrossings[0].angleName}】，外在生活情勢重大躍進`;
+    if (monthAngleCrossings.length > 0) {
+      dynamicTheme = `流年${monthAngleCrossings[0].planet}合相本命【${monthAngleCrossings[0].angleName}】，外在生活情勢重大躍進`;
     } else if (isSolarReturnMonth) {
       dynamicTheme = `太陽回歸生日點啟動，聚焦第 ${srSunHouse} 宮【${HOUSE_DETAILS[srSunHouse - 1]?.name || ''}】年度核心舞台`;
-    } else if (stationEventsInMonth.length > 0) {
-      dynamicTheme = `${stationEventsInMonth[0].planet}${stationEventsInMonth[0].type}，第 ${stationEventsInMonth[0].house} 宮深度檢視與校準`;
+    } else if (top3TightAspects.length > 0) {
+      dynamicTheme = `流年${top3TightAspects[0].planetName}${top3TightAspects[0].aspectName}本命${top3TightAspects[0].natalName}，深層轉化與重大抉擇`;
+    } else if (monthStations.some(s => s.passedFilter)) {
+      const pSt = monthStations.find(s => s.passedFilter)!;
+      dynamicTheme = `${pSt.planet}${pSt.type}引動本命${pSt.matchedNatalName}，深度檢視與人生步調校準`;
+    } else if (monthEclipses.length > 0) {
+      dynamicTheme = `${monthEclipses[0].type}聚焦第 ${monthEclipses[0].house} 宮【${HOUSE_DETAILS[monthEclipses[0].house - 1]?.name || ''}】重大突破與轉化`;
     } else if (isHotspot) {
       dynamicTheme = `高能聚焦期：多重星象交會引動本命第 ${currentSunHouse} 宮【${HOUSE_DETAILS[currentSunHouse - 1]?.name || ''}】`;
     } else {
@@ -2675,7 +3112,7 @@ export function generatePredictiveReport(
         });
 
       // Filter angle crossing events for this house
-      const houseAngleEvents = angleCrossings.filter(ae => ae.houseNumber === hNum);
+      const houseAngleEvents = monthAngleCrossings.filter(ae => ae.houseNumber === hNum);
 
       // Check Eclipse in this house
       const eclipseInThisHouse = monthEclipses.find(e => e.house === hNum);
@@ -2721,7 +3158,7 @@ export function generatePredictiveReport(
     });
 
     // 2. Add houses with angle crossing events
-    angleCrossings.forEach(ae => {
+    monthAngleCrossings.forEach(ae => {
       getOrCreateHouseDetail(ae.houseNumber);
     });
 
